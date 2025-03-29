@@ -5,8 +5,15 @@ import java.util.List;
 
 import org.fxapps.ollamafx.AlertsHelper;
 import org.fxapps.ollamafx.events.ClearChatEvent;
+import org.fxapps.ollamafx.events.SaveChatEvent;
 import org.fxapps.ollamafx.events.SelectedModelEvent;
 import org.fxapps.ollamafx.events.UserInputEvent;
+import org.w3c.dom.Element;
+import org.w3c.dom.Node;
+import org.w3c.dom.html.HTMLDivElement;
+import org.w3c.dom.html.HTMLElement;
+import org.fxapps.ollamafx.events.SaveChatEvent.Format;
+
 import io.quarkiverse.fx.views.FxView;
 import jakarta.enterprise.context.Dependent;
 import jakarta.enterprise.event.Event;
@@ -17,7 +24,6 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.TextField;
-import javafx.scene.web.WebEngine;
 import javafx.scene.web.WebView;
 
 @FxView
@@ -32,29 +38,23 @@ public class ChatController {
                             padding: 10px;
                             flex-direction: column;
                             align-items: flex-start;
-                            gat: 10;
+                            gap: 10;
 
                         }
-                        .left-message .right-message {
-
-                        }
-                        .left-message {
-                            text-align: right;
+                        .user-message {
                             background-color: lightblue;
-                            padding: 10px;
                             border-radius: 20px;
                             color: black;
-                            float: right;
-                            margin-bottom: 15px;
                             margin-top: 15px;
+                            padding: 5px;
                         }
 
-                        .right-message {
-                            text-align: left;
+                        .assistant-message {
+                            padding: 5px;
                             background-color: lightgray;
-                            padding: 10px;
                             border-radius: 20px;
                             color: black;
+                            margin-top: 15px;
                         }
                     </style>
                     <body>
@@ -72,6 +72,9 @@ public class ChatController {
 
     @Inject
     Event<ClearChatEvent> clearChatEvent;
+
+    @Inject
+    Event<SaveChatEvent> saveChatEvent;
 
     @Inject
     AlertsHelper alertsHelper;
@@ -92,7 +95,6 @@ public class ChatController {
             txtInput.setText("");
             onUserInputEvent.fireAsync(new UserInputEvent(input));
         }
-
     }
 
     @FXML
@@ -112,16 +114,17 @@ public class ChatController {
 
     @FXML
     void saveAsHTML(ActionEvent event) {
-
+        saveChatEvent.fire(new SaveChatEvent(Format.HTML));
     }
 
     @FXML
     void saveAsJSON(ActionEvent event) {
-
+        saveChatEvent.fire(new SaveChatEvent(Format.JSON));
     }
 
     @FXML
     void saveAsText(ActionEvent event) {
+        saveChatEvent.fire(new SaveChatEvent(Format.TEXT));
 
     }
 
@@ -142,37 +145,31 @@ public class ChatController {
     }
 
     public void appendUserMessage(String userMessage) {
-        runScriptToAppendMessage(userMessage, "left");
+        runScriptToAppendMessage("<p>" + userMessage + "</p>", "user");
     }
 
     public void appendAssistantMessage(String assistantMessage) {
-        runScriptToAppendMessage(assistantMessage, "right");
+        runScriptToAppendMessage(assistantMessage, "assistant");
 
     }
 
-    public void updateLastAssistantMessage(String content) {
-        final var lastAssistantMessageSelector = "document.querySelector('.chat-container .right-message:last-child')";
-        final var engine = chatOutput.getEngine();
-
-        Object currentWorkingContent = engine.executeScript(lastAssistantMessageSelector + ".innerHTML");
-        // avoids blinks due exceptions
-        try {
-            engine.executeScript(lastAssistantMessageSelector + ".innerHTML = `" + content + "`");
-        } catch (Exception e) {
-            engine.executeScript(lastAssistantMessageSelector + ".innerHTML = `" + currentWorkingContent + "`");
-        }
-    }
-
-    private void runScriptToAppendMessage(String message, String messagePos) {
-        var addUserMessageScriptTemplate = """
-                        var pos = '%s';
-                        var messageContent = document.createElement('div');
-                        messageContent.setAttribute("class", `${pos}-message`);
-                        messageContent.innerHTML = `%s`;
-                        document.getElementById('chatContent').appendChild(messageContent);
-                """;
-
-        var script = String.format(addUserMessageScriptTemplate, messagePos, message);
+    private void runScriptToAppendMessage(String message, String role) {
+        // workaround because I don't have an innerHTML method in Java API!
+        var script = """
+                var messageContent = document.createElement('div');
+                var tmp = document.querySelector('#tmp');
+                messageContent.setAttribute("class", '%s-message');                
+                messageContent.innerHTML = tmp.textContent;
+                document.querySelector('#chatContent').appendChild(messageContent);
+                tmp.remove();
+                """.formatted(role);
+        
+        var el = chatOutput.getEngine().getDocument().createElement("div");
+        el.setTextContent(message);
+        el.setAttribute("id", "tmp");
+        el.setAttribute("hidden", "true");
+        var chatRoot = (HTMLElement) chatOutput.getEngine().getDocument().getElementById("chatContent");
+        chatRoot.appendChild(el);
         chatOutput.getEngine().executeScript(script);
         adjustScroll();
 
@@ -184,5 +181,10 @@ public class ChatController {
 
     public void clearChatHistoy() {
         chatOutput.getEngine().executeScript("document.getElementById('chatContent').innerHTML = ''");
+    }
+
+    public String getChatHistoryHTML() {
+        return (String) chatOutput.getEngine().executeScript("document.documentElement.outerHTML");
+
     }
 }
