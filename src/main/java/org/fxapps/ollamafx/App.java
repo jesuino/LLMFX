@@ -11,7 +11,6 @@ import java.util.stream.Collectors;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.fxapps.ollamafx.App.Message;
 import org.fxapps.ollamafx.controllers.ChatController;
 import org.fxapps.ollamafx.events.ChatUpdateEvent;
 import org.fxapps.ollamafx.events.ClearChatEvent;
@@ -19,17 +18,14 @@ import org.fxapps.ollamafx.events.SaveChatEvent;
 import org.fxapps.ollamafx.events.SelectedModelEvent;
 import org.fxapps.ollamafx.events.UserInputEvent;
 import org.fxapps.ollamafx.services.ChatModelFactory;
+import org.fxapps.ollamafx.services.OllamaService;
 
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.model.StreamingResponseHandler;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
-import dev.langchain4j.model.language.StreamingLanguageModel;
-import dev.langchain4j.model.output.Response;
-import io.github.ollama4j.OllamaAPI;
 import io.quarkiverse.fx.FxPostStartupEvent;
 import io.quarkiverse.fx.RunOnFxThread;
 import io.quarkiverse.fx.views.FxViewData;
@@ -38,7 +34,6 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.event.ObservesAsync;
-import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.inject.Inject;
 import javafx.application.Platform;
 import javafx.scene.Parent;
@@ -52,8 +47,6 @@ public class App {
     final String OLLAMA_MODEL_ID_CONFIG = "quarkus.langchain4j.ollama.chat-model.model-id";
 
     final String OLLAMA_BASE_URL_CONFIG = "quarkus.langchain4j.ollama.base-url";
-
-    OllamaAPI ollamaAPI;
 
     @Inject
     FxViewRepository viewRepository;
@@ -72,13 +65,15 @@ public class App {
 
     @Inject
     ChatModelFactory modelFactory;
+
+    @Inject
+    OllamaService ollamaService;
     private ChatController chatController;
     private Parser markDownParser;
     private HtmlRenderer markdownRenderer;
 
     private StreamingChatLanguageModel model;
     List<Message> chatHistory = new ArrayList<>();
-    List<String> modelsList;
     private FxViewData chatViewData;
 
     enum Role {
@@ -91,19 +86,16 @@ public class App {
     private Map<Message, String> htmlMessageCache;
     private Stage stage;
 
-
     void onPostStartup(@Observes final FxPostStartupEvent event) throws Exception {
-        this.ollamaAPI = new OllamaAPI(ollamaUrl);
-
         this.chatViewData = viewRepository.getViewData("Chat");
         this.chatController = chatViewData.getController();
-        this.modelsList = ollamaAPI.listModels().stream().map(m -> m.getModel()).toList();
         this.markDownParser = Parser.builder().build();
         this.markdownRenderer = HtmlRenderer.builder().build();
         this.htmlMessageCache = new HashMap<>();
 
         final var rootNode = (Parent) chatViewData.getRootNode();
         final var scene = new Scene(rootNode);
+        final var modelsList = ollamaService.listModels(ollamaUrl);
         this.stage = event.getPrimaryStage();
         stage.setScene(scene);
         stage.setTitle("OllamaFX: A desktop App for Ollama");
@@ -153,8 +145,10 @@ public class App {
 
                 @Override
                 public void onPartialResponse(String token) {
-                    final var previous = chatHistory.removeLast();
-                    Platform.runLater(() -> chatHistory.add(new Message(previous.content() + token, Role.ASSISTANT)));
+                    Platform.runLater(() -> {
+                        final var previous = chatHistory.removeLast();
+                        chatHistory.add(new Message(previous.content() + token, Role.ASSISTANT));
+                    });
                     showChatHistory();
                 }
 
