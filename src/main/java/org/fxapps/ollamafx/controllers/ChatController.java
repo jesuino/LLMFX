@@ -42,11 +42,9 @@ public class ChatController {
                         }
                         .user-message {
                             background-color: lightblue;
-                            text-align: right;
                         }
                         .assistant-message {
                             background-color: lightgray;
-                            text-align: left;
                         }
                     </style>
                     <body>

@@ -11,17 +11,25 @@ import java.util.stream.Collectors;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.fxapps.ollamafx.App.Message;
 import org.fxapps.ollamafx.controllers.ChatController;
 import org.fxapps.ollamafx.events.ChatUpdateEvent;
 import org.fxapps.ollamafx.events.ClearChatEvent;
 import org.fxapps.ollamafx.events.SaveChatEvent;
 import org.fxapps.ollamafx.events.SelectedModelEvent;
 import org.fxapps.ollamafx.events.UserInputEvent;
+import org.fxapps.ollamafx.services.ChatModelFactory;
 
+import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.model.StreamingResponseHandler;
+import dev.langchain4j.model.chat.StreamingChatLanguageModel;
+import dev.langchain4j.model.chat.request.ChatRequest;
+import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
+import dev.langchain4j.model.language.StreamingLanguageModel;
+import dev.langchain4j.model.output.Response;
 import io.github.ollama4j.OllamaAPI;
-import io.github.ollama4j.models.chat.OllamaChatMessage;
-import io.github.ollama4j.models.chat.OllamaChatMessageRole;
-import io.github.ollama4j.models.chat.OllamaChatRequestBuilder;
 import io.quarkiverse.fx.FxPostStartupEvent;
 import io.quarkiverse.fx.RunOnFxThread;
 import io.quarkiverse.fx.views.FxViewData;
@@ -30,6 +38,7 @@ import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.event.ObservesAsync;
+import jakarta.enterprise.inject.spi.BeanManager;
 import jakarta.inject.Inject;
 import javafx.application.Platform;
 import javafx.scene.Parent;
@@ -40,8 +49,9 @@ import javafx.stage.Stage;
 @ApplicationScoped
 public class App {
 
-    final String OLLAMA_DEFAULT_URL = "http://localhost:11434";
-    final String OLLAMA_DEFAULT_MODEL = "qwen2.5:latest";
+    final String OLLAMA_MODEL_ID_CONFIG = "quarkus.langchain4j.ollama.chat-model.model-id";
+
+    final String OLLAMA_BASE_URL_CONFIG = "quarkus.langchain4j.ollama.base-url";
 
     OllamaAPI ollamaAPI;
 
@@ -54,30 +64,40 @@ public class App {
     @Inject
     AlertsHelper alertsHelper;
 
-    @ConfigProperty(name = "ollamafx.url", defaultValue = OLLAMA_DEFAULT_URL)
+    @ConfigProperty(name = "ollama.url", defaultValue = "http://localhost:11434")
     String ollamaUrl;
 
-    @ConfigProperty(name = "ollamafx.model", defaultValue = OLLAMA_DEFAULT_MODEL)
+    @ConfigProperty(name = "ollama.model", defaultValue = "qwen2.5:latest")
     String ollamaModel;
+
+    @Inject
+    ChatModelFactory modelFactory;
     private ChatController chatController;
     private Parser markDownParser;
     private HtmlRenderer markdownRenderer;
 
-    List<OllamaChatMessage> chatHistory = new ArrayList<>();
+    private StreamingChatLanguageModel model;
+    List<Message> chatHistory = new ArrayList<>();
     List<String> modelsList;
     private FxViewData chatViewData;
-    private String currentModel;
 
-    private Map<OllamaChatMessage, String> htmlMessageCache;
+    enum Role {
+        ASSISTANT, USER;
+    }
+
+    record Message(String content, Role role) {
+    }
+
+    private Map<Message, String> htmlMessageCache;
     private Stage stage;
+
 
     void onPostStartup(@Observes final FxPostStartupEvent event) throws Exception {
         this.ollamaAPI = new OllamaAPI(ollamaUrl);
+
         this.chatViewData = viewRepository.getViewData("Chat");
         this.chatController = chatViewData.getController();
-        this.modelsList = ollamaAPI.listModels().stream().map(m -> m.getModel())
-                .toList();
-
+        this.modelsList = ollamaAPI.listModels().stream().map(m -> m.getModel()).toList();
         this.markDownParser = Parser.builder().build();
         this.markdownRenderer = HtmlRenderer.builder().build();
         this.htmlMessageCache = new HashMap<>();
@@ -98,13 +118,12 @@ public class App {
         } else {
             chatController.chatDisableProperty().set(true);
         }
-
     }
 
     @RunOnFxThread
     public void onModelSelected(@Observes SelectedModelEvent selectedModelEvent) {
         System.out.println("Selected model: " + selectedModelEvent.getModel());
-        this.currentModel = selectedModelEvent.getModel();
+        this.model = modelFactory.getModel(ollamaUrl, selectedModelEvent.getModel());
     }
 
     @RunOnFxThread
@@ -115,30 +134,41 @@ public class App {
     }
 
     public void onUserInput(@ObservesAsync UserInputEvent userInput) {
-        final var chatBuilder = OllamaChatRequestBuilder.getInstance(this.currentModel);
-        final var chatRequest = chatBuilder.withMessages(chatHistory)
-                .withMessage(OllamaChatMessageRole.USER, userInput.getText()).build();
-
-        showChatHistory();
-
+        final var userMessage = new Message(userInput.getText(), Role.USER);
+        chatHistory.add(userMessage);
         try {
-            final var onGoingTokens = new StringBuffer();
-            // workaround for: https://github.com/ollama4j/ollama4j/issues/115
-            final var tempMessage = new OllamaChatMessage();
-            tempMessage.setContent("...");
+            final var tempMessage = new Message("", Role.ASSISTANT);
             chatHistory.add(tempMessage);
             showChatHistory();
             chatController.chatDisableProperty().set(true);
-            ollamaAPI.chatStreaming(chatRequest, token -> {
-                onGoingTokens.append(token.getMessage().getContent());
-                tempMessage.setContent(onGoingTokens.toString());
-                showChatHistory();
-                if (token.isDone()) {
-                    chatHistory.remove(tempMessage);
+
+            var chatMessages = chatHistory.stream().map(m -> {
+                return switch (m.role()) {
+                    case USER -> new UserMessage(m.content());
+                    case ASSISTANT -> new AiMessage(m.content());
+                };
+            }).toList();
+            var request = ChatRequest.builder().messages(chatMessages).build();
+            this.model.chat(request, new StreamingChatResponseHandler() {
+
+                @Override
+                public void onPartialResponse(String token) {
+                    final var previous = chatHistory.removeLast();
+                    Platform.runLater(() -> chatHistory.add(new Message(previous.content() + token, Role.ASSISTANT)));
+                    showChatHistory();
+                }
+
+                @Override
+                public void onCompleteResponse(ChatResponse response) {
+                    chatController.chatDisableProperty().set(false);
+                }
+
+                @Override
+                public void onError(Throwable error) {
                     chatController.chatDisableProperty().set(false);
                 }
             });
-            showChatHistory();
+
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -151,11 +181,11 @@ public class App {
     private void updateHistory() {
         chatController.clearChatHistoy();
         chatHistory.stream().forEach(message -> {
-            if (OllamaChatMessageRole.USER == message.getRole()) {
-                chatController.appendUserMessage(message.getContent());
+            if (Role.USER == message.role()) {
+                chatController.appendUserMessage(message.content());
             } else {
                 var htmlMessage = htmlMessageCache.computeIfAbsent(message,
-                        messageToParse -> parseMarkdowToHTML(messageToParse.getContent()));
+                        messageToParse -> parseMarkdowToHTML(messageToParse.content()));
                 chatController.appendAssistantMessage(htmlMessage);
             }
         });
@@ -172,7 +202,7 @@ public class App {
             case JSON -> getHistoryAsJson();
             case TEXT -> getHistoryAsText();
         };
-        var  fileChooser = new FileChooser();
+        var fileChooser = new FileChooser();
         var dest = fileChooser.showSaveDialog(stage);
 
         try {
@@ -192,8 +222,7 @@ public class App {
 
     String getHistoryAsText() {
         return chatHistory.stream()
-                .map(m -> m.getRole() + ": " + m.getContent())
+                .map(m -> m.role() + ": " + m.content())
                 .collect(Collectors.joining("\n"));
     }
-
 }

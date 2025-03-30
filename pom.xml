@@ -20,6 +20,7 @@
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.5.2</surefire-plugin.version>
         <ollama4j.version>1.0.99</ollama4j.version>
+        <langchain4j.version>1.0.0-beta2</langchain4j.version>
     </properties>
 
     <dependencyManagement>
@@ -39,6 +40,11 @@
             <groupId>io.github.ollama4j</groupId>
             <artifactId>ollama4j</artifactId>
             <version>${ollama4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>dev.langchain4j</groupId>
+            <artifactId>langchain4j-ollama</artifactId>
+            <version>${langchain4j.version}</version>
         </dependency>
         <dependency>
             <groupId>org.commonmark</groupId>
