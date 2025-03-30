@@ -6,13 +6,10 @@ import java.util.List;
 import org.fxapps.ollamafx.AlertsHelper;
 import org.fxapps.ollamafx.events.ClearChatEvent;
 import org.fxapps.ollamafx.events.SaveChatEvent;
+import org.fxapps.ollamafx.events.SaveChatEvent.Format;
 import org.fxapps.ollamafx.events.SelectedModelEvent;
 import org.fxapps.ollamafx.events.UserInputEvent;
-import org.w3c.dom.Element;
-import org.w3c.dom.Node;
-import org.w3c.dom.html.HTMLDivElement;
 import org.w3c.dom.html.HTMLElement;
-import org.fxapps.ollamafx.events.SaveChatEvent.Format;
 
 import io.quarkiverse.fx.views.FxView;
 import jakarta.enterprise.context.Dependent;
@@ -34,27 +31,22 @@ public class ChatController {
                 <html>
                     <style>
                         .chat-container {
-                            display: flex;
                             padding: 10px;
-                            flex-direction: column;
-                            align-items: flex-start;
-                            gap: 10;
-
+                            flex-grow: 1;
+                        }
+                        .chat-container > p {
+                            border-radius: 20px;
+                            color: black;
+                            margin: 5px;
+                            padding: 5px;
                         }
                         .user-message {
                             background-color: lightblue;
-                            border-radius: 20px;
-                            color: black;
-                            margin-top: 15px;
-                            padding: 5px;
+                            text-align: right;
                         }
-
                         .assistant-message {
-                            padding: 5px;
                             background-color: lightgray;
-                            border-radius: 20px;
-                            color: black;
-                            margin-top: 15px;
+                            text-align: left;
                         }
                     </style>
                     <body>
@@ -156,15 +148,15 @@ public class ChatController {
     private void runScriptToAppendMessage(String message, String role) {
         // workaround because I don't have an innerHTML method in Java API!
         var script = """
-                var messageContent = document.createElement('div');
+                var messageContent = document.createElement('p');
                 var tmp = document.querySelector('#tmp');
-                messageContent.setAttribute("class", '%s-message');                
+                messageContent.setAttribute("class", '%s-message');
                 messageContent.innerHTML = tmp.textContent;
                 document.querySelector('#chatContent').appendChild(messageContent);
                 tmp.remove();
                 """.formatted(role);
-        
-        var el = chatOutput.getEngine().getDocument().createElement("div");
+
+        var el = chatOutput.getEngine().getDocument().createElement("p");
         el.setTextContent(message);
         el.setAttribute("id", "tmp");
         el.setAttribute("hidden", "true");

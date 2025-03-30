@@ -16,23 +16,27 @@
    <children>
       <HBox alignment="CENTER" prefHeight="33.0" prefWidth="1172.0" spacing="10.0">
          <children>
-            <Text strokeType="OUTSIDE" strokeWidth="0.0" text="LLamaFX: A Desktop App for Ollama" wrappingWidth="744.8718872070312">
+            <Text strokeType="OUTSIDE" strokeWidth="0.0" text="OllamaFX: A Desktop App for Ollama" wrappingWidth="744.8718872070312">
                <font>
-                  <Font size="24.0" />
+                  <Font name="System Bold" size="20.0" />
                </font>
             </Text>
-            <ComboBox fx:id="cmbModels" onAction="#modelSelected" prefHeight="25.0" prefWidth="200.0" promptText="Select Model" />
-            <SplitMenuButton mnemonicParsing="false" prefHeight="25.0" prefWidth="100.0" text="Save As">
-              <items>
-                <MenuItem mnemonicParsing="false" onAction="#saveAsText" text="Text" />
-                <MenuItem mnemonicParsing="false" onAction="#saveAsJSON" text="JSON" />
-                  <MenuItem mnemonicParsing="false" onAction="#saveAsHTML" text="HTML" />
-              </items>
-            </SplitMenuButton>
-            <Button mnemonicParsing="false" onAction="#newChat" prefHeight="25.0" prefWidth="100.0" text="New Chat" textFill="#dd0606" />
+            <HBox alignment="CENTER_RIGHT" spacing="5.0" HBox.hgrow="ALWAYS">
+               <children>
+                  <ComboBox fx:id="cmbModels" onAction="#modelSelected" prefHeight="25.0" prefWidth="200.0" promptText="Select Model" />
+                  <SplitMenuButton mnemonicParsing="false" prefHeight="25.0" prefWidth="100.0" text="Save As">
+                    <items>
+                      <MenuItem mnemonicParsing="false" onAction="#saveAsText" text="Text" />
+                      <MenuItem mnemonicParsing="false" onAction="#saveAsJSON" text="JSON" />
+                        <MenuItem mnemonicParsing="false" onAction="#saveAsHTML" text="HTML" />
+                    </items>
+                  </SplitMenuButton>
+                  <Button mnemonicParsing="false" onAction="#newChat" prefHeight="25.0" prefWidth="100.0" text="New Chat" textFill="#dd0606" />
+               </children>
+            </HBox>
          </children>
       </HBox>
-      <WebView fx:id="chatOutput" prefHeight="825.0" prefWidth="1200.0">
+      <WebView fx:id="chatOutput" prefHeight="825.0" prefWidth="1200.0" VBox.vgrow="ALWAYS">
          <VBox.margin>
             <Insets bottom="10.0" top="5.0" />
          </VBox.margin>
