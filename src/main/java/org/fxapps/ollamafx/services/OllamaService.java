@@ -6,13 +6,18 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 
+import org.eclipse.microprofile.config.inject.ConfigProperty;
+
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.json.Json;
 
 @ApplicationScoped
 public class OllamaService {
 
-    public List<String> listModels(String ollamaUrl) throws Exception {
+    @ConfigProperty(name = "ollama.url", defaultValue = "http://localhost:11434")
+    String ollamaUrl;
+
+    public List<String> listModels() throws Exception {
         var httpClient = HttpClient.newHttpClient();
         var endpoint = URI.create(ollamaUrl + "/api/tags");
         var request = HttpRequest.newBuilder()
@@ -29,6 +34,10 @@ public class OllamaService {
                 .map(j -> j.asJsonObject().getString("model"))
                 .toList();
 
+    }
+
+    public String getOllamaUrl() {
+        return ollamaUrl;
     }
 
 }

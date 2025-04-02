@@ -3,6 +3,7 @@
 <?import javafx.geometry.Insets?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
+<?import javafx.scene.control.MenuButton?>
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.SplitMenuButton?>
 <?import javafx.scene.control.TextField?>
@@ -16,14 +17,15 @@
    <children>
       <HBox alignment="CENTER" prefHeight="33.0" prefWidth="1172.0" spacing="10.0">
          <children>
-            <Text strokeType="OUTSIDE" strokeWidth="0.0" text="OllamaFX: A Desktop App for Ollama" wrappingWidth="744.8718872070312">
+            <Text strokeType="OUTSIDE" strokeWidth="0.0" text="OllamaFX: A Desktop App for Ollama" wrappingWidth="371.87188720703125">
                <font>
                   <Font name="System Bold" size="20.0" />
                </font>
             </Text>
-            <HBox alignment="CENTER_RIGHT" spacing="5.0" HBox.hgrow="ALWAYS">
+            <HBox alignment="CENTER_RIGHT" prefHeight="28.0" prefWidth="617.0" spacing="5.0" HBox.hgrow="ALWAYS">
                <children>
                   <ComboBox fx:id="cmbModels" onAction="#modelSelected" prefHeight="25.0" prefWidth="200.0" promptText="Select Model" />
+                  <MenuButton fx:id="mcpMenu" mnemonicParsing="false" text="MCP Servers" />
                   <SplitMenuButton mnemonicParsing="false" prefHeight="25.0" prefWidth="100.0" text="Save As">
                     <items>
                       <MenuItem mnemonicParsing="false" onAction="#saveAsText" text="Text" />
@@ -31,7 +33,7 @@
                         <MenuItem mnemonicParsing="false" onAction="#saveAsHTML" text="HTML" />
                     </items>
                   </SplitMenuButton>
-                  <Button mnemonicParsing="false" onAction="#newChat" prefHeight="25.0" prefWidth="100.0" text="New Chat" textFill="#dd0606" />
+                  <Button fx:id="btnNewChat" mnemonicParsing="false" onAction="#newChat" prefHeight="25.0" prefWidth="100.0" text="New Chat" textFill="#dd0606" />
                </children>
             </HBox>
          </children>

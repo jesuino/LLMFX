@@ -11,37 +11,42 @@ import java.util.stream.Collectors;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.fxapps.ollamafx.Model.Message;
+import org.fxapps.ollamafx.Model.Role;
 import org.fxapps.ollamafx.controllers.ChatController;
 import org.fxapps.ollamafx.events.ChatUpdateEvent;
 import org.fxapps.ollamafx.events.ClearChatEvent;
+import org.fxapps.ollamafx.events.MCPServerSelectEvent;
 import org.fxapps.ollamafx.events.SaveChatEvent;
 import org.fxapps.ollamafx.events.SelectedModelEvent;
 import org.fxapps.ollamafx.events.UserInputEvent;
 import org.fxapps.ollamafx.services.ChatModelFactory;
+import org.fxapps.ollamafx.services.ChatService;
+import org.fxapps.ollamafx.services.MCPClientRepository;
 import org.fxapps.ollamafx.services.OllamaService;
 
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.mcp.McpToolProvider;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;
 import dev.langchain4j.model.chat.request.ChatRequest;
-import dev.langchain4j.model.chat.response.ChatResponse;
-import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import io.quarkiverse.fx.FxPostStartupEvent;
 import io.quarkiverse.fx.RunOnFxThread;
 import io.quarkiverse.fx.views.FxViewData;
 import io.quarkiverse.fx.views.FxViewRepository;
-import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.enterprise.event.Event;
 import jakarta.enterprise.event.Observes;
 import jakarta.enterprise.event.ObservesAsync;
 import jakarta.inject.Inject;
+import jakarta.inject.Singleton;
 import javafx.application.Platform;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
-@ApplicationScoped
+// TODO: Support Image upload and response!
+@Singleton
 public class App {
 
     final String OLLAMA_MODEL_ID_CONFIG = "quarkus.langchain4j.ollama.chat-model.model-id";
@@ -57,8 +62,8 @@ public class App {
     @Inject
     AlertsHelper alertsHelper;
 
-    @ConfigProperty(name = "ollama.url", defaultValue = "http://localhost:11434")
-    String ollamaUrl;
+    @Inject
+    ChatService chatService;
 
     @ConfigProperty(name = "ollama.model", defaultValue = "qwen2.5:latest")
     String ollamaModel;
@@ -68,23 +73,38 @@ public class App {
 
     @Inject
     OllamaService ollamaService;
+
+    @Inject
+    MCPClientRepository mcpClientRepository;
+
     private ChatController chatController;
+
     private Parser markDownParser;
     private HtmlRenderer markdownRenderer;
-
     private StreamingChatLanguageModel model;
+
     List<Message> chatHistory = new ArrayList<>();
+
     private FxViewData chatViewData;
-
-    enum Role {
-        ASSISTANT, USER;
-    }
-
-    record Message(String content, Role role) {
-    }
 
     private Map<Message, String> htmlMessageCache;
     private Stage stage;
+
+    List<String> selectedMcpServers;
+
+    private String modelName;
+
+    @RunOnFxThread
+    void onModelSelected(@Observes SelectedModelEvent selectedModelEvent) {
+        this.modelName = selectedModelEvent.getModel();
+    }
+
+    @RunOnFxThread
+    void onClearChat(@Observes ClearChatEvent evt) {
+        this.chatHistory.clear();
+        this.chatController.clearChatHistoy();
+        this.htmlMessageCache.clear();
+    }
 
     void onPostStartup(@Observes final FxPostStartupEvent event) throws Exception {
         this.chatViewData = viewRepository.getViewData("Chat");
@@ -95,7 +115,9 @@ public class App {
 
         final var rootNode = (Parent) chatViewData.getRootNode();
         final var scene = new Scene(rootNode);
-        final var modelsList = ollamaService.listModels(ollamaUrl);
+        final var modelsList = ollamaService.listModels();
+
+        chatController.init();
         this.stage = event.getPrimaryStage();
         stage.setScene(scene);
         stage.setTitle("OllamaFX: A desktop App for Ollama");
@@ -108,86 +130,60 @@ public class App {
         if (modelsList.stream().anyMatch(m -> m.equals(ollamaModel))) {
             chatController.setSelectedModel(ollamaModel);
         } else {
-            chatController.chatDisableProperty().set(true);
+            chatController.holdChatProperty().set(true);
+        }
+        chatController.setMCPServers(mcpClientRepository.mcpServers());
+        selectedMcpServers = new ArrayList<>();
+    }
+
+    void onMcpServerSelected(@Observes MCPServerSelectEvent mcpServerSelectEvent) {
+        final var name = mcpServerSelectEvent.name();
+        if (mcpServerSelectEvent.isSelected()) {
+            selectedMcpServers.add(name);
+        } else {
+            selectedMcpServers.remove(name);
         }
     }
 
-    @RunOnFxThread
-    public void onModelSelected(@Observes SelectedModelEvent selectedModelEvent) {
-        System.out.println("Selected model: " + selectedModelEvent.getModel());
-        this.model = modelFactory.getModel(ollamaUrl, selectedModelEvent.getModel());
-    }
-
-    @RunOnFxThread
-    public void onClearChat(@Observes ClearChatEvent evt) {
-        this.chatHistory.clear();
-        this.chatController.clearChatHistoy();
-        this.htmlMessageCache.clear();
-    }
-
     public void onUserInput(@ObservesAsync UserInputEvent userInput) {
-        final var userMessage = new Message(userInput.getText(), Role.USER);
+
+        // TODO: extract MCP and chat code to a different service
+        final var userMessage = Message.userMessage(userInput.getText());
         chatHistory.add(userMessage);
+        showChatHistory();
         try {
+
+            var toolProvider = McpToolProvider.builder()
+                    .mcpClients(selectedMcpServers.stream()
+                            .map(mcpClientRepository::getMcpClient).toList())
+                    .build();
+
             final var tempMessage = new Message("", Role.ASSISTANT);
             chatHistory.add(tempMessage);
-            showChatHistory();
-            chatController.chatDisableProperty().set(true);
 
-            var chatMessages = chatHistory.stream().map(m -> {
-                return switch (m.role()) {
-                    case USER -> new UserMessage(m.content());
-                    case ASSISTANT -> new AiMessage(m.content());
-                };
-            }).toList();
-            var request = ChatRequest.builder().messages(chatMessages).build();
-            this.model.chat(request, new StreamingChatResponseHandler() {
-
-                @Override
-                public void onPartialResponse(String token) {
-                    Platform.runLater(() -> {
-                        final var previous = chatHistory.removeLast();
-                        chatHistory.add(new Message(previous.content() + token, Role.ASSISTANT));
+            chatController.holdChatProperty().set(true);
+            var request = new Model.ChatRequest(
+                    userInput.getText(),
+                    chatHistory,
+                    modelName,
+                    toolProvider,
+                    token -> {
+                        Platform.runLater(() -> {
+                            final var previous = chatHistory.removeLast();
+                            chatHistory.add(new Message(previous.content() + token, Role.ASSISTANT));
+                        });
+                        showChatHistory();
+                    },
+                    r -> chatController.holdChatProperty().set(false),
+                    e -> {
+                        e.printStackTrace();
+                        chatController.holdChatProperty().set(false);
                     });
-                    showChatHistory();
-                }
-
-                @Override
-                public void onCompleteResponse(ChatResponse response) {
-                    chatController.chatDisableProperty().set(false);
-                }
-
-                @Override
-                public void onError(Throwable error) {
-                    chatController.chatDisableProperty().set(false);
-                }
-            });
+            chatService.chatAsync(request);            
 
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    private void showChatHistory() {
-        Platform.runLater(() -> updateHistory());
-    }
-
-    private void updateHistory() {
-        chatController.clearChatHistoy();
-        chatHistory.stream().forEach(message -> {
-            if (Role.USER == message.role()) {
-                chatController.appendUserMessage(message.content());
-            } else {
-                var htmlMessage = htmlMessageCache.computeIfAbsent(message,
-                        messageToParse -> parseMarkdowToHTML(messageToParse.content()));
-                chatController.appendAssistantMessage(htmlMessage);
-            }
-        });
-    }
-
-    private String parseMarkdowToHTML(String markdown) {
-        var parsedContent = markDownParser.parse(markdown);
-        return markdownRenderer.render(parsedContent);
     }
 
     public void saveChat(@Observes SaveChatEvent saveChatEvent) {
@@ -218,5 +214,25 @@ public class App {
         return chatHistory.stream()
                 .map(m -> m.role() + ": " + m.content())
                 .collect(Collectors.joining("\n"));
+    }
+
+    private void showChatHistory() {
+        Platform.runLater(() -> {
+            chatController.clearChatHistoy();
+            chatHistory.stream().forEach(message -> {
+                if (Role.USER == message.role()) {
+                    chatController.appendUserMessage(message.content());
+                } else {
+                    var htmlMessage = htmlMessageCache.computeIfAbsent(message,
+                            messageToParse -> parseMarkdowToHTML(messageToParse.content()));
+                    chatController.appendAssistantMessage(htmlMessage);
+                }
+            });
+        });
+    }
+
+    private String parseMarkdowToHTML(String markdown) {
+        var parsedContent = markDownParser.parse(markdown);
+        return markdownRenderer.render(parsedContent);
     }
 }
