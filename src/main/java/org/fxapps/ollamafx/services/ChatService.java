@@ -1,21 +1,16 @@
 package org.fxapps.ollamafx.services;
 
-import java.util.List;
-import java.util.function.Consumer;
-
-import org.fxapps.ollamafx.Model.Message;
+import java.util.HashMap;
+import java.util.Map;
 
 import dev.langchain4j.data.message.AiMessage;
-import dev.langchain4j.data.message.ChatMessage;
 import dev.langchain4j.data.message.UserMessage;
-import dev.langchain4j.memory.ChatMemory;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
-import dev.langchain4j.model.chat.request.ChatRequest;
-import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.chat.StreamingChatLanguageModel;
+import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.TokenStream;
-import dev.langchain4j.service.tool.ToolExecution;
-import dev.langchain4j.service.tool.ToolProvider;
+import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -23,15 +18,13 @@ import jakarta.inject.Singleton;
 public class ChatService {
 
     @Inject
-    ChatModelFactory modelFactory;
-
-    @Inject
     OllamaService ollamaService;
 
-    public interface ChatBot {
+    Map<String, StreamingChatLanguageModel> modelCache;
 
-        String chat(String userMessage);
-
+    @PostConstruct
+    public void init() {
+        modelCache = new HashMap<>();
     }
 
     public interface AsyncChatBot {
@@ -40,24 +33,25 @@ public class ChatService {
 
     }
 
-    public String chatSync(String userMessage, String model, ToolProvider toolProvider) {
-        var m = modelFactory.getModelSync(ollamaService.getOllamaUrl(), model);
-        var bot = AiServices.builder(ChatBot.class)
-                .chatLanguageModel(m)
-                .toolProvider(toolProvider)
-                .build();
-        return bot.chat(userMessage);
-    }
-
     public void chatAsync(org.fxapps.ollamafx.Model.ChatRequest chatRequest) {
-
-        var memory = memoryFromMessages(chatRequest.messages());
-        var model = modelFactory.getModel(ollamaService.getOllamaUrl(), chatRequest.model());
+        var memory = MessageWindowChatMemory.withMaxMessages(100);
+        var model = modelCache.computeIfAbsent(chatRequest.model(),
+                m -> OllamaStreamingChatModel.builder().baseUrl(ollamaService.getOllamaUrl())
+                        .modelName(m)
+                        .logRequests(true)
+                        .logResponses(true)
+                        .build());
         var bot = AiServices.builder(AsyncChatBot.class)
                 .streamingChatLanguageModel(model)
                 .chatMemory(memory)
                 .toolProvider(chatRequest.toolProvider())
                 .build();
+
+        chatRequest.messages().stream().map(m -> switch (m.role()) {
+            case USER -> new UserMessage(m.content());
+            case ASSISTANT -> new AiMessage(m.content());
+
+        }).forEach(memory::add);
 
         bot.chat(chatRequest.message())
                 .onPartialResponse(chatRequest.onToken())
@@ -67,37 +61,4 @@ public class ChatService {
                 .onError(chatRequest.onError())
                 .start();
     }
-
-    private ChatMemory memoryFromMessages(List<Message> messages) {
-        return new ChatMemory() {
-
-            @Override
-            public Object id() {
-                return 1;
-            }
-
-            @Override
-            public void add(ChatMessage message) {
-                // NOP
-            }
-
-            @Override
-            public List<ChatMessage> messages() {
-                return messages.stream().map(m -> {
-                    return switch (m.role()) {
-                        case USER -> new UserMessage(m.content());
-                        case ASSISTANT -> new AiMessage(m.content());
-                    };
-
-                }).toList();
-            }
-
-            @Override
-            public void clear() {
-                // NOP
-            }
-
-        };
-    }
-
 }

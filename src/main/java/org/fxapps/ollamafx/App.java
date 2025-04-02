@@ -20,16 +20,11 @@ import org.fxapps.ollamafx.events.MCPServerSelectEvent;
 import org.fxapps.ollamafx.events.SaveChatEvent;
 import org.fxapps.ollamafx.events.SelectedModelEvent;
 import org.fxapps.ollamafx.events.UserInputEvent;
-import org.fxapps.ollamafx.services.ChatModelFactory;
 import org.fxapps.ollamafx.services.ChatService;
 import org.fxapps.ollamafx.services.MCPClientRepository;
 import org.fxapps.ollamafx.services.OllamaService;
 
-import dev.langchain4j.data.message.AiMessage;
-import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.mcp.McpToolProvider;
-import dev.langchain4j.model.chat.StreamingChatLanguageModel;
-import dev.langchain4j.model.chat.request.ChatRequest;
 import io.quarkiverse.fx.FxPostStartupEvent;
 import io.quarkiverse.fx.RunOnFxThread;
 import io.quarkiverse.fx.views.FxViewData;
@@ -68,8 +63,6 @@ public class App {
     @ConfigProperty(name = "ollama.model", defaultValue = "qwen2.5:latest")
     String ollamaModel;
 
-    @Inject
-    ChatModelFactory modelFactory;
 
     @Inject
     OllamaService ollamaService;
@@ -81,7 +74,6 @@ public class App {
 
     private Parser markDownParser;
     private HtmlRenderer markdownRenderer;
-    private StreamingChatLanguageModel model;
 
     List<Message> chatHistory = new ArrayList<>();
 
@@ -92,11 +84,11 @@ public class App {
 
     List<String> selectedMcpServers;
 
-    private String modelName;
+    private String selectedModel;
 
     @RunOnFxThread
     void onModelSelected(@Observes SelectedModelEvent selectedModelEvent) {
-        this.modelName = selectedModelEvent.getModel();
+        this.selectedModel = selectedModelEvent.getModel();
     }
 
     @RunOnFxThread
@@ -146,8 +138,6 @@ public class App {
     }
 
     public void onUserInput(@ObservesAsync UserInputEvent userInput) {
-
-        // TODO: extract MCP and chat code to a different service
         final var userMessage = Message.userMessage(userInput.getText());
         chatHistory.add(userMessage);
         showChatHistory();
@@ -165,7 +155,7 @@ public class App {
             var request = new Model.ChatRequest(
                     userInput.getText(),
                     chatHistory,
-                    modelName,
+                    selectedModel,
                     toolProvider,
                     token -> {
                         Platform.runLater(() -> {
