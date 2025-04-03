@@ -1,7 +1,10 @@
 package org.fxapps.ollamafx.services;
 
+import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+
+import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;
@@ -19,6 +22,9 @@ public class ChatService {
 
     @Inject
     OllamaService ollamaService;
+
+    @ConfigProperty(name = "ollama.requestTimeout", defaultValue = "120")
+    Integer requestTimeout;
 
     Map<String, StreamingChatLanguageModel> modelCache;
 
@@ -38,6 +44,7 @@ public class ChatService {
         var model = modelCache.computeIfAbsent(chatRequest.model(),
                 m -> OllamaStreamingChatModel.builder().baseUrl(ollamaService.getOllamaUrl())
                         .modelName(m)
+                        .timeout(Duration.ofSeconds(requestTimeout))
                         .logRequests(true)
                         .logResponses(true)
                         .build());
