@@ -43,11 +43,20 @@
             <Insets bottom="10.0" top="5.0" />
          </VBox.margin>
       </WebView>
-      <TextField id="txtInput" fx:id="txtInput" onAction="#onInputAction" promptText="Say Something!">
-         <padding>
-            <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
-         </padding>
-      </TextField>
+      <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
+         <children>
+            <TextField id="txtInput" fx:id="txtInput" onAction="#onInputAction" prefHeight="38.0" prefWidth="1113.0" promptText="Say Something!" HBox.hgrow="ALWAYS">
+               <padding>
+                  <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
+               </padding>
+            </TextField>
+            <Button fx:id="btnStop" alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false" onAction="#stopStreaming" prefHeight="39.0" prefWidth="38.0" text="■" textAlignment="CENTER" textFill="#e40a0a">
+               <font>
+                  <Font size="15.0" />
+               </font>
+            </Button>
+         </children>
+      </HBox>
    </children>
    <padding>
       <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />

@@ -6,6 +6,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import org.commonmark.parser.Parser;
@@ -19,6 +20,7 @@ import org.fxapps.ollamafx.events.ClearChatEvent;
 import org.fxapps.ollamafx.events.MCPServerSelectEvent;
 import org.fxapps.ollamafx.events.SaveChatEvent;
 import org.fxapps.ollamafx.events.SelectedModelEvent;
+import org.fxapps.ollamafx.events.StopStreamingEvent;
 import org.fxapps.ollamafx.events.UserInputEvent;
 import org.fxapps.ollamafx.services.ChatService;
 import org.fxapps.ollamafx.services.MCPClientRepository;
@@ -86,6 +88,8 @@ public class App {
 
     private String selectedModel;
 
+    private AtomicBoolean stopStreamingFlag;
+
     @RunOnFxThread
     void onModelSelected(@Observes SelectedModelEvent selectedModelEvent) {
         this.selectedModel = selectedModelEvent.getModel();
@@ -104,13 +108,15 @@ public class App {
         this.markDownParser = Parser.builder().build();
         this.markdownRenderer = HtmlRenderer.builder().build();
         this.htmlMessageCache = new HashMap<>();
+        this.stage = event.getPrimaryStage();
+        this.stopStreamingFlag = new AtomicBoolean(false);
 
         final var rootNode = (Parent) chatViewData.getRootNode();
         final var scene = new Scene(rootNode);
         final var modelsList = ollamaService.listModels();
-
+        
         chatController.init();
-        this.stage = event.getPrimaryStage();
+
         stage.setScene(scene);
         stage.setTitle("OllamaFX: A desktop App for Ollama");
         stage.show();
@@ -137,6 +143,10 @@ public class App {
         }
     }
 
+    void onStopStreaming(@Observes StopStreamingEvent stopStreamingEvent) {
+        stopStreamingFlag.set(true);
+    }
+
     public void onUserInput(@ObservesAsync UserInputEvent userInput) {
         final var userMessage = Message.userMessage(userInput.getText());
         chatHistory.add(userMessage);
@@ -158,6 +168,12 @@ public class App {
                     selectedModel,
                     toolProvider,
                     token -> {
+                        if(stopStreamingFlag.get()) {
+                            stopStreamingFlag.set(false);
+                            System.out.println("FORCE STOOOOOOOOP!");
+                            chatController.holdChatProperty().set(false);
+                            throw new RuntimeException("Workaround to force the streaming to stop!");
+                        }
                         Platform.runLater(() -> {
                             final var previous = chatHistory.removeLast();
                             chatHistory.add(new Message(previous.content() + token, Role.ASSISTANT));

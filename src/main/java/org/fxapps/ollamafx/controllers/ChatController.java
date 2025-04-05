@@ -10,6 +10,7 @@ import org.fxapps.ollamafx.events.MCPServerSelectEvent;
 import org.fxapps.ollamafx.events.SaveChatEvent;
 import org.fxapps.ollamafx.events.SaveChatEvent.Format;
 import org.fxapps.ollamafx.events.SelectedModelEvent;
+import org.fxapps.ollamafx.events.StopStreamingEvent;
 import org.fxapps.ollamafx.events.UserInputEvent;
 import org.w3c.dom.html.HTMLElement;
 
@@ -72,8 +73,11 @@ public class ChatController {
     @Inject
     Event<SaveChatEvent> saveChatEvent;
 
-    @Inject
+    @Inject    
     Event<MCPServerSelectEvent> mcpServerSelectEvent;
+
+    @Inject
+    Event<StopStreamingEvent> stopStreamingEvent;
 
     @Inject
     AlertsHelper alertsHelper;
@@ -93,13 +97,16 @@ public class ChatController {
     @FXML
     private Button btnNewChat;
 
+    @FXML
+    private Button btnStop;
+
     private SimpleBooleanProperty holdChatProperty;
 
     public void init() {
         holdChatProperty = new SimpleBooleanProperty();
         txtInput.disableProperty().bind(holdChatProperty);
         btnNewChat.disableProperty().bind(holdChatProperty);
-
+        btnStop.disableProperty().bind(holdChatProperty.not());
     }
 
     @FXML
@@ -186,6 +193,12 @@ public class ChatController {
     @FXML
     void saveAsText(ActionEvent event) {
         saveChatEvent.fire(new SaveChatEvent(Format.TEXT));
+
+    }
+
+    @FXML
+    void stopStreaming() {
+        stopStreamingEvent.fire(new StopStreamingEvent());
 
     }
 

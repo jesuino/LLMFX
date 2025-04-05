@@ -42,7 +42,8 @@ public class ChatService {
     public void chatAsync(org.fxapps.ollamafx.Model.ChatRequest chatRequest) {
         var memory = MessageWindowChatMemory.withMaxMessages(100);
         var model = modelCache.computeIfAbsent(chatRequest.model(),
-                m -> OllamaStreamingChatModel.builder().baseUrl(ollamaService.getOllamaUrl())
+                m -> OllamaStreamingChatModel.builder()
+                        .baseUrl(ollamaService.getOllamaUrl())
                         .modelName(m)
                         .timeout(Duration.ofSeconds(requestTimeout))
                         .logRequests(true)
@@ -60,12 +61,12 @@ public class ChatService {
 
         }).forEach(memory::add);
 
-        bot.chat(chatRequest.message())
+        bot.chat(chatRequest.message())                
                 .onPartialResponse(chatRequest.onToken())
                 .onRetrieved(contents -> System.out.println(contents))
                 .onToolExecuted(execution -> System.out.println(execution))
                 .onCompleteResponse(chatRequest.onComplete())
-                .onError(chatRequest.onError())
+                .onError(chatRequest.onError())                
                 .start();
     }
 }
