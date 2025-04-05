@@ -15,16 +15,17 @@ import org.eclipse.microprofile.config.inject.ConfigProperty;
 import org.fxapps.ollamafx.Model.Message;
 import org.fxapps.ollamafx.Model.Role;
 import org.fxapps.ollamafx.controllers.ChatController;
-import org.fxapps.ollamafx.events.ChatUpdateEvent;
-import org.fxapps.ollamafx.events.ClearChatEvent;
-import org.fxapps.ollamafx.events.MCPServerSelectEvent;
-import org.fxapps.ollamafx.events.SaveChatEvent;
-import org.fxapps.ollamafx.events.SelectedModelEvent;
-import org.fxapps.ollamafx.events.StopStreamingEvent;
-import org.fxapps.ollamafx.events.UserInputEvent;
+import org.fxapps.ollamafx.Events.ChatUpdateEvent;
+import org.fxapps.ollamafx.Events.ClearChatEvent;
+import org.fxapps.ollamafx.Events.MCPServerSelectEvent;
+import org.fxapps.ollamafx.Events.SaveChatEvent;
+import org.fxapps.ollamafx.Events.SelectedModelEvent;
+import org.fxapps.ollamafx.Events.StopStreamingEvent;
+import org.fxapps.ollamafx.Events.UserInputEvent;
 import org.fxapps.ollamafx.services.ChatService;
 import org.fxapps.ollamafx.services.MCPClientRepository;
 import org.fxapps.ollamafx.services.OllamaService;
+import org.jboss.logging.Logger;
 
 import dev.langchain4j.mcp.McpToolProvider;
 import io.quarkiverse.fx.FxPostStartupEvent;
@@ -50,6 +51,8 @@ public class App {
 
     final String OLLAMA_BASE_URL_CONFIG = "quarkus.langchain4j.ollama.base-url";
 
+    Logger logger = Logger.getLogger(App.class);
+
     @Inject
     FxViewRepository viewRepository;
 
@@ -64,7 +67,6 @@ public class App {
 
     @ConfigProperty(name = "ollama.model", defaultValue = "qwen2.5:latest")
     String ollamaModel;
-
 
     @Inject
     OllamaService ollamaService;
@@ -92,7 +94,7 @@ public class App {
 
     @RunOnFxThread
     void onModelSelected(@Observes SelectedModelEvent selectedModelEvent) {
-        this.selectedModel = selectedModelEvent.getModel();
+        this.selectedModel = selectedModelEvent.model();
     }
 
     @RunOnFxThread
@@ -114,7 +116,7 @@ public class App {
         final var rootNode = (Parent) chatViewData.getRootNode();
         final var scene = new Scene(rootNode);
         final var modelsList = ollamaService.listModels();
-        
+
         chatController.init();
 
         stage.setScene(scene);
@@ -148,7 +150,7 @@ public class App {
     }
 
     public void onUserInput(@ObservesAsync UserInputEvent userInput) {
-        final var userMessage = Message.userMessage(userInput.getText());
+        final var userMessage = Message.userMessage(userInput.text());
         chatHistory.add(userMessage);
         showChatHistory();
         try {
@@ -163,14 +165,13 @@ public class App {
 
             chatController.holdChatProperty().set(true);
             var request = new Model.ChatRequest(
-                    userInput.getText(),
+                    userInput.text(),
                     chatHistory,
                     selectedModel,
                     toolProvider,
                     token -> {
-                        if(stopStreamingFlag.get()) {
+                        if (stopStreamingFlag.get()) {
                             stopStreamingFlag.set(false);
-                            System.out.println("FORCE STOOOOOOOOP!");
                             chatController.holdChatProperty().set(false);
                             throw new RuntimeException("Workaround to force the streaming to stop!");
                         }
@@ -182,10 +183,13 @@ public class App {
                     },
                     r -> chatController.holdChatProperty().set(false),
                     e -> {
-                        e.printStackTrace();
+                        logger.error("Error during message streaming", e);
+                        Platform.runLater(() -> alertsHelper.showError("Error",
+                                "There was an error during the conversation",
+                                "The following error happend: " + e.getMessage()));
                         chatController.holdChatProperty().set(false);
                     });
-            chatService.chatAsync(request);            
+            chatService.chatAsync(request);
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -193,7 +197,7 @@ public class App {
     }
 
     public void saveChat(@Observes SaveChatEvent saveChatEvent) {
-        var content = switch (saveChatEvent.getFormat()) {
+        var content = switch (saveChatEvent.saveFormat()) {
             case HTML -> chatController.getChatHistoryHTML();
             case JSON -> getHistoryAsJson();
             case TEXT -> getHistoryAsText();
@@ -201,10 +205,13 @@ public class App {
         var fileChooser = new FileChooser();
         var dest = fileChooser.showSaveDialog(stage);
 
-        try {
-            Files.writeString(dest.toPath(), content);
-        } catch (IOException e) {
-            alertsHelper.showError("Error", "Error saving chat History", "Error: " + e.getMessage());
+        if (dest != null) {
+            try {
+                Files.writeString(dest.toPath(), content);
+            } catch (IOException e) {
+                logger.error("Error saving file", e);
+                alertsHelper.showError("Error", "Error saving chat History", "Error: " + e.getMessage());
+            }
         }
 
     }

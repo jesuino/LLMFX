@@ -5,13 +5,13 @@ import java.util.Collection;
 import java.util.List;
 
 import org.fxapps.ollamafx.AlertsHelper;
-import org.fxapps.ollamafx.events.ClearChatEvent;
-import org.fxapps.ollamafx.events.MCPServerSelectEvent;
-import org.fxapps.ollamafx.events.SaveChatEvent;
-import org.fxapps.ollamafx.events.SaveChatEvent.Format;
-import org.fxapps.ollamafx.events.SelectedModelEvent;
-import org.fxapps.ollamafx.events.StopStreamingEvent;
-import org.fxapps.ollamafx.events.UserInputEvent;
+import org.fxapps.ollamafx.Events.ClearChatEvent;
+import org.fxapps.ollamafx.Events.MCPServerSelectEvent;
+import org.fxapps.ollamafx.Events.SaveChatEvent;
+import org.fxapps.ollamafx.Events.SaveFormat;
+import org.fxapps.ollamafx.Events.SelectedModelEvent;
+import org.fxapps.ollamafx.Events.StopStreamingEvent;
+import org.fxapps.ollamafx.Events.UserInputEvent;
 import org.w3c.dom.html.HTMLElement;
 
 import io.quarkiverse.fx.views.FxView;
@@ -182,17 +182,17 @@ public class ChatController {
 
     @FXML
     void saveAsHTML(ActionEvent event) {
-        saveChatEvent.fire(new SaveChatEvent(Format.HTML));
+        saveChatEvent.fire(new SaveChatEvent(SaveFormat.HTML));
     }
 
     @FXML
     void saveAsJSON(ActionEvent event) {
-        saveChatEvent.fire(new SaveChatEvent(Format.JSON));
+        saveChatEvent.fire(new SaveChatEvent(SaveFormat.JSON));
     }
 
     @FXML
     void saveAsText(ActionEvent event) {
-        saveChatEvent.fire(new SaveChatEvent(Format.TEXT));
+        saveChatEvent.fire(new SaveChatEvent(SaveFormat.TEXT));
 
     }
 
