@@ -24,8 +24,9 @@
             </Text>
             <HBox alignment="CENTER_RIGHT" prefHeight="28.0" prefWidth="617.0" spacing="5.0" HBox.hgrow="ALWAYS">
                <children>
-                  <ComboBox fx:id="cmbModels" onAction="#modelSelected" prefHeight="25.0" prefWidth="200.0" promptText="Select Model" />
-                  <MenuButton fx:id="mcpMenu" mnemonicParsing="false" text="MCP Servers" />
+                  <ComboBox fx:id="cmbModels" onAction="#modelSelected" prefHeight="25.0" prefWidth="200.0" promptText="Model" />
+                  <MenuButton fx:id="toolsMenu" mnemonicParsing="false" text="Tools" />
+                  <MenuButton fx:id="mcpMenu" mnemonicParsing="false" text="MCP" />
                   <SplitMenuButton mnemonicParsing="false" prefHeight="25.0" prefWidth="100.0" text="Save As">
                     <items>
                       <MenuItem mnemonicParsing="false" onAction="#saveAsText" text="Text" />

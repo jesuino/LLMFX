@@ -4,8 +4,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -21,10 +23,13 @@ import org.fxapps.ollamafx.Events.MCPServerSelectEvent;
 import org.fxapps.ollamafx.Events.SaveChatEvent;
 import org.fxapps.ollamafx.Events.SelectedModelEvent;
 import org.fxapps.ollamafx.Events.StopStreamingEvent;
+import org.fxapps.ollamafx.Events.ToolSelectEvent;
 import org.fxapps.ollamafx.Events.UserInputEvent;
 import org.fxapps.ollamafx.services.ChatService;
 import org.fxapps.ollamafx.services.MCPClientRepository;
 import org.fxapps.ollamafx.services.OllamaService;
+import org.fxapps.ollamafx.tools.FilesReaderTool;
+import org.fxapps.ollamafx.tools.FilesWriterTool;
 import org.jboss.logging.Logger;
 
 import dev.langchain4j.mcp.McpToolProvider;
@@ -88,6 +93,12 @@ public class App {
 
     List<String> selectedMcpServers;
 
+    Map<String, Object> toolsMap = Map.of(
+            "Files Read", new FilesReaderTool(),
+            "File Write", new FilesWriterTool());
+
+    Set<Object> tools;
+
     private String selectedModel;
 
     private AtomicBoolean stopStreamingFlag;
@@ -112,6 +123,7 @@ public class App {
         this.htmlMessageCache = new HashMap<>();
         this.stage = event.getPrimaryStage();
         this.stopStreamingFlag = new AtomicBoolean(false);
+        this.tools = new HashSet<>();
 
         final var rootNode = (Parent) chatViewData.getRootNode();
         final var scene = new Scene(rootNode);
@@ -133,16 +145,31 @@ public class App {
             chatController.holdChatProperty().set(true);
         }
         chatController.setMCPServers(mcpClientRepository.mcpServers());
+        chatController.setTools(toolsMap.keySet());
         selectedMcpServers = new ArrayList<>();
     }
 
-    void onMcpServerSelected(@Observes MCPServerSelectEvent mcpServerSelectEvent) {
+    void onMcpServerSelected(@ObservesAsync MCPServerSelectEvent mcpServerSelectEvent) {
         final var name = mcpServerSelectEvent.name();
         if (mcpServerSelectEvent.isSelected()) {
             selectedMcpServers.add(name);
         } else {
             selectedMcpServers.remove(name);
         }
+    }
+
+    void onToolSelected(@ObservesAsync ToolSelectEvent toolSelectEvent) {
+        final var name = toolSelectEvent.name();
+        var tool = toolsMap.get(name);
+
+        if (toolSelectEvent.isSelected()) {
+            tools.add(tool);
+        } else {
+            tools.remove(tool);
+        }
+
+        Platform.runLater(() -> this.chatController.enableMCPMenu(tools.isEmpty()));
+
     }
 
     void onStopStreaming(@Observes StopStreamingEvent stopStreamingEvent) {
@@ -168,6 +195,7 @@ public class App {
                     userInput.text(),
                     chatHistory,
                     selectedModel,
+                    tools,
                     toolProvider,
                     token -> {
                         if (stopStreamingFlag.get()) {

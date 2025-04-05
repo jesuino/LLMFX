@@ -11,6 +11,7 @@ import org.fxapps.ollamafx.Events.SaveChatEvent;
 import org.fxapps.ollamafx.Events.SaveFormat;
 import org.fxapps.ollamafx.Events.SelectedModelEvent;
 import org.fxapps.ollamafx.Events.StopStreamingEvent;
+import org.fxapps.ollamafx.Events.ToolSelectEvent;
 import org.fxapps.ollamafx.Events.UserInputEvent;
 import org.w3c.dom.html.HTMLElement;
 
@@ -28,7 +29,10 @@ import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.TextField;
+import javafx.scene.control.Tooltip;
 import javafx.scene.web.WebView;
+import javafx.stage.Stage;
+import javafx.util.Duration;
 
 @FxView
 @Singleton
@@ -73,8 +77,11 @@ public class ChatController {
     @Inject
     Event<SaveChatEvent> saveChatEvent;
 
-    @Inject    
+    @Inject
     Event<MCPServerSelectEvent> mcpServerSelectEvent;
+
+    @Inject
+    Event<ToolSelectEvent> toolSelectEvent;
 
     @Inject
     Event<StopStreamingEvent> stopStreamingEvent;
@@ -92,6 +99,9 @@ public class ChatController {
     private MenuButton mcpMenu;
 
     @FXML
+    private MenuButton toolsMenu;
+
+    @FXML
     private TextField txtInput;
 
     @FXML
@@ -102,11 +112,16 @@ public class ChatController {
 
     private SimpleBooleanProperty holdChatProperty;
 
+    private Tooltip mcpMenuTooltip;
+
     public void init() {
+        this.mcpMenuTooltip = new Tooltip("Select MCP Servers");
+        mcpMenuTooltip.setHideDelay(Duration.seconds(2));
         holdChatProperty = new SimpleBooleanProperty();
         txtInput.disableProperty().bind(holdChatProperty);
         btnNewChat.disableProperty().bind(holdChatProperty);
         btnStop.disableProperty().bind(holdChatProperty.not());
+        mcpMenu.setTooltip(mcpMenuTooltip);
     }
 
     @FXML
@@ -116,6 +131,12 @@ public class ChatController {
             txtInput.setText("");
             onUserInputEvent.fireAsync(new UserInputEvent(input));
         }
+    }
+
+    public void enableMCPMenu(boolean enable) {
+        var text = enable ? "MCP Servers are enabled" : "MCP Servers are ignored because Tools are selected";
+        mcpMenuTooltip.setText(text);
+        mcpMenu.setDisable(!enable);
     }
 
     public BooleanProperty holdChatProperty() {
@@ -156,13 +177,26 @@ public class ChatController {
         final var mcpMenus = mcpServers.stream().map(mcpServer -> {
             var menu = new CheckMenuItem(mcpServer);
             menu.setOnAction(e -> {
-                mcpServerSelectEvent.fire(new MCPServerSelectEvent(mcpServer,
+                mcpServerSelectEvent.fireAsync(new MCPServerSelectEvent(mcpServer,
                         menu.isSelected()));
             });
             return menu;
 
         }).toList();
         mcpMenu.getItems().addAll(mcpMenus);
+    }
+
+    public void setTools(Collection<String> tools) {
+        final var toolsMenus = tools.stream().map(tool -> {
+            var menu = new CheckMenuItem(tool);
+            menu.setOnAction(e -> {
+                toolSelectEvent.fireAsync(new ToolSelectEvent(tool,
+                        menu.isSelected()));
+            });
+            return menu;
+
+        }).toList();
+        toolsMenu.getItems().addAll(toolsMenus);
     }
 
     @FXML

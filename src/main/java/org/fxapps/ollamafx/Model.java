@@ -1,6 +1,7 @@
 package org.fxapps.ollamafx;
 
 import java.util.List;
+import java.util.Set;
 import java.util.function.Consumer;
 
 import dev.langchain4j.model.chat.response.ChatResponse;
@@ -26,6 +27,7 @@ public class Model {
             String message,
             List<Message> messages,
             String model,
+            Set<Object> tools,
             ToolProvider toolProvider,
             Consumer<String> onToken,
             Consumer<ChatResponse> onComplete,

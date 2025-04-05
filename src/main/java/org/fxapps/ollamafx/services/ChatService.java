@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.eclipse.microprofile.config.inject.ConfigProperty;
+import org.fxapps.ollamafx.tools.FilesReaderTool;
 
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;
@@ -49,11 +50,19 @@ public class ChatService {
                         .logRequests(true)
                         .logResponses(true)
                         .build());
-        var bot = AiServices.builder(AsyncChatBot.class)
+
+        var botBuilder = AiServices.builder(AsyncChatBot.class)
                 .streamingChatLanguageModel(model)
-                .chatMemory(memory)
-                .toolProvider(chatRequest.toolProvider())
-                .build();
+                .chatMemory(memory);
+
+        // Selected tools will ignore tool provider (MCP)
+        if (chatRequest.tools() != null && !chatRequest.tools().isEmpty()) {
+            botBuilder.tools(chatRequest.tools());
+        } else {
+            botBuilder.toolProvider(chatRequest.toolProvider());
+        }
+
+        var bot = botBuilder.build();
 
         chatRequest.messages().stream().map(m -> switch (m.role()) {
             case USER -> new UserMessage(m.content());
@@ -61,12 +70,12 @@ public class ChatService {
 
         }).forEach(memory::add);
 
-        bot.chat(chatRequest.message())                
+        bot.chat(chatRequest.message())
                 .onPartialResponse(chatRequest.onToken())
                 .onRetrieved(contents -> System.out.println(contents))
                 .onToolExecuted(execution -> System.out.println(execution))
                 .onCompleteResponse(chatRequest.onComplete())
-                .onError(chatRequest.onError())                
+                .onError(chatRequest.onError())
                 .start();
     }
 }

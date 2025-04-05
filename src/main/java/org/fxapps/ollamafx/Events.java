@@ -18,6 +18,9 @@ public class Events {
     public record MCPServerSelectEvent(String name, boolean isSelected) {
     }
 
+    public record ToolSelectEvent(String name, boolean isSelected) {
+    }
+
     public record SaveChatEvent(SaveFormat saveFormat) {
     }
 
