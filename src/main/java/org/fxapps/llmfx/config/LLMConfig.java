@@ -1,5 +1,7 @@
 package org.fxapps.llmfx.config;
 
+import java.util.Optional;
+
 import org.eclipse.microprofile.config.inject.ConfigProperty;
 
 import io.smallrye.config.ConfigMapping;
@@ -14,5 +16,8 @@ public interface LLMConfig {
 
     @ConfigProperty(defaultValue =  "200")
     int timeout();
+
+    @ConfigProperty(defaultValue = "")
+    Optional<String> key();
 
 }

@@ -45,6 +45,7 @@ public class ChatService {
                 m -> OpenAiStreamingChatModel.builder()
                         .baseUrl(openAi.getBaseUrl())
                         .modelName(m)
+                        .apiKey(llmConfig.key().orElse(""))
                         .timeout(Duration.ofSeconds(llmConfig.timeout()))
                         .logRequests(true)
                         .logResponses(true)
