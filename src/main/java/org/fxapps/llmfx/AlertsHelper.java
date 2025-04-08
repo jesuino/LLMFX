@@ -1,4 +1,4 @@
-package org.fxapps.ollamafx;
+package org.fxapps.llmfx;
 
 import jakarta.enterprise.context.ApplicationScoped;
 import javafx.scene.control.Alert;

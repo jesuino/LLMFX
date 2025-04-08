@@ -1,4 +1,4 @@
-package org.fxapps.ollamafx;
+package org.fxapps.llmfx;
 
 import java.util.List;
 import java.util.Set;

@@ -1,4 +1,4 @@
-package org.fxapps.ollamafx.tools;
+package org.fxapps.llmfx.tools;
 
 import java.io.IOException;
 import java.nio.file.FileSystems;

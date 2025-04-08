@@ -1,4 +1,4 @@
-package org.fxapps.ollamafx;
+package org.fxapps.llmfx;
 
 public class Events {
 

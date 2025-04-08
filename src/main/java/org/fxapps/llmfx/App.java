@@ -1,4 +1,4 @@
-package org.fxapps.ollamafx;
+package org.fxapps.llmfx;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -13,23 +13,23 @@ import java.util.stream.Collectors;
 
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.fxapps.ollamafx.Model.Message;
-import org.fxapps.ollamafx.Model.Role;
-import org.fxapps.ollamafx.controllers.ChatController;
-import org.fxapps.ollamafx.Events.ChatUpdateEvent;
-import org.fxapps.ollamafx.Events.ClearChatEvent;
-import org.fxapps.ollamafx.Events.MCPServerSelectEvent;
-import org.fxapps.ollamafx.Events.SaveChatEvent;
-import org.fxapps.ollamafx.Events.SelectedModelEvent;
-import org.fxapps.ollamafx.Events.StopStreamingEvent;
-import org.fxapps.ollamafx.Events.ToolSelectEvent;
-import org.fxapps.ollamafx.Events.UserInputEvent;
-import org.fxapps.ollamafx.services.ChatService;
-import org.fxapps.ollamafx.services.MCPClientRepository;
-import org.fxapps.ollamafx.services.OllamaService;
-import org.fxapps.ollamafx.tools.FilesReaderTool;
-import org.fxapps.ollamafx.tools.FilesWriterTool;
+import org.fxapps.llmfx.Events.ChatUpdateEvent;
+import org.fxapps.llmfx.Events.ClearChatEvent;
+import org.fxapps.llmfx.Events.MCPServerSelectEvent;
+import org.fxapps.llmfx.Events.SaveChatEvent;
+import org.fxapps.llmfx.Events.SelectedModelEvent;
+import org.fxapps.llmfx.Events.StopStreamingEvent;
+import org.fxapps.llmfx.Events.ToolSelectEvent;
+import org.fxapps.llmfx.Events.UserInputEvent;
+import org.fxapps.llmfx.Model.Message;
+import org.fxapps.llmfx.Model.Role;
+import org.fxapps.llmfx.config.LLMConfig;
+import org.fxapps.llmfx.controllers.ChatController;
+import org.fxapps.llmfx.services.ChatService;
+import org.fxapps.llmfx.services.MCPClientRepository;
+import org.fxapps.llmfx.services.OpenAiService;
+import org.fxapps.llmfx.tools.FilesReaderTool;
+import org.fxapps.llmfx.tools.FilesWriterTool;
 import org.jboss.logging.Logger;
 
 import dev.langchain4j.mcp.McpToolProvider;
@@ -52,10 +52,6 @@ import javafx.stage.Stage;
 @Singleton
 public class App {
 
-    final String OLLAMA_MODEL_ID_CONFIG = "quarkus.langchain4j.ollama.chat-model.model-id";
-
-    final String OLLAMA_BASE_URL_CONFIG = "quarkus.langchain4j.ollama.base-url";
-
     Logger logger = Logger.getLogger(App.class);
 
     @Inject
@@ -70,11 +66,11 @@ public class App {
     @Inject
     ChatService chatService;
 
-    @ConfigProperty(name = "ollama.model", defaultValue = "qwen2.5:latest")
-    String ollamaModel;
+    @Inject
+    LLMConfig llmConfig;
 
     @Inject
-    OllamaService ollamaService;
+    OpenAiService openApiService;
 
     @Inject
     MCPClientRepository mcpClientRepository;
@@ -127,20 +123,20 @@ public class App {
 
         final var rootNode = (Parent) chatViewData.getRootNode();
         final var scene = new Scene(rootNode);
-        final var modelsList = ollamaService.listModels();
+        final var modelsList = openApiService.listModels();
 
         chatController.init();
 
         stage.setScene(scene);
-        stage.setTitle("OllamaFX: A desktop App for Ollama");
+        stage.setTitle("LLM FX: A desktop App for LLM Servers");
         stage.show();
 
         chatController = chatViewData.<ChatController>getController();
         chatController.initializeWebView();
         chatController.fillModels(modelsList);
 
-        if (modelsList.stream().anyMatch(m -> m.equals(ollamaModel))) {
-            chatController.setSelectedModel(ollamaModel);
+        if (modelsList.stream().anyMatch(m -> m.equals(llmConfig.model()))) {
+            chatController.setSelectedModel(llmConfig.model());
         } else {
             chatController.holdChatProperty().set(true);
         }

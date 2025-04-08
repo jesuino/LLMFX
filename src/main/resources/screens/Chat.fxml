@@ -13,11 +13,11 @@
 <?import javafx.scene.text.Text?>
 <?import javafx.scene.web.WebView?>
 
-<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="900.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.fxapps.ollamafx.controllers.ChatController">
+<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="900.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.fxapps.llmfx.controllers.ChatController">
    <children>
       <HBox alignment="CENTER" prefHeight="33.0" prefWidth="1172.0" spacing="10.0">
          <children>
-            <Text strokeType="OUTSIDE" strokeWidth="0.0" text="OllamaFX: A Desktop App for Ollama" wrappingWidth="371.87188720703125">
+            <Text strokeType="OUTSIDE" strokeWidth="0.0" text="llmfx: A Desktop App for LLM Servers" wrappingWidth="371.87188720703125">
                <font>
                   <Font name="System Bold" size="20.0" />
                </font>

@@ -1,17 +1,16 @@
-package org.fxapps.ollamafx.services;
+package org.fxapps.llmfx.services;
 
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.eclipse.microprofile.config.inject.ConfigProperty;
-import org.fxapps.ollamafx.tools.FilesReaderTool;
+import org.fxapps.llmfx.config.LLMConfig;
 
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;
-import dev.langchain4j.model.ollama.OllamaStreamingChatModel;
+import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.TokenStream;
 import jakarta.annotation.PostConstruct;
@@ -22,10 +21,10 @@ import jakarta.inject.Singleton;
 public class ChatService {
 
     @Inject
-    OllamaService ollamaService;
+    OpenAiService openAi;
 
-    @ConfigProperty(name = "ollama.requestTimeout", defaultValue = "120")
-    Integer requestTimeout;
+    @Inject
+    LLMConfig llmConfig;
 
     Map<String, StreamingChatLanguageModel> modelCache;
 
@@ -40,13 +39,13 @@ public class ChatService {
 
     }
 
-    public void chatAsync(org.fxapps.ollamafx.Model.ChatRequest chatRequest) {
+    public void chatAsync(org.fxapps.llmfx.Model.ChatRequest chatRequest) {
         var memory = MessageWindowChatMemory.withMaxMessages(100);
         var model = modelCache.computeIfAbsent(chatRequest.model(),
-                m -> OllamaStreamingChatModel.builder()
-                        .baseUrl(ollamaService.getOllamaUrl())
+                m -> OpenAiStreamingChatModel.builder()
+                        .baseUrl(openAi.getBaseUrl())
                         .modelName(m)
-                        .timeout(Duration.ofSeconds(requestTimeout))
+                        .timeout(Duration.ofSeconds(llmConfig.timeout()))
                         .logRequests(true)
                         .logResponses(true)
                         .build());

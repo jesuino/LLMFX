@@ -1,18 +1,18 @@
-package org.fxapps.ollamafx.controllers;
+package org.fxapps.llmfx.controllers;
 
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
-import org.fxapps.ollamafx.AlertsHelper;
-import org.fxapps.ollamafx.Events.ClearChatEvent;
-import org.fxapps.ollamafx.Events.MCPServerSelectEvent;
-import org.fxapps.ollamafx.Events.SaveChatEvent;
-import org.fxapps.ollamafx.Events.SaveFormat;
-import org.fxapps.ollamafx.Events.SelectedModelEvent;
-import org.fxapps.ollamafx.Events.StopStreamingEvent;
-import org.fxapps.ollamafx.Events.ToolSelectEvent;
-import org.fxapps.ollamafx.Events.UserInputEvent;
+import org.fxapps.llmfx.AlertsHelper;
+import org.fxapps.llmfx.Events.ClearChatEvent;
+import org.fxapps.llmfx.Events.MCPServerSelectEvent;
+import org.fxapps.llmfx.Events.SaveChatEvent;
+import org.fxapps.llmfx.Events.SaveFormat;
+import org.fxapps.llmfx.Events.SelectedModelEvent;
+import org.fxapps.llmfx.Events.StopStreamingEvent;
+import org.fxapps.llmfx.Events.ToolSelectEvent;
+import org.fxapps.llmfx.Events.UserInputEvent;
 import org.w3c.dom.html.HTMLElement;
 
 import io.quarkiverse.fx.views.FxView;
@@ -31,8 +31,6 @@ import javafx.scene.control.MenuButton;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.web.WebView;
-import javafx.stage.Stage;
-import javafx.util.Duration;
 
 @FxView
 @Singleton
@@ -116,7 +114,6 @@ public class ChatController {
 
     public void init() {
         this.mcpMenuTooltip = new Tooltip("Select MCP Servers");
-        mcpMenuTooltip.setHideDelay(Duration.seconds(2));
         holdChatProperty = new SimpleBooleanProperty();
         txtInput.disableProperty().bind(holdChatProperty);
         btnNewChat.disableProperty().bind(holdChatProperty);
@@ -160,8 +157,8 @@ public class ChatController {
 
     }
 
-    public void setSelectedModel(String ollamaModel) {
-        cmbModels.getSelectionModel().select(ollamaModel);
+    public void setSelectedModel(String model) {
+        cmbModels.getSelectionModel().select(model);
     }
 
     public void clearChatHistoy() {

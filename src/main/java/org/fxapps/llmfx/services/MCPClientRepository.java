@@ -1,11 +1,11 @@
-package org.fxapps.ollamafx.services;
+package org.fxapps.llmfx.services;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
-import org.fxapps.ollamafx.config.MCPCollections;
-import org.fxapps.ollamafx.config.MCPCollections.MCPServerDefinition;
+import org.fxapps.llmfx.config.MCPCollections;
+import org.fxapps.llmfx.config.MCPCollections.MCPServerDefinition;
 import org.jboss.logging.Logger;
 
 import dev.langchain4j.mcp.client.DefaultMcpClient;

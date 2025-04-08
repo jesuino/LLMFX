@@ -1,4 +1,4 @@
-package org.fxapps.ollamafx.config;
+package org.fxapps.llmfx.config;
 
 import java.util.List;
 import java.util.Map;
