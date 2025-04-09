@@ -135,10 +135,18 @@ public class App {
         chatController.initializeWebView();
         chatController.fillModels(modelsList);
 
+        if (modelsList.isEmpty()) {
+            alertsHelper.showError("No model",
+                    "No Model is available on the server",
+                    "No Model found, Check if the server has at least one model available for use. Exiting...");
+            System.exit(0);
+        }
+
         if (modelsList.stream().anyMatch(m -> m.equals(llmConfig.model()))) {
             chatController.setSelectedModel(llmConfig.model());
         } else {
-            chatController.holdChatProperty().set(true);
+            logger.info("No model is set as default, using a random model");
+            chatController.setSelectedModel(modelsList.get(0));
         }
         chatController.setMCPServers(mcpClientRepository.mcpServers());
         chatController.setTools(toolsMap.keySet());
