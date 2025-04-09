@@ -45,6 +45,8 @@ import jakarta.inject.Singleton;
 import javafx.application.Platform;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
+import javafx.scene.layout.Priority;
+import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -121,9 +123,13 @@ public class App {
         this.stopStreamingFlag = new AtomicBoolean(false);
         this.tools = new HashSet<>();
 
-        final var rootNode = (Parent) chatViewData.getRootNode();
-        final var scene = new Scene(rootNode);
+        final var chatView = (Parent) chatViewData.getRootNode();
+        final var scene = new Scene(chatView);
         final var modelsList = openApiService.listModels();
+
+        stage.setMinWidth(700);
+        stage.setMinHeight(400);
+        VBox.setVgrow(chatView, Priority.ALWAYS);
 
         chatController.init();
 

@@ -7,20 +7,43 @@
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.SplitMenuButton?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.effect.Glow?>
+<?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.paint.Color?>
+<?import javafx.scene.paint.LinearGradient?>
+<?import javafx.scene.paint.Stop?>
 <?import javafx.scene.text.Font?>
 <?import javafx.scene.text.Text?>
 <?import javafx.scene.web.WebView?>
 
-<VBox maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="900.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.fxapps.llmfx.controllers.ChatController">
-   <children>
-      <HBox alignment="CENTER" prefHeight="33.0" prefWidth="1172.0" spacing="10.0">
+<BorderPane prefHeight="400.0" prefWidth="700.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.fxapps.llmfx.controllers.ChatController">
+   <top>
+      <HBox alignment="CENTER" prefHeight="33.0" prefWidth="1172.0" spacing="10.0" BorderPane.alignment="CENTER">
          <children>
-            <Text strokeType="OUTSIDE" strokeWidth="0.0" text="llmfx: A Desktop App for LLM Servers" wrappingWidth="371.87188720703125">
+            <Text strokeType="OUTSIDE" strokeWidth="0.0" text="LLM FX" wrappingWidth="129.87188720703125">
                <font>
-                  <Font name="System Bold" size="20.0" />
+                  <Font name="System Bold" size="30.0" />
                </font>
+               <effect>
+                  <Glow level="1.0" />
+               </effect>
+               <fill>
+                  <LinearGradient endX="0.43333333333333335" endY="0.46190476190476176" startX="0.6000000000000001" startY="0.719047619047619">
+                     <stops>
+                        <Stop>
+                           <color>
+                              <Color red="0.6710526347160339" green="0.03417397662997246" blue="0.03417397662997246" />
+                           </color>
+                        </Stop>
+                        <Stop offset="1.0">
+                           <color>
+                              <Color red="0.14473684132099152" green="0.1346856653690338" blue="0.1346856653690338" />
+                           </color>
+                        </Stop>
+                     </stops>
+                  </LinearGradient>
+               </fill>
             </Text>
             <HBox alignment="CENTER_RIGHT" prefHeight="28.0" prefWidth="617.0" spacing="5.0" HBox.hgrow="ALWAYS">
                <children>
@@ -34,19 +57,16 @@
                         <MenuItem mnemonicParsing="false" onAction="#saveAsHTML" text="HTML" />
                     </items>
                   </SplitMenuButton>
-                  <Button fx:id="btnNewChat" mnemonicParsing="false" onAction="#newChat" prefHeight="25.0" prefWidth="100.0" text="New Chat" textFill="#dd0606" />
+                  <Button fx:id="btnNewChat" mnemonicParsing="false" onAction="#newChat" prefHeight="26.0" prefWidth="58.0" text="New" textFill="#dd0606" />
                </children>
             </HBox>
          </children>
       </HBox>
-      <WebView fx:id="chatOutput" prefHeight="825.0" prefWidth="1200.0" VBox.vgrow="ALWAYS">
-         <VBox.margin>
-            <Insets bottom="10.0" top="5.0" />
-         </VBox.margin>
-      </WebView>
-      <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="10.0">
+   </top>
+   <bottom>
+      <HBox alignment="CENTER" spacing="10.0" BorderPane.alignment="CENTER">
          <children>
-            <TextField id="txtInput" fx:id="txtInput" onAction="#onInputAction" prefHeight="38.0" prefWidth="1113.0" promptText="Say Something!" HBox.hgrow="ALWAYS">
+            <TextField id="txtInput" fx:id="txtInput" onAction="#onInputAction" prefHeight="38.0" promptText="Say Something!" HBox.hgrow="ALWAYS">
                <padding>
                   <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
                </padding>
@@ -57,9 +77,15 @@
                </font>
             </Button>
          </children>
+         <BorderPane.margin>
+            <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
+         </BorderPane.margin>
       </HBox>
-   </children>
+   </bottom>
+   <center>
+      <WebView fx:id="chatOutput" prefHeight="-1.0" prefWidth="-1.0" BorderPane.alignment="CENTER" />
+   </center>
    <padding>
-      <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+      <Insets left="10.0" right="10.0" top="5.0" />
    </padding>
-</VBox>
+</BorderPane>
