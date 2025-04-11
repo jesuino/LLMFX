@@ -129,7 +129,10 @@ public class App {
 
         stage.setMinWidth(700);
         stage.setMinHeight(400);
-        VBox.setVgrow(chatView, Priority.ALWAYS);
+        stage.setOnCloseRequest(e -> {
+            logger.info("Closing application...");
+            System.exit(0);
+        });
 
         chatController.init();
 
@@ -271,8 +274,9 @@ public class App {
         Platform.runLater(() -> {
             chatController.clearChatHistoy();
             chatHistory.stream().forEach(message -> {
+                final var content = message.content();
                 if (Role.USER == message.role()) {
-                    chatController.appendUserMessage(message.content());
+                    chatController.appendUserMessage(content);
                 } else {
                     var htmlMessage = htmlMessageCache.computeIfAbsent(message,
                             messageToParse -> parseMarkdowToHTML(messageToParse.content()));
@@ -284,6 +288,12 @@ public class App {
 
     private String parseMarkdowToHTML(String markdown) {
         var parsedContent = markDownParser.parse(markdown);
-        return markdownRenderer.render(parsedContent);
+        return markdownRenderer.render(parsedContent)
+                .replaceFirst("<think>",
+                        """
+                                    <h4 style=\"color: red !important\">Thinking</h4>
+                                    <i style=\"color: gray\">
+                                """)
+                .replaceFirst("</think>", "<h4>end thinking</h4></i><hr/>");
     }
 }
