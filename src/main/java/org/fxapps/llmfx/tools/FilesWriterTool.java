@@ -15,7 +15,7 @@ public class FilesWriterTool {
         var currentDir = Paths.get(".");
         var p = currentDir.resolve(path);
         Files.writeString(p, content);
-        return "The file " + p + " was sucessfully removed";
+        return "The file " + p + " was sucessfully updated";
     }
 
     @Tool("Deletes a file")

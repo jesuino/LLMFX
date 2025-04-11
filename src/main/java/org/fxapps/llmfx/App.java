@@ -28,8 +28,7 @@ import org.fxapps.llmfx.controllers.ChatController;
 import org.fxapps.llmfx.services.ChatService;
 import org.fxapps.llmfx.services.MCPClientRepository;
 import org.fxapps.llmfx.services.OpenAiService;
-import org.fxapps.llmfx.tools.FilesReaderTool;
-import org.fxapps.llmfx.tools.FilesWriterTool;
+import org.fxapps.llmfx.tools.ToolsInfo;
 import org.jboss.logging.Logger;
 
 import dev.langchain4j.mcp.McpToolProvider;
@@ -45,8 +44,6 @@ import jakarta.inject.Singleton;
 import javafx.application.Platform;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.scene.layout.Priority;
-import javafx.scene.layout.VBox;
 import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
@@ -91,9 +88,8 @@ public class App {
 
     List<String> selectedMcpServers;
 
-    Map<String, Object> toolsMap = Map.of(
-            "Files Read", new FilesReaderTool(),
-            "File Write", new FilesWriterTool());
+    @Inject
+    ToolsInfo toolsInfo;
 
     Set<Object> tools;
 
@@ -158,7 +154,7 @@ public class App {
             chatController.setSelectedModel(modelsList.get(0));
         }
         chatController.setMCPServers(mcpClientRepository.mcpServers());
-        chatController.setTools(toolsMap.keySet());
+        chatController.setTools(toolsInfo.getToolsCategoryMap());
         selectedMcpServers = new ArrayList<>();
     }
 
@@ -173,7 +169,7 @@ public class App {
 
     void onToolSelected(@ObservesAsync ToolSelectEvent toolSelectEvent) {
         final var name = toolSelectEvent.name();
-        var tool = toolsMap.get(name);
+        var tool = toolsInfo.getToolsMap().get(name);
 
         if (toolSelectEvent.isSelected()) {
             tools.add(tool);
@@ -192,6 +188,7 @@ public class App {
     public void onUserInput(@ObservesAsync UserInputEvent userInput) {
         final var userMessage = Message.userMessage(userInput.text());
         chatHistory.add(userMessage);
+        chatController.setAutoScroll(true);
         showChatHistory();
         try {
 
@@ -288,12 +285,6 @@ public class App {
 
     private String parseMarkdowToHTML(String markdown) {
         var parsedContent = markDownParser.parse(markdown);
-        return markdownRenderer.render(parsedContent)
-                .replaceFirst("<think>",
-                        """
-                                    <h4 style=\"color: red !important\">Thinking</h4>
-                                    <i style=\"color: gray\">
-                                """)
-                .replaceFirst("</think>", "<h4>end thinking</h4></i><hr/>");
+        return markdownRenderer.render(parsedContent);
     }
 }

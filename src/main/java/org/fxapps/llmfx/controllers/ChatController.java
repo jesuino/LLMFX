@@ -3,6 +3,7 @@ package org.fxapps.llmfx.controllers;
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 import org.fxapps.llmfx.AlertsHelper;
 import org.fxapps.llmfx.Events.ClearChatEvent;
@@ -27,6 +28,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.Menu;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
@@ -110,6 +112,8 @@ public class ChatController {
 
     private SimpleBooleanProperty holdChatProperty;
 
+    private boolean autoScroll;
+
     private Tooltip mcpMenuTooltip;
 
     public void init() {
@@ -119,6 +123,8 @@ public class ChatController {
         btnNewChat.disableProperty().bind(holdChatProperty);
         btnStop.disableProperty().bind(holdChatProperty.not());
         mcpMenu.setTooltip(mcpMenuTooltip);
+
+        chatOutput.setOnScroll(e -> autoScroll = false);
     }
 
     @FXML
@@ -140,6 +146,10 @@ public class ChatController {
         return holdChatProperty;
     }
 
+    public void setAutoScroll(boolean isAutoScroll) {
+        this.autoScroll = isAutoScroll;
+    }
+
     public void fillModels(List<String> modelsNames) {
         cmbModels.setItems(FXCollections.observableList(modelsNames));
     }
@@ -153,7 +163,16 @@ public class ChatController {
     }
 
     public void appendAssistantMessage(String assistantMessage) {
-        runScriptToAppendMessage(assistantMessage, "assistant");
+        var message = assistantMessage.replaceFirst("<think>",
+                """
+                            <h4 style=\"color: red !important\">Thinking</h4>
+                            <i style=\"color: gray\">
+                        """)
+                .replaceFirst("</think>", "</i><h4 style=\"color: red !important\">end thinking</h4><hr/>")
+                // TODO: find someway to copy to the clipboard
+                .replaceAll("<code", "<code");
+
+        runScriptToAppendMessage(message, "assistant");
 
     }
 
@@ -183,17 +202,21 @@ public class ChatController {
         mcpMenu.getItems().addAll(mcpMenus);
     }
 
-    public void setTools(Collection<String> tools) {
-        final var toolsMenus = tools.stream().map(tool -> {
-            var menu = new CheckMenuItem(tool);
-            menu.setOnAction(e -> {
-                toolSelectEvent.fireAsync(new ToolSelectEvent(tool,
-                        menu.isSelected()));
-            });
-            return menu;
+    public void setTools(Map<String, List<String>> toolsCat) {
+        var catMenus = toolsCat.entrySet()
+                .stream()
+                .map(e -> {
+                    Menu mnCat = new Menu(e.getKey());
+                    e.getValue().stream().map(tool -> {
+                        var menu = new CheckMenuItem(tool);
+                        menu.setOnAction(evt -> toolSelectEvent.fireAsync(
+                                new ToolSelectEvent(tool, menu.isSelected())));
+                        return menu;
 
-        }).toList();
-        toolsMenu.getItems().addAll(toolsMenus);
+                    }).forEach(mnCat.getItems()::add);
+                    return mnCat;
+                }).toList();
+        toolsMenu.getItems().addAll(catMenus);
     }
 
     @FXML
@@ -233,10 +256,6 @@ public class ChatController {
 
     }
 
-    private void adjustScroll() {
-        chatOutput.getEngine().executeScript("window.scrollTo(0, document.body.scrollHeight);");
-    }
-
     private void runScriptToAppendMessage(String message, String role) {
         // workaround because I don't have an innerHTML method in Java API!
         var script = """
@@ -255,7 +274,8 @@ public class ChatController {
         var chatRoot = (HTMLElement) chatOutput.getEngine().getDocument().getElementById("chatContent");
         chatRoot.appendChild(el);
         chatOutput.getEngine().executeScript(script);
-        adjustScroll();
+        if (autoScroll)
+            chatOutput.getEngine().executeScript("window.scrollTo(0, document.body.scrollHeight);");
 
     }
 }
