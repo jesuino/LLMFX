@@ -24,10 +24,16 @@ public class Events {
     public record SaveChatEvent(SaveFormat saveFormat) {
     }
 
-    public record SelectedModelEvent(String model) {}
+    public record SelectedModelEvent(String model) {
+    }
 
-    public record StopStreamingEvent () {}
+    public record StopStreamingEvent() {
+    }
 
-    public record UserInputEvent(String text) {}
+    public record UserInputEvent(String text) {
+    }
+
+    public record RefreshModelsEvent() {
+    }
 
 }

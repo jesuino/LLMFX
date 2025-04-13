@@ -8,6 +8,7 @@ import java.util.Map;
 import org.fxapps.llmfx.AlertsHelper;
 import org.fxapps.llmfx.Events.ClearChatEvent;
 import org.fxapps.llmfx.Events.MCPServerSelectEvent;
+import org.fxapps.llmfx.Events.RefreshModelsEvent;
 import org.fxapps.llmfx.Events.SaveChatEvent;
 import org.fxapps.llmfx.Events.SaveFormat;
 import org.fxapps.llmfx.Events.SelectedModelEvent;
@@ -85,6 +86,9 @@ public class ChatController {
 
     @Inject
     Event<StopStreamingEvent> stopStreamingEvent;
+
+    @Inject
+    Event<RefreshModelsEvent> refreshModelsEvent;
 
     @Inject
     AlertsHelper alertsHelper;
@@ -222,6 +226,11 @@ public class ChatController {
     @FXML
     void modelSelected(ActionEvent event) {
         selectedModelEvent.fire(new SelectedModelEvent(cmbModels.getSelectionModel().getSelectedItem()));
+    }
+
+    @FXML
+    void onRefreshModels() {
+        refreshModelsEvent.fire(new RefreshModelsEvent());
     }
 
     @FXML

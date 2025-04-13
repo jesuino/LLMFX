@@ -16,6 +16,7 @@ import org.commonmark.renderer.html.HtmlRenderer;
 import org.fxapps.llmfx.Events.ChatUpdateEvent;
 import org.fxapps.llmfx.Events.ClearChatEvent;
 import org.fxapps.llmfx.Events.MCPServerSelectEvent;
+import org.fxapps.llmfx.Events.RefreshModelsEvent;
 import org.fxapps.llmfx.Events.SaveChatEvent;
 import org.fxapps.llmfx.Events.SelectedModelEvent;
 import org.fxapps.llmfx.Events.StopStreamingEvent;
@@ -121,7 +122,6 @@ public class App {
 
         final var chatView = (Parent) chatViewData.getRootNode();
         final var scene = new Scene(chatView);
-        final var modelsList = openApiService.listModels();
 
         stage.setMinWidth(700);
         stage.setMinHeight(400);
@@ -138,6 +138,15 @@ public class App {
 
         chatController = chatViewData.<ChatController>getController();
         chatController.initializeWebView();
+
+        refreshModels();
+        chatController.setMCPServers(mcpClientRepository.mcpServers());
+        chatController.setTools(toolsInfo.getToolsCategoryMap());
+        selectedMcpServers = new ArrayList<>();
+    }
+
+    private void refreshModels() throws Exception {
+        final var modelsList = openApiService.listModels();
         chatController.fillModels(modelsList);
 
         if (modelsList.isEmpty()) {
@@ -146,16 +155,22 @@ public class App {
                     "No Model found, Check if the server has at least one model available for use. Exiting...");
             System.exit(0);
         }
-
-        if (modelsList.stream().anyMatch(m -> m.equals(llmConfig.model()))) {
-            chatController.setSelectedModel(llmConfig.model());
+        var currentModel = modelsList.stream()
+                .filter(m -> m.equals(selectedModel))
+                .findAny()
+                .or(() -> modelsList.stream()
+                        .filter(m -> m.equals(llmConfig.model()))
+                        .findAny());
+        if (currentModel.isPresent()) {
+            chatController.setSelectedModel(currentModel.get());
         } else {
             logger.info("No model is set as default, using a random model");
             chatController.setSelectedModel(modelsList.get(0));
         }
-        chatController.setMCPServers(mcpClientRepository.mcpServers());
-        chatController.setTools(toolsInfo.getToolsCategoryMap());
-        selectedMcpServers = new ArrayList<>();
+    }
+
+    void onRefreshModels(@Observes RefreshModelsEvent evt) throws Exception {
+        refreshModels();
     }
 
     void onMcpServerSelected(@ObservesAsync MCPServerSelectEvent mcpServerSelectEvent) {
