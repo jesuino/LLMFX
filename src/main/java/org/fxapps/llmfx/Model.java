@@ -1,5 +1,6 @@
 package org.fxapps.llmfx;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.function.Consumer;
@@ -32,6 +33,15 @@ public class Model {
             Consumer<String> onToken,
             Consumer<ChatResponse> onComplete,
             Consumer<Throwable> onError) {
+    }
+
+    public record ChatHistory(
+            String title,
+            List<Message> messages) {
+
+        public static ChatHistory withTitle(String title) {
+            return new ChatHistory(title, new ArrayList<>());
+        }
     }
 
 }

@@ -12,7 +12,7 @@ public class Events {
     public record ChatUpdateEvent(String chat) {
     }
 
-    public record ClearChatEvent() {
+    public record NewChatEvent() {
     }
 
     public record MCPServerSelectEvent(String name, boolean isSelected) {
@@ -34,6 +34,9 @@ public class Events {
     }
 
     public record RefreshModelsEvent() {
+    }
+
+    public record HistorySelectedEvent(int index) {
     }
 
 }

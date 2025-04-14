@@ -6,7 +6,8 @@ import java.util.List;
 import java.util.Map;
 
 import org.fxapps.llmfx.AlertsHelper;
-import org.fxapps.llmfx.Events.ClearChatEvent;
+import org.fxapps.llmfx.Events.NewChatEvent;
+import org.fxapps.llmfx.Events.HistorySelectedEvent;
 import org.fxapps.llmfx.Events.MCPServerSelectEvent;
 import org.fxapps.llmfx.Events.RefreshModelsEvent;
 import org.fxapps.llmfx.Events.SaveChatEvent;
@@ -29,6 +30,7 @@ import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ComboBox;
+import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.TextField;
@@ -73,7 +75,7 @@ public class ChatController {
     Event<SelectedModelEvent> selectedModelEvent;
 
     @Inject
-    Event<ClearChatEvent> clearChatEvent;
+    Event<NewChatEvent> clearChatEvent;
 
     @Inject
     Event<SaveChatEvent> saveChatEvent;
@@ -89,6 +91,9 @@ public class ChatController {
 
     @Inject
     Event<RefreshModelsEvent> refreshModelsEvent;
+
+    @Inject
+    Event<HistorySelectedEvent> historySelectedEvent;
 
     @Inject
     AlertsHelper alertsHelper;
@@ -114,6 +119,9 @@ public class ChatController {
     @FXML
     private Button btnStop;
 
+    @FXML
+    ListView<String> historyList;
+
     private SimpleBooleanProperty holdChatProperty;
 
     private boolean autoScroll;
@@ -125,10 +133,20 @@ public class ChatController {
         holdChatProperty = new SimpleBooleanProperty();
         txtInput.disableProperty().bind(holdChatProperty);
         btnNewChat.disableProperty().bind(holdChatProperty);
+        historyList.disableProperty().bind(holdChatProperty);
         btnStop.disableProperty().bind(holdChatProperty.not());
         mcpMenu.setTooltip(mcpMenuTooltip);
 
         chatOutput.setOnScroll(e -> autoScroll = false);
+
+        chatOutput.getEngine().loadContent(CHAT_PAGE);
+
+        this.historyList.getSelectionModel().selectedIndexProperty().addListener((obs, old, n) -> {
+            final var i = n.intValue();
+            if (i != -1) {
+                historySelectedEvent.fireAsync(new HistorySelectedEvent(i));
+            }
+        });
     }
 
     @FXML
@@ -150,16 +168,17 @@ public class ChatController {
         return holdChatProperty;
     }
 
+    public void setHistoryItems(Collection<String> items) {
+        historyList.getItems().clear();
+        historyList.getItems().addAll(items);
+    }
+
     public void setAutoScroll(boolean isAutoScroll) {
         this.autoScroll = isAutoScroll;
     }
 
     public void fillModels(List<String> modelsNames) {
         cmbModels.setItems(FXCollections.observableList(modelsNames));
-    }
-
-    public void initializeWebView() throws IOException {
-        chatOutput.getEngine().loadContent(CHAT_PAGE);
     }
 
     public void appendUserMessage(String userMessage) {
@@ -235,12 +254,7 @@ public class ChatController {
 
     @FXML
     void newChat(ActionEvent event) {
-        var clearChat = alertsHelper.showWarningWithConfirmation("Start a new Chat?",
-                "Make sure you saved your work or it will be lost!");
-
-        if (clearChat) {
-            clearChatEvent.fire(new ClearChatEvent());
-        }
+        clearChatEvent.fire(new NewChatEvent());
     }
 
     @FXML

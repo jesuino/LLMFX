@@ -14,7 +14,8 @@ import java.util.stream.Collectors;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.fxapps.llmfx.Events.ChatUpdateEvent;
-import org.fxapps.llmfx.Events.ClearChatEvent;
+import org.fxapps.llmfx.Events.HistorySelectedEvent;
+import org.fxapps.llmfx.Events.NewChatEvent;
 import org.fxapps.llmfx.Events.MCPServerSelectEvent;
 import org.fxapps.llmfx.Events.RefreshModelsEvent;
 import org.fxapps.llmfx.Events.SaveChatEvent;
@@ -22,8 +23,10 @@ import org.fxapps.llmfx.Events.SelectedModelEvent;
 import org.fxapps.llmfx.Events.StopStreamingEvent;
 import org.fxapps.llmfx.Events.ToolSelectEvent;
 import org.fxapps.llmfx.Events.UserInputEvent;
+import org.fxapps.llmfx.Model.ChatHistory;
 import org.fxapps.llmfx.Model.Message;
 import org.fxapps.llmfx.Model.Role;
+import org.fxapps.llmfx.config.AppConfig;
 import org.fxapps.llmfx.config.LLMConfig;
 import org.fxapps.llmfx.controllers.ChatController;
 import org.fxapps.llmfx.services.ChatService;
@@ -58,7 +61,7 @@ public class App {
     FxViewRepository viewRepository;
 
     @Inject
-    Event<ChatUpdateEvent> historyEvent;
+    Event<ChatUpdateEvent> chatUpdateEvent;
 
     @Inject
     AlertsHelper alertsHelper;
@@ -75,12 +78,16 @@ public class App {
     @Inject
     MCPClientRepository mcpClientRepository;
 
+    @Inject
+    AppConfig appConfig;
+
     private ChatController chatController;
 
     private Parser markDownParser;
     private HtmlRenderer markdownRenderer;
 
-    List<Message> chatHistory = new ArrayList<>();
+    List<ChatHistory> chatHistory = new ArrayList<>();
+    ChatHistory currentListOfMessages;
 
     private FxViewData chatViewData;
 
@@ -98,18 +105,6 @@ public class App {
 
     private AtomicBoolean stopStreamingFlag;
 
-    @RunOnFxThread
-    void onModelSelected(@Observes SelectedModelEvent selectedModelEvent) {
-        this.selectedModel = selectedModelEvent.model();
-    }
-
-    @RunOnFxThread
-    void onClearChat(@Observes ClearChatEvent evt) {
-        this.chatHistory.clear();
-        this.chatController.clearChatHistoy();
-        this.htmlMessageCache.clear();
-    }
-
     void onPostStartup(@Observes final FxPostStartupEvent event) throws Exception {
         this.chatViewData = viewRepository.getViewData("Chat");
         this.chatController = chatViewData.getController();
@@ -123,6 +118,7 @@ public class App {
         final var chatView = (Parent) chatViewData.getRootNode();
         final var scene = new Scene(chatView);
 
+        stage.setAlwaysOnTop(appConfig.alwaysOnTop().orElse(true));
         stage.setMinWidth(700);
         stage.setMinHeight(400);
         stage.setOnCloseRequest(e -> {
@@ -130,15 +126,13 @@ public class App {
             System.exit(0);
         });
 
-        chatController.init();
+        chatHistory = new ArrayList<>();
 
         stage.setScene(scene);
         stage.setTitle("LLM FX: A desktop App for LLM Servers");
         stage.show();
 
-        chatController = chatViewData.<ChatController>getController();
-        chatController.initializeWebView();
-
+        chatController.init();
         refreshModels();
         chatController.setMCPServers(mcpClientRepository.mcpServers());
         chatController.setTools(toolsInfo.getToolsCategoryMap());
@@ -167,6 +161,27 @@ public class App {
             logger.info("No model is set as default, using a random model");
             chatController.setSelectedModel(modelsList.get(0));
         }
+    }
+
+    @RunOnFxThread
+    void onModelSelected(@Observes SelectedModelEvent selectedModelEvent) {
+        this.selectedModel = selectedModelEvent.model();
+    }
+
+    @RunOnFxThread
+    void onClearChat(@Observes NewChatEvent evt) {
+        this.chatController.clearChatHistoy();
+        this.currentListOfMessages = null;
+    }
+
+    @RunOnFxThread
+    void onHistorySelected(@ObservesAsync HistorySelectedEvent evt) {
+        var selectedHistory = chatHistory.get(evt.index());
+        if (this.currentListOfMessages != selectedHistory) {
+            this.currentListOfMessages = selectedHistory;
+            showChatMessages();
+        }
+
     }
 
     void onRefreshModels(@Observes RefreshModelsEvent evt) throws Exception {
@@ -202,9 +217,14 @@ public class App {
 
     public void onUserInput(@ObservesAsync UserInputEvent userInput) {
         final var userMessage = Message.userMessage(userInput.text());
-        chatHistory.add(userMessage);
+        if (currentListOfMessages == null) {
+            currentListOfMessages = ChatHistory.withTitle(userMessage.content());
+            chatHistory.add(currentListOfMessages);
+            updateHistoryList();
+        }
+        currentListOfMessages.messages().add(userMessage);
         chatController.setAutoScroll(true);
-        showChatHistory();
+        showChatMessages();
         try {
 
             var toolProvider = McpToolProvider.builder()
@@ -213,12 +233,12 @@ public class App {
                     .build();
 
             final var tempMessage = new Message("", Role.ASSISTANT);
-            chatHistory.add(tempMessage);
+            currentListOfMessages.messages().add(tempMessage);
 
             chatController.holdChatProperty().set(true);
             var request = new Model.ChatRequest(
                     userInput.text(),
-                    chatHistory,
+                    currentListOfMessages.messages(),
                     selectedModel,
                     tools,
                     toolProvider,
@@ -229,10 +249,11 @@ public class App {
                             throw new RuntimeException("Workaround to force the streaming to stop!");
                         }
                         Platform.runLater(() -> {
-                            final var previous = chatHistory.removeLast();
-                            chatHistory.add(new Message(previous.content() + token, Role.ASSISTANT));
+                            final var previous = currentListOfMessages.messages().removeLast();
+                            currentListOfMessages.messages()
+                                    .add(new Message(previous.content() + token, Role.ASSISTANT));
                         });
-                        showChatHistory();
+                        showChatMessages();
                     },
                     r -> chatController.holdChatProperty().set(false),
                     e -> {
@@ -270,22 +291,26 @@ public class App {
     }
 
     String getHistoryAsJson() {
-        return chatHistory.stream()
+        return currentListOfMessages.messages().stream()
                 .map(Object::toString)
                 .collect(Collectors.joining(",", "[", "]"));
 
     }
 
     String getHistoryAsText() {
-        return chatHistory.stream()
+        return currentListOfMessages.messages().stream()
                 .map(m -> m.role() + ": " + m.content())
                 .collect(Collectors.joining("\n"));
     }
 
-    private void showChatHistory() {
+    private void updateHistoryList() {
+        Platform.runLater(() -> chatController.setHistoryItems(chatHistory.stream().map(ChatHistory::title).toList()));
+    }
+
+    private void showChatMessages() {
         Platform.runLater(() -> {
             chatController.clearChatHistoy();
-            chatHistory.stream().forEach(message -> {
+            currentListOfMessages.messages().stream().forEach(message -> {
                 final var content = message.content();
                 if (Role.USER == message.role()) {
                     chatController.appendUserMessage(content);
