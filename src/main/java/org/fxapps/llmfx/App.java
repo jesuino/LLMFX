@@ -14,6 +14,7 @@ import java.util.stream.Collectors;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.fxapps.llmfx.Events.ChatUpdateEvent;
+import org.fxapps.llmfx.Events.DeleteConversationEvent;
 import org.fxapps.llmfx.Events.HistorySelectedEvent;
 import org.fxapps.llmfx.Events.NewChatEvent;
 import org.fxapps.llmfx.Events.MCPServerSelectEvent;
@@ -30,6 +31,7 @@ import org.fxapps.llmfx.config.AppConfig;
 import org.fxapps.llmfx.config.LLMConfig;
 import org.fxapps.llmfx.controllers.ChatController;
 import org.fxapps.llmfx.services.ChatService;
+import org.fxapps.llmfx.services.HistoryStorage;
 import org.fxapps.llmfx.services.MCPClientRepository;
 import org.fxapps.llmfx.services.OpenAiService;
 import org.fxapps.llmfx.tools.ToolsInfo;
@@ -42,7 +44,6 @@ import io.quarkiverse.fx.views.FxViewData;
 import io.quarkiverse.fx.views.FxViewRepository;
 import jakarta.enterprise.event.Event;
 import jakarta.enterprise.event.Observes;
-import jakarta.enterprise.event.ObservesAsync;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import javafx.application.Platform;
@@ -77,6 +78,9 @@ public class App {
 
     @Inject
     MCPClientRepository mcpClientRepository;
+
+    @Inject
+    HistoryStorage historyStorage;
 
     @Inject
     AppConfig appConfig;
@@ -123,10 +127,9 @@ public class App {
         stage.setMinHeight(400);
         stage.setOnCloseRequest(e -> {
             logger.info("Closing application...");
+            saveHistory();
             System.exit(0);
         });
-
-        chatHistory = new ArrayList<>();
 
         stage.setScene(scene);
         stage.setTitle("LLM FX: A desktop App for LLM Servers");
@@ -137,6 +140,14 @@ public class App {
         chatController.setMCPServers(mcpClientRepository.mcpServers());
         chatController.setTools(toolsInfo.getToolsCategoryMap());
         selectedMcpServers = new ArrayList<>();
+
+        historyStorage.load().stream().map(ChatHistory::mutable).forEach(chatHistory::add);
+
+        if (!chatHistory.isEmpty()) {
+            this.currentListOfMessages = chatHistory.get(0);
+            updateHistoryList();
+            showChatMessages();
+        }
     }
 
     private void refreshModels() throws Exception {
@@ -175,7 +186,7 @@ public class App {
     }
 
     @RunOnFxThread
-    void onHistorySelected(@ObservesAsync HistorySelectedEvent evt) {
+    void onHistorySelected(@Observes HistorySelectedEvent evt) {
         var selectedHistory = chatHistory.get(evt.index());
         if (this.currentListOfMessages != selectedHistory) {
             this.currentListOfMessages = selectedHistory;
@@ -184,11 +195,23 @@ public class App {
 
     }
 
+    @RunOnFxThread
+    void onHistoryDeleted(@Observes DeleteConversationEvent evt) {
+        var selectedHistory = chatHistory.get(evt.index());
+        if (selectedHistory != null) {
+            chatHistory.remove(selectedHistory);            
+            updateHistoryList();
+            currentListOfMessages = null;
+            chatController.clearChatHistoy();
+        }
+
+    }
+
     void onRefreshModels(@Observes RefreshModelsEvent evt) throws Exception {
         refreshModels();
     }
 
-    void onMcpServerSelected(@ObservesAsync MCPServerSelectEvent mcpServerSelectEvent) {
+    void onMcpServerSelected(@Observes MCPServerSelectEvent mcpServerSelectEvent) {
         final var name = mcpServerSelectEvent.name();
         if (mcpServerSelectEvent.isSelected()) {
             selectedMcpServers.add(name);
@@ -197,7 +220,7 @@ public class App {
         }
     }
 
-    void onToolSelected(@ObservesAsync ToolSelectEvent toolSelectEvent) {
+    void onToolSelected(@Observes ToolSelectEvent toolSelectEvent) {
         final var name = toolSelectEvent.name();
         var tool = toolsInfo.getToolsMap().get(name);
 
@@ -215,7 +238,7 @@ public class App {
         stopStreamingFlag.set(true);
     }
 
-    public void onUserInput(@ObservesAsync UserInputEvent userInput) {
+    public void onUserInput(@Observes UserInputEvent userInput) {
         final var userMessage = Message.userMessage(userInput.text());
         if (currentListOfMessages == null) {
             currentListOfMessages = ChatHistory.withTitle(userMessage.content());
@@ -225,6 +248,7 @@ public class App {
         currentListOfMessages.messages().add(userMessage);
         chatController.setAutoScroll(true);
         showChatMessages();
+        saveHistory();
         try {
 
             var toolProvider = McpToolProvider.builder()
@@ -273,8 +297,14 @@ public class App {
     public void saveChat(@Observes SaveChatEvent saveChatEvent) {
         var content = switch (saveChatEvent.saveFormat()) {
             case HTML -> chatController.getChatHistoryHTML();
-            case JSON -> getHistoryAsJson();
-            case TEXT -> getHistoryAsText();
+            case JSON -> currentListOfMessages.messages()
+                    .stream()
+                    .map(Object::toString)
+                    .collect(Collectors.joining(",", "[", "]"));
+            case TEXT -> currentListOfMessages.messages()
+                    .stream()
+                    .map(m -> m.role() + ": " + m.content())
+                    .collect(Collectors.joining("\n"));
         };
         var fileChooser = new FileChooser();
         var dest = fileChooser.showSaveDialog(stage);
@@ -288,19 +318,6 @@ public class App {
             }
         }
 
-    }
-
-    String getHistoryAsJson() {
-        return currentListOfMessages.messages().stream()
-                .map(Object::toString)
-                .collect(Collectors.joining(",", "[", "]"));
-
-    }
-
-    String getHistoryAsText() {
-        return currentListOfMessages.messages().stream()
-                .map(m -> m.role() + ": " + m.content())
-                .collect(Collectors.joining("\n"));
     }
 
     private void updateHistoryList() {
@@ -321,6 +338,14 @@ public class App {
                 }
             });
         });
+    }
+
+    private void saveHistory() {
+        try {
+            historyStorage.save(chatHistory);
+        } catch (IOException e) {
+            logger.warn("Error saving chat history", e);
+        }
     }
 
     private String parseMarkdowToHTML(String markdown) {

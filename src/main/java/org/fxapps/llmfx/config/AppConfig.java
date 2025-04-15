@@ -11,5 +11,8 @@ public interface AppConfig {
 
     @ConfigProperty(defaultValue = "true")
     Optional<Boolean> alwaysOnTop();
+
+    @ConfigProperty
+    Optional<String> historyFile();
     
 }

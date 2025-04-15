@@ -39,4 +39,7 @@ public class Events {
     public record HistorySelectedEvent(int index) {
     }
 
+    public record DeleteConversationEvent(int index) {
+    }
+
 }

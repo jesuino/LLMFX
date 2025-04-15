@@ -42,6 +42,10 @@ public class Model {
         public static ChatHistory withTitle(String title) {
             return new ChatHistory(title, new ArrayList<>());
         }
+
+        public ChatHistory mutable() {
+            return new ChatHistory(this.title, new ArrayList<>(this.messages));
+        }
     }
 
 }

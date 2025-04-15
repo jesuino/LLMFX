@@ -1,12 +1,12 @@
 package org.fxapps.llmfx.controllers;
 
-import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import org.fxapps.llmfx.AlertsHelper;
 import org.fxapps.llmfx.Events.NewChatEvent;
+import org.fxapps.llmfx.Events.DeleteConversationEvent;
 import org.fxapps.llmfx.Events.HistorySelectedEvent;
 import org.fxapps.llmfx.Events.MCPServerSelectEvent;
 import org.fxapps.llmfx.Events.RefreshModelsEvent;
@@ -35,6 +35,7 @@ import javafx.scene.control.Menu;
 import javafx.scene.control.MenuButton;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
+import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 
 @FxView
@@ -96,6 +97,9 @@ public class ChatController {
     Event<HistorySelectedEvent> historySelectedEvent;
 
     @Inject
+    Event<DeleteConversationEvent> deleteConversationEvent;
+
+    @Inject
     AlertsHelper alertsHelper;
 
     @FXML
@@ -120,7 +124,13 @@ public class ChatController {
     private Button btnStop;
 
     @FXML
+    private Button btnTrashConversation;
+
+    @FXML
     ListView<String> historyList;
+
+    @FXML
+    private VBox vbWelcomeMessage;
 
     private SimpleBooleanProperty holdChatProperty;
 
@@ -144,9 +154,12 @@ public class ChatController {
         this.historyList.getSelectionModel().selectedIndexProperty().addListener((obs, old, n) -> {
             final var i = n.intValue();
             if (i != -1) {
-                historySelectedEvent.fireAsync(new HistorySelectedEvent(i));
+                historySelectedEvent.fire(new HistorySelectedEvent(i));
             }
         });
+
+        btnTrashConversation.disableProperty()
+                .bind(historyList.getSelectionModel().selectedIndexProperty().isEqualTo(-1));
     }
 
     @FXML
@@ -154,7 +167,7 @@ public class ChatController {
         final var input = txtInput.getText();
         if (!input.isBlank()) {
             txtInput.setText("");
-            onUserInputEvent.fireAsync(new UserInputEvent(input));
+            onUserInputEvent.fire(new UserInputEvent(input));
         }
     }
 
@@ -164,6 +177,22 @@ public class ChatController {
         mcpMenu.setDisable(!enable);
     }
 
+    @FXML
+    void trashConversation() {
+        final var i = historyList.getSelectionModel().getSelectedIndex();
+        if (i == -1) {
+            return;
+        }
+        final var confirmDelete = alertsHelper.showWarningWithConfirmation("Delete conversation",
+                "Are you sure you want to delete the conversation?");
+
+        if (confirmDelete) {
+            deleteConversationEvent.fire(new DeleteConversationEvent(i));
+            historyList.getSelectionModel().clearSelection();
+        }
+
+    }
+
     public BooleanProperty holdChatProperty() {
         return holdChatProperty;
     }
@@ -171,6 +200,8 @@ public class ChatController {
     public void setHistoryItems(Collection<String> items) {
         historyList.getItems().clear();
         historyList.getItems().addAll(items);
+        historyList.getSelectionModel().selectLast();
+
     }
 
     public void setAutoScroll(boolean isAutoScroll) {
@@ -204,6 +235,7 @@ public class ChatController {
     }
 
     public void clearChatHistoy() {
+        vbWelcomeMessage.setVisible(true);
         chatOutput.getEngine().executeScript("document.getElementById('chatContent').innerHTML = ''");
     }
 
@@ -216,7 +248,7 @@ public class ChatController {
         final var mcpMenus = mcpServers.stream().map(mcpServer -> {
             var menu = new CheckMenuItem(mcpServer);
             menu.setOnAction(e -> {
-                mcpServerSelectEvent.fireAsync(new MCPServerSelectEvent(mcpServer,
+                mcpServerSelectEvent.fire(new MCPServerSelectEvent(mcpServer,
                         menu.isSelected()));
             });
             return menu;
@@ -232,7 +264,7 @@ public class ChatController {
                     Menu mnCat = new Menu(e.getKey());
                     e.getValue().stream().map(tool -> {
                         var menu = new CheckMenuItem(tool);
-                        menu.setOnAction(evt -> toolSelectEvent.fireAsync(
+                        menu.setOnAction(evt -> toolSelectEvent.fire(
                                 new ToolSelectEvent(tool, menu.isSelected())));
                         return menu;
 
@@ -254,6 +286,7 @@ public class ChatController {
 
     @FXML
     void newChat(ActionEvent event) {
+        vbWelcomeMessage.setVisible(true);
         clearChatEvent.fire(new NewChatEvent());
     }
 
@@ -270,7 +303,6 @@ public class ChatController {
     @FXML
     void saveAsText(ActionEvent event) {
         saveChatEvent.fire(new SaveChatEvent(SaveFormat.TEXT));
-
     }
 
     @FXML
@@ -280,6 +312,7 @@ public class ChatController {
     }
 
     private void runScriptToAppendMessage(String message, String role) {
+        vbWelcomeMessage.setVisible(false);
         // workaround because I don't have an innerHTML method in Java API!
         var script = """
                 var messageContent = document.createElement('p');
