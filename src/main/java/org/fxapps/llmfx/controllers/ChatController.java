@@ -332,6 +332,5 @@ public class ChatController {
         chatOutput.getEngine().executeScript(script);
         if (autoScroll)
             chatOutput.getEngine().executeScript("window.scrollTo(0, document.body.scrollHeight);");
-
     }
 }
