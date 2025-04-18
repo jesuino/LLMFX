@@ -199,12 +199,11 @@ public class App {
     void onHistoryDeleted(@Observes DeleteConversationEvent evt) {
         var selectedHistory = chatHistory.get(evt.index());
         if (selectedHistory != null) {
-            chatHistory.remove(selectedHistory);            
+            chatHistory.remove(selectedHistory);
             updateHistoryList();
             currentListOfMessages = null;
             chatController.clearChatHistoy();
         }
-
     }
 
     void onRefreshModels(@Observes RefreshModelsEvent evt) throws Exception {

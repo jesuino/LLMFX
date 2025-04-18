@@ -59,7 +59,6 @@ public class HistoryStorage {
             var content = jsonBuilder.toJson(history);
             Files.writeString(historyFile, content);
         }
-
     }
 
 }

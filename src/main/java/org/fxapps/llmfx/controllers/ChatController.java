@@ -3,6 +3,7 @@ package org.fxapps.llmfx.controllers;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 import org.fxapps.llmfx.AlertsHelper;
 import org.fxapps.llmfx.Events.NewChatEvent;
@@ -245,11 +246,22 @@ public class ChatController {
     }
 
     public void setMCPServers(Collection<String> mcpServers) {
+        var totalSelectedMCPServers = new AtomicInteger();
         final var mcpMenus = mcpServers.stream().map(mcpServer -> {
             var menu = new CheckMenuItem(mcpServer);
             menu.setOnAction(e -> {
-                mcpServerSelectEvent.fire(new MCPServerSelectEvent(mcpServer,
-                        menu.isSelected()));
+                var isSelected = menu.isSelected();
+                if (isSelected) {
+                    totalSelectedMCPServers.incrementAndGet();
+
+                } else {
+                    totalSelectedMCPServers.decrementAndGet();
+                }
+                mcpMenu.setText("MCP");
+                if (totalSelectedMCPServers.get() > 0) {
+                    mcpMenu.setText(mcpMenu.getText() + " (" + totalSelectedMCPServers.get() + ")");
+                }
+                mcpServerSelectEvent.fire(new MCPServerSelectEvent(mcpServer, isSelected));
             });
             return menu;
 
@@ -258,14 +270,27 @@ public class ChatController {
     }
 
     public void setTools(Map<String, List<String>> toolsCat) {
+        var totalSelectedTools = new AtomicInteger();
         var catMenus = toolsCat.entrySet()
                 .stream()
                 .map(e -> {
                     Menu mnCat = new Menu(e.getKey());
                     e.getValue().stream().map(tool -> {
                         var menu = new CheckMenuItem(tool);
-                        menu.setOnAction(evt -> toolSelectEvent.fire(
-                                new ToolSelectEvent(tool, menu.isSelected())));
+                        menu.setOnAction(evt -> {
+                            final var isSelected = menu.isSelected();
+                            if (isSelected) {
+                                totalSelectedTools.incrementAndGet();
+                            } else {
+                                totalSelectedTools.decrementAndGet();
+                            }
+                            toolsMenu.setText("Tools");
+                            if (totalSelectedTools.get() > 0) {
+                                toolsMenu.setText(toolsMenu.getText() + " (" + totalSelectedTools.get() + ")");
+                            }
+                            toolSelectEvent.fire(new ToolSelectEvent(tool, isSelected));
+
+                        });
                         return menu;
 
                     }).forEach(mnCat.getItems()::add);
