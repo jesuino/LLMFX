@@ -267,7 +267,8 @@ public class App {
                     tools,
                     toolProvider,
                     token -> {
-                        if (stopStreamingFlag.get()) {
+                        // Streaming does not work with Tools or MCP
+                        if (stopStreamingFlag.get() && tools.isEmpty() && selectedMcpServers.isEmpty()) {
                             stopStreamingFlag.set(false);
                             chatController.holdChatProperty().set(false);
                             throw new RuntimeException("Workaround to force the streaming to stop!");
