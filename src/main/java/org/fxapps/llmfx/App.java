@@ -90,7 +90,6 @@ public class App {
     private Parser markDownParser;
     private HtmlRenderer markdownRenderer;
 
-    List<ChatHistory> chatHistory = new ArrayList<>();
     ChatHistory currentListOfMessages;
 
     private FxViewData chatViewData;
@@ -141,10 +140,10 @@ public class App {
         chatController.setTools(toolsInfo.getToolsCategoryMap());
         selectedMcpServers = new ArrayList<>();
 
-        historyStorage.load().stream().map(ChatHistory::mutable).forEach(chatHistory::add);
+        historyStorage.load();
 
-        if (!chatHistory.isEmpty()) {
-            this.currentListOfMessages = chatHistory.get(0);
+        if (!historyStorage.getChatHistory().isEmpty()) {
+            this.currentListOfMessages = historyStorage.getChatHistory().get(0);
             updateHistoryList();
             showChatMessages();
         }
@@ -187,7 +186,10 @@ public class App {
 
     @RunOnFxThread
     void onHistorySelected(@Observes HistorySelectedEvent evt) {
-        var selectedHistory = chatHistory.get(evt.index());
+        if (evt.index() == -1) {
+            return;
+        }
+        var selectedHistory = historyStorage.getChatHistory().get(evt.index());
         if (this.currentListOfMessages != selectedHistory) {
             this.currentListOfMessages = selectedHistory;
             showChatMessages();
@@ -197,9 +199,9 @@ public class App {
 
     @RunOnFxThread
     void onHistoryDeleted(@Observes DeleteConversationEvent evt) {
-        var selectedHistory = chatHistory.get(evt.index());
+        var selectedHistory = historyStorage.getChatHistory().get(evt.index());
         if (selectedHistory != null) {
-            chatHistory.remove(selectedHistory);
+            historyStorage.getChatHistory().remove(selectedHistory);
             updateHistoryList();
             currentListOfMessages = null;
             chatController.clearChatHistoy();
@@ -241,57 +243,53 @@ public class App {
         final var userMessage = Message.userMessage(userInput.text());
         if (currentListOfMessages == null) {
             currentListOfMessages = ChatHistory.withTitle(userMessage.content());
-            chatHistory.add(currentListOfMessages);
+            historyStorage.getChatHistory().add(currentListOfMessages);
             updateHistoryList();
         }
         currentListOfMessages.messages().add(userMessage);
         chatController.setAutoScroll(true);
         showChatMessages();
         saveHistory();
-        try {
 
-            var toolProvider = McpToolProvider.builder()
-                    .mcpClients(selectedMcpServers.stream()
-                            .map(mcpClientRepository::getMcpClient).toList())
-                    .build();
+        var toolProvider = McpToolProvider.builder()
+                .mcpClients(selectedMcpServers.stream()
+                        .map(mcpClientRepository::getMcpClient).toList())
+                .build();
 
-            final var tempMessage = new Message("", Role.ASSISTANT);
-            currentListOfMessages.messages().add(tempMessage);
+        final var tempMessage = new Message("", Role.ASSISTANT);
+        currentListOfMessages.messages().add(tempMessage);
 
-            chatController.holdChatProperty().set(true);
-            var request = new Model.ChatRequest(
-                    userInput.text(),
-                    currentListOfMessages.messages(),
-                    selectedModel,
-                    tools,
-                    toolProvider,
-                    token -> {
-                        // Streaming does not work with Tools or MCP
-                        if (stopStreamingFlag.get() && tools.isEmpty() && selectedMcpServers.isEmpty()) {
-                            stopStreamingFlag.set(false);
-                            chatController.holdChatProperty().set(false);
-                            throw new RuntimeException("Workaround to force the streaming to stop!");
-                        }
-                        Platform.runLater(() -> {
-                            final var previous = currentListOfMessages.messages().removeLast();
-                            currentListOfMessages.messages()
-                                    .add(new Message(previous.content() + token, Role.ASSISTANT));
-                        });
-                        showChatMessages();
-                    },
-                    r -> chatController.holdChatProperty().set(false),
-                    e -> {
-                        logger.error("Error during message streaming", e);
-                        Platform.runLater(() -> alertsHelper.showError("Error",
-                                "There was an error during the conversation",
-                                "The following error happend: " + e.getMessage()));
+        chatController.holdChatProperty().set(true);
+        var request = new Model.ChatRequest(
+                userInput.text(),
+                currentListOfMessages.messages(),
+                selectedModel,
+                tools,
+                toolProvider,
+                token -> {
+                    // Streaming does not work with Tools or MCP
+                    if (stopStreamingFlag.get() && tools.isEmpty() && selectedMcpServers.isEmpty()) {
+                        stopStreamingFlag.set(false);
                         chatController.holdChatProperty().set(false);
+                        throw new RuntimeException("Workaround to force the streaming to stop!");
+                    }
+                    Platform.runLater(() -> {
+                        final var previous = currentListOfMessages.messages().removeLast();
+                        currentListOfMessages.messages()
+                                .add(new Message(previous.content() + token, Role.ASSISTANT));
                     });
-            chatService.chatAsync(request);
+                    showChatMessages();
+                },
+                r -> chatController.holdChatProperty().set(false),
+                e -> {
+                    logger.error("Error during message streaming", e);
+                    Platform.runLater(() -> alertsHelper.showError("Error",
+                            "There was an error during the conversation",
+                            "The following error happend: " + e.getMessage()));
+                    chatController.holdChatProperty().set(false);
+                });
+        chatService.chatAsync(request);
 
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
     }
 
     public void saveChat(@Observes SaveChatEvent saveChatEvent) {
@@ -321,7 +319,8 @@ public class App {
     }
 
     private void updateHistoryList() {
-        Platform.runLater(() -> chatController.setHistoryItems(chatHistory.stream().map(ChatHistory::title).toList()));
+        Platform.runLater(() -> chatController
+                .setHistoryItems(historyStorage.getChatHistory().stream().map(ChatHistory::title).toList()));
     }
 
     private void showChatMessages() {
@@ -342,7 +341,7 @@ public class App {
 
     private void saveHistory() {
         try {
-            historyStorage.save(chatHistory);
+            historyStorage.save();
         } catch (IOException e) {
             logger.warn("Error saving chat history", e);
         }

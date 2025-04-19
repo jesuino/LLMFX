@@ -26,8 +26,11 @@ public class HistoryStorage {
 
     private Jsonb jsonBuilder;
 
+    private List<ChatHistory> chatHistory;
+
     @PostConstruct
     void init() {
+        this.chatHistory = new ArrayList<>();
         this.jsonBuilder = JsonbBuilder.create();
         if (appConfig.historyFile().isPresent()) {
             this.historyFile = Path.of(appConfig.historyFile().get());
@@ -47,16 +50,22 @@ public class HistoryStorage {
             var jsonContent = Files.readString(historyFile);
 
             if (!jsonContent.isBlank()) {
-                return Arrays.asList(jsonBuilder.fromJson(jsonContent, ChatHistory[].class));
+                final var loadHistory = Arrays.asList(jsonBuilder.fromJson(jsonContent, ChatHistory[].class));
+                this.chatHistory = new ArrayList<>(loadHistory);
             }
         }
-        return new ArrayList<>();
+
+        return this.chatHistory;
 
     }
 
-    public void save(List<ChatHistory> history) throws IOException {
+    public List<ChatHistory> getChatHistory() {
+        return chatHistory;
+    }
+
+    public void save() throws IOException {
         if (this.historyFile != null) {
-            var content = jsonBuilder.toJson(history);
+            var content = jsonBuilder.toJson(this.chatHistory);
             Files.writeString(historyFile, content);
         }
     }

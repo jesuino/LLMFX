@@ -152,11 +152,15 @@ public class ChatController {
 
         chatOutput.getEngine().loadContent(CHAT_PAGE);
 
+        this.historyList.setOnMouseClicked(e -> {
+            var i = historyList.getSelectionModel().getSelectedIndex();
+            historySelectedEvent.fire(new HistorySelectedEvent(i));
+        });
+
         this.historyList.getSelectionModel().selectedIndexProperty().addListener((obs, old, n) -> {
             final var i = n.intValue();
-            if (i != -1) {
-                historySelectedEvent.fire(new HistorySelectedEvent(i));
-            }
+            historySelectedEvent.fire(new HistorySelectedEvent(i));
+
         });
 
         btnTrashConversation.disableProperty()
