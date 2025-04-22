@@ -28,35 +28,29 @@ public class HistoryStorage {
 
     private List<ChatHistory> chatHistory;
 
+    private ChatHistory currentConversation;
+
     @PostConstruct
-    void init() {
+    void init() throws IOException {
         this.chatHistory = new ArrayList<>();
         this.jsonBuilder = JsonbBuilder.create();
+        this.currentConversation = ChatHistory.empty();
         if (appConfig.historyFile().isPresent()) {
             this.historyFile = Path.of(appConfig.historyFile().get());
             if (!Files.exists(historyFile)) {
-                try {
-                    Files.createDirectories(historyFile.resolve(".."));
-                    Files.createFile(historyFile);
-                } catch (IOException e) {
-                    throw new RuntimeException("Unable to create history file: " + historyFile, e);
+                Files.createDirectories(historyFile.resolve(".."));
+                Files.createFile(historyFile);
+            } else {
+                var jsonContent = Files.readString(historyFile);
+                if (!jsonContent.isBlank()) {
+                    final var loadHistory = Arrays.asList(jsonBuilder.fromJson(jsonContent, ChatHistory[].class));
+                    loadHistory.forEach(this.chatHistory::add);
+                    if (!chatHistory.isEmpty()) {
+                        this.currentConversation = this.chatHistory.get(0);
+                    }
                 }
             }
         }
-    }
-
-    public List<ChatHistory> load() throws IOException {
-        if (this.historyFile != null) {
-            var jsonContent = Files.readString(historyFile);
-
-            if (!jsonContent.isBlank()) {
-                final var loadHistory = Arrays.asList(jsonBuilder.fromJson(jsonContent, ChatHistory[].class));
-                this.chatHistory = new ArrayList<>(loadHistory);
-            }
-        }
-
-        return this.chatHistory;
-
     }
 
     public List<ChatHistory> getChatHistory() {
@@ -68,6 +62,23 @@ public class HistoryStorage {
             var content = jsonBuilder.toJson(this.chatHistory);
             Files.writeString(historyFile, content);
         }
+    }
+
+    public ChatHistory getConversation() {
+        return this.currentConversation;
+    }
+
+    public void newConversation(String title) {
+        this.currentConversation = ChatHistory.withTitle(title);
+        this.chatHistory.add(this.currentConversation);
+    }
+
+    public void clearConversation() {
+        this.currentConversation = ChatHistory.empty();
+    }
+
+    public void setConversation(ChatHistory selectedHistory) {
+        this.currentConversation = selectedHistory;
     }
 
 }

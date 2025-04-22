@@ -41,12 +41,20 @@ public class Model {
             String title,
             List<Message> messages) {
 
+        public static ChatHistory empty() {
+            return new ChatHistory("", new ArrayList<>());
+        }
+
         public static ChatHistory withTitle(String title) {
             return new ChatHistory(title, new ArrayList<>());
         }
 
         public ChatHistory mutable() {
             return new ChatHistory(this.title, new ArrayList<>(this.messages));
+        }
+
+        public boolean isEmpty() {
+            return this.messages.isEmpty();
         }
     }
 

@@ -92,8 +92,6 @@ public class App {
     private Parser markDownParser;
     private HtmlRenderer markdownRenderer;
 
-    private ChatHistory currentListOfMessages;
-
     private FxViewData chatViewData;
 
     private Map<Message, String> htmlMessageCache;
@@ -139,10 +137,7 @@ public class App {
         chatController.setTools(toolsInfo.getToolsCategoryMap());
         selectedMcpServers = new ArrayList<>();
 
-        historyStorage.load();
-
         if (!historyStorage.getChatHistory().isEmpty()) {
-            this.currentListOfMessages = historyStorage.getChatHistory().get(0);
             updateHistoryList();
             showChatMessages();
         }
@@ -180,7 +175,7 @@ public class App {
     @RunOnFxThread
     void onClearChat(@Observes NewChatEvent evt) {
         this.chatController.clearChatHistoy();
-        this.currentListOfMessages = null;
+        this.historyStorage.clearConversation();
     }
 
     @RunOnFxThread
@@ -189,8 +184,8 @@ public class App {
             return;
         }
         var selectedHistory = historyStorage.getChatHistory().get(evt.index());
-        if (this.currentListOfMessages != selectedHistory) {
-            this.currentListOfMessages = selectedHistory;
+        if (this.historyStorage.getConversation() != selectedHistory) {
+            this.historyStorage.setConversation(selectedHistory);
             showChatMessages();
         }
 
@@ -202,7 +197,6 @@ public class App {
         if (selectedHistory != null) {
             historyStorage.getChatHistory().remove(selectedHistory);
             updateHistoryList();
-            currentListOfMessages = null;
             chatController.clearChatHistoy();
         }
     }
@@ -241,12 +235,11 @@ public class App {
 
     public void onUserInput(@Observes UserInputEvent userInput) {
         final var userMessage = Message.userMessage(userInput.text());
-        if (currentListOfMessages == null) {
-            currentListOfMessages = ChatHistory.withTitle(userMessage.content());
-            historyStorage.getChatHistory().add(currentListOfMessages);
+        if (this.historyStorage.getConversation().isEmpty()) {
+            this.historyStorage.newConversation(userMessage.content());
             updateHistoryList();
         }
-        currentListOfMessages.messages().add(userMessage);
+        historyStorage.getConversation().messages().add(userMessage);
         chatController.setAutoScroll(true);
         showChatMessages();
         saveHistory();
@@ -257,22 +250,22 @@ public class App {
                 .build();
 
         final var tempMessage = new Message("", Role.ASSISTANT);
-        currentListOfMessages.messages().add(tempMessage);
+        historyStorage.getConversation().messages().add(tempMessage);
 
         chatController.holdChatProperty().set(true);
         var stopFlag = new AtomicBoolean(false);
         this.stopStreamingStack.push(stopFlag);
         var request = new Model.ChatRequest(
                 userInput.text(),
-                currentListOfMessages.messages(),
+                historyStorage.getConversation().messages(),
                 selectedModel,
                 tools,
                 toolProvider,
                 stopFlag,
                 token -> {
                     Platform.runLater(() -> {
-                        final var previous = currentListOfMessages.messages().removeLast();
-                        currentListOfMessages.messages()
+                        final var previous = historyStorage.getConversation().messages().removeLast();
+                        historyStorage.getConversation().messages()
                                 .add(new Message(previous.content() + token, Role.ASSISTANT));
                     });
                     showChatMessages();
@@ -295,11 +288,11 @@ public class App {
     public void saveChat(@Observes SaveChatEvent saveChatEvent) {
         var content = switch (saveChatEvent.saveFormat()) {
             case HTML -> chatController.getChatHistoryHTML();
-            case JSON -> currentListOfMessages.messages()
+            case JSON -> historyStorage.getConversation().messages()
                     .stream()
                     .map(Object::toString)
                     .collect(Collectors.joining(",", "[", "]"));
-            case TEXT -> currentListOfMessages.messages()
+            case TEXT -> historyStorage.getConversation().messages()
                     .stream()
                     .map(m -> m.role() + ": " + m.content())
                     .collect(Collectors.joining("\n"));
@@ -326,7 +319,7 @@ public class App {
     private void showChatMessages() {
         Platform.runLater(() -> {
             chatController.clearChatHistoy();
-            currentListOfMessages.messages().stream().forEach(message -> {
+            historyStorage.getConversation().messages().stream().forEach(message -> {
                 final var content = message.content();
                 if (Role.USER == message.role()) {
                     chatController.appendUserMessage(content);
