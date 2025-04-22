@@ -8,6 +8,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
@@ -84,29 +85,27 @@ public class App {
 
     @Inject
     AppConfig appConfig;
+    @Inject
+    ToolsInfo toolsInfo;
 
     private ChatController chatController;
-
     private Parser markDownParser;
     private HtmlRenderer markdownRenderer;
 
-    ChatHistory currentListOfMessages;
+    private ChatHistory currentListOfMessages;
 
     private FxViewData chatViewData;
 
     private Map<Message, String> htmlMessageCache;
     private Stage stage;
 
-    List<String> selectedMcpServers;
-
-    @Inject
-    ToolsInfo toolsInfo;
-
-    Set<Object> tools;
+    // TODO: THis could be provided by the UI
+    private List<String> selectedMcpServers;
+    private Set<Object> tools;
 
     private String selectedModel;
 
-    private AtomicBoolean stopStreamingFlag;
+    private Stack<AtomicBoolean> stopStreamingStack;
 
     void onPostStartup(@Observes final FxPostStartupEvent event) throws Exception {
         this.chatViewData = viewRepository.getViewData("Chat");
@@ -115,7 +114,7 @@ public class App {
         this.markdownRenderer = HtmlRenderer.builder().build();
         this.htmlMessageCache = new HashMap<>();
         this.stage = event.getPrimaryStage();
-        this.stopStreamingFlag = new AtomicBoolean(false);
+        this.stopStreamingStack = new Stack<AtomicBoolean>();
         this.tools = new HashSet<>();
 
         final var chatView = (Parent) chatViewData.getRootNode();
@@ -236,7 +235,8 @@ public class App {
     }
 
     void onStopStreaming(@Observes StopStreamingEvent stopStreamingEvent) {
-        stopStreamingFlag.set(true);
+        stopStreamingStack.pop().set(true);
+        chatController.holdChatProperty().set(!stopStreamingStack.isEmpty());
     }
 
     public void onUserInput(@Observes UserInputEvent userInput) {
@@ -260,19 +260,16 @@ public class App {
         currentListOfMessages.messages().add(tempMessage);
 
         chatController.holdChatProperty().set(true);
+        var stopFlag = new AtomicBoolean(false);
+        this.stopStreamingStack.push(stopFlag);
         var request = new Model.ChatRequest(
                 userInput.text(),
                 currentListOfMessages.messages(),
                 selectedModel,
                 tools,
                 toolProvider,
+                stopFlag,
                 token -> {
-                    // Streaming does not work with Tools or MCP
-                    if (stopStreamingFlag.get() && tools.isEmpty() && selectedMcpServers.isEmpty()) {
-                        stopStreamingFlag.set(false);
-                        chatController.holdChatProperty().set(false);
-                        throw new RuntimeException("Workaround to force the streaming to stop!");
-                    }
                     Platform.runLater(() -> {
                         final var previous = currentListOfMessages.messages().removeLast();
                         currentListOfMessages.messages()
@@ -280,7 +277,10 @@ public class App {
                     });
                     showChatMessages();
                 },
-                r -> chatController.holdChatProperty().set(false),
+                r -> {
+                    stopStreamingStack.remove(stopFlag);
+                    chatController.holdChatProperty().set(false);
+                },
                 e -> {
                     logger.error("Error during message streaming", e);
                     Platform.runLater(() -> alertsHelper.showError("Error",

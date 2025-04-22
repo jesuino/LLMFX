@@ -71,7 +71,13 @@ public class ChatService {
         }).forEach(memory::add);
 
         bot.chat(chatRequest.message())
-                .onPartialResponse(chatRequest.onToken())
+                .onPartialResponse(token -> {
+                    if(!chatRequest.stop().get()) {
+                        chatRequest.onToken().accept(token); 
+                        // TODO: force streaming stop here                      
+                    }
+
+                })
                 .onRetrieved(contents -> System.out.println(contents))
                 .onToolExecuted(execution -> System.out.println(execution))
                 .onCompleteResponse(chatRequest.onComplete())

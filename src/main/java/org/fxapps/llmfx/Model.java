@@ -3,6 +3,7 @@ package org.fxapps.llmfx;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
 import dev.langchain4j.model.chat.response.ChatResponse;
@@ -30,6 +31,7 @@ public class Model {
             String model,
             Set<Object> tools,
             ToolProvider toolProvider,
+            AtomicBoolean stop,
             Consumer<String> onToken,
             Consumer<ChatResponse> onComplete,
             Consumer<Throwable> onError) {
