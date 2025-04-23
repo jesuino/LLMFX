@@ -13,10 +13,12 @@ import java.util.List;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+import jakarta.inject.Singleton;
 
 /*
  * A tool to read and search files
  */
+@Singleton
 public class FilesReaderTool {
 
     @Tool("Returns a file content. You only have access to the current working directory")

@@ -6,7 +6,9 @@ import java.util.List;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+import jakarta.inject.Singleton;
 
+@Singleton
 public class CommandsTool {
 
     @Tool("""

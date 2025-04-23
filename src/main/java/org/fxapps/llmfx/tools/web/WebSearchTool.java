@@ -10,7 +10,9 @@ import org.jsoup.nodes.Element;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+import jakarta.inject.Singleton;
 
+@Singleton
 public class WebSearchTool {
 
     private final static String DUCKDUCKGO_SEARCH_URL = "https://duckduckgo.com/html/?q=";

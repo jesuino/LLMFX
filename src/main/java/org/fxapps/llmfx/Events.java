@@ -1,5 +1,7 @@
 package org.fxapps.llmfx;
 
+import javafx.scene.Node;
+
 public class Events {
 
     private Events() {
@@ -40,6 +42,12 @@ public class Events {
     }
 
     public record DeleteConversationEvent(int index) {
+    }
+
+    public record NewDrawingNodeEvent(Node node) {
+    }
+
+    public record NewReportingNodeEvent(Node node, int column, int row) {
     }
 
 }

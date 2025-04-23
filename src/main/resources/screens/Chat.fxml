@@ -9,9 +9,12 @@
 <?import javafx.scene.control.MenuItem?>
 <?import javafx.scene.control.SplitMenuButton?>
 <?import javafx.scene.control.SplitPane?>
+<?import javafx.scene.control.Tab?>
+<?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.effect.Glow?>
 <?import javafx.scene.effect.Shadow?>
+<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.HBox?>
 <?import javafx.scene.layout.StackPane?>
@@ -55,7 +58,7 @@
                <children>
                   <ComboBox fx:id="cmbModels" onAction="#modelSelected" prefHeight="26.0" prefWidth="181.0" promptText="Model" />
                   <Button mnemonicParsing="false" onAction="#onRefreshModels" text="↻" />
-                  <SplitMenuButton mnemonicParsing="false" prefHeight="26.0" prefWidth="75.0" text="Save">
+                  <SplitMenuButton mnemonicParsing="false" prefHeight="26.0" prefWidth="47.0" text="↓">
                     <items>
                       <MenuItem mnemonicParsing="false" onAction="#saveAsText" text="Text" />
                       <MenuItem mnemonicParsing="false" onAction="#saveAsJSON" text="JSON" />
@@ -87,12 +90,12 @@
       </HBox>
    </bottom>
    <center>
-      <SplitPane dividerPositions="0.2" BorderPane.alignment="CENTER">
+      <SplitPane fx:id="spBody" dividerPositions="0.1, 0.9" BorderPane.alignment="CENTER">
          <items>
-            <StackPane>
+            <StackPane minWidth="0.0">
                <children>
-                  <ListView fx:id="historyList" prefHeight="295.0" prefWidth="199.0" />
-                  <Button fx:id="btnTrashConversation" alignment="CENTER" mnemonicParsing="false" onAction="#trashConversation" text="🗑" textFill="#bc1111" StackPane.alignment="BOTTOM_RIGHT">
+                  <ListView fx:id="historyList" minWidth="0.0" prefHeight="295.0" prefWidth="199.0" />
+                  <Button fx:id="btnTrashConversation" alignment="CENTER" minWidth="0.0" mnemonicParsing="false" onAction="#trashConversation" text="🗑" textFill="#bc1111" StackPane.alignment="BOTTOM_RIGHT">
                      <StackPane.margin>
                         <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
                      </StackPane.margin>
@@ -135,6 +138,36 @@
                         <MenuButton fx:id="mcpMenu" mnemonicParsing="false" text="MCP" />
                         <Button fx:id="btnNewChat" mnemonicParsing="false" onAction="#newChat" prefHeight="26.0" prefWidth="33.0" text="🗎" textFill="#dd0606" />
                      </children>
+                  </HBox>
+               </children>
+            </StackPane>
+            <StackPane minWidth="0.0">
+               <children>
+                  <TabPane fx:id="pnlJFX" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
+                     <tabs>
+                        <Tab fx:id="canvasTab" text="Canvas" />
+                        <Tab fx:id="reportingTab" text="Reporting">
+                          <content>
+                            <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
+                          </content>
+                        </Tab>
+                     </tabs></TabPane>
+                  <HBox alignment="BOTTOM_RIGHT" prefHeight="145.0" prefWidth="306.0" spacing="5.0" StackPane.alignment="CENTER">
+                     <children>
+                        <Button fx:id="btnClearCanvas" mnemonicParsing="false" text="🗑">
+                           <font>
+                              <Font size="10.0" />
+                           </font>
+                        </Button>
+                        <Button mnemonicParsing="false" onAction="#onDownloadImage" text="↓">
+                           <font>
+                              <Font size="10.0" />
+                           </font>
+                        </Button>
+                     </children>
+                     <StackPane.margin>
+                        <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                     </StackPane.margin>
                   </HBox>
                </children>
             </StackPane>

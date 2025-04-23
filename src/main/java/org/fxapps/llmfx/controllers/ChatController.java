@@ -6,10 +6,12 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.fxapps.llmfx.AlertsHelper;
-import org.fxapps.llmfx.Events.NewChatEvent;
 import org.fxapps.llmfx.Events.DeleteConversationEvent;
 import org.fxapps.llmfx.Events.HistorySelectedEvent;
 import org.fxapps.llmfx.Events.MCPServerSelectEvent;
+import org.fxapps.llmfx.Events.NewChatEvent;
+import org.fxapps.llmfx.Events.NewDrawingNodeEvent;
+import org.fxapps.llmfx.Events.NewReportingNodeEvent;
 import org.fxapps.llmfx.Events.RefreshModelsEvent;
 import org.fxapps.llmfx.Events.SaveChatEvent;
 import org.fxapps.llmfx.Events.SaveFormat;
@@ -21,8 +23,10 @@ import org.w3c.dom.html.HTMLElement;
 
 import io.quarkiverse.fx.views.FxView;
 import jakarta.enterprise.event.Event;
+import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import javafx.application.Platform;
 import javafx.beans.property.BooleanProperty;
 import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
@@ -34,8 +38,15 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuButton;
+import javafx.scene.control.ScrollPane;
+import javafx.scene.control.SplitPane;
+import javafx.scene.control.Tab;
+import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
+import javafx.scene.layout.AnchorPane;
+import javafx.scene.layout.GridPane;
+import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 
@@ -133,6 +144,24 @@ public class ChatController {
     @FXML
     private VBox vbWelcomeMessage;
 
+    @FXML
+    SplitPane spBody;
+
+    @FXML
+    TabPane pnlJFX;
+
+    @FXML
+    Button btnClearCanvas;
+
+    @FXML
+    private Tab canvasTab;
+
+    @FXML
+    private Tab reportingTab;
+
+    private Pane canvasPane;
+    private GridPane reportingPane;
+
     private SimpleBooleanProperty holdChatProperty;
 
     private boolean autoScroll;
@@ -141,6 +170,19 @@ public class ChatController {
 
     public void init() {
         this.mcpMenuTooltip = new Tooltip("Select MCP Servers");
+        this.canvasPane = new AnchorPane();
+        this.reportingPane = new GridPane(5, 5);
+
+        canvasTab.setContent(new ScrollPane(canvasPane));
+        canvasPane.setTranslateX(5);
+        canvasPane.setTranslateY(5);
+
+        reportingTab.setContent(new ScrollPane(reportingPane));
+        reportingPane.setTranslateX(5);
+        reportingPane.setTranslateY(5);
+
+        pnlJFX.getTabs().addAll(canvasTab, reportingTab);
+
         holdChatProperty = new SimpleBooleanProperty();
         txtInput.disableProperty().bind(holdChatProperty);
         btnNewChat.disableProperty().bind(holdChatProperty);
@@ -148,6 +190,7 @@ public class ChatController {
         btnStop.disableProperty().bind(holdChatProperty.not());
         mcpMenu.setTooltip(mcpMenuTooltip);
 
+        btnClearCanvas.setOnAction(e -> canvasPane.getChildren().clear());
         chatOutput.setOnScroll(e -> autoScroll = false);
 
         chatOutput.getEngine().loadContent(CHAT_PAGE);
@@ -168,18 +211,17 @@ public class ChatController {
     }
 
     @FXML
-    public void onInputAction() {
+    void onDownloadImage() {
+        // TODO: implement
+    }
+
+    @FXML
+    void onInputAction() {
         final var input = txtInput.getText();
         if (!input.isBlank()) {
             txtInput.setText("");
             onUserInputEvent.fire(new UserInputEvent(input));
         }
-    }
-
-    public void enableMCPMenu(boolean enable) {
-        var text = enable ? "MCP Servers are enabled" : "MCP Servers are ignored because Tools are selected";
-        mcpMenuTooltip.setText(text);
-        mcpMenu.setDisable(!enable);
     }
 
     @FXML
@@ -196,6 +238,12 @@ public class ChatController {
             historyList.getSelectionModel().clearSelection();
         }
 
+    }
+
+    public void enableMCPMenu(boolean enable) {
+        var text = enable ? "MCP Servers are enabled" : "MCP Servers are ignored because Tools are selected";
+        mcpMenuTooltip.setText(text);
+        mcpMenu.setDisable(!enable);
     }
 
     public BooleanProperty holdChatProperty() {
@@ -215,6 +263,27 @@ public class ChatController {
 
     public void fillModels(List<String> modelsNames) {
         cmbModels.setItems(FXCollections.observableList(modelsNames));
+    }
+
+    public void onNewDrawingNodeEvent(@Observes NewDrawingNodeEvent event) {
+
+        Platform.runLater(() -> {
+            canvasPane.getChildren().add(event.node());
+            pnlJFX.getSelectionModel().select(canvasTab);
+            spBody.setDividerPosition(2, 0.4);
+        });
+
+    }
+
+
+    public void onNewReportingNodeEvent(@Observes NewReportingNodeEvent evt) {
+
+        Platform.runLater(() -> {            
+            reportingPane.add(evt.node(), evt.column(), evt.row());
+            pnlJFX.getSelectionModel().select(reportingTab);
+            spBody.setDividerPosition(2, 0.4);
+        });
+
     }
 
     public void appendUserMessage(String userMessage) {
