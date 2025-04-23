@@ -2,9 +2,7 @@ package org.fxapps.llmfx;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -125,7 +123,7 @@ public class App {
         chatController.init();
         refreshModels();
         chatController.setMCPServers(mcpClientRepository.mcpServers());
-        chatController.setTools(toolsInfo.getToolsCategoryMap());        
+        chatController.setTools(toolsInfo.getToolsCategoryMap());
 
         if (!historyStorage.getChatHistory().isEmpty()) {
             updateHistoryList();
@@ -204,6 +202,10 @@ public class App {
         final var userMessage = Message.userMessage(userInput.text());
         if (this.historyStorage.getConversation().isEmpty()) {
             this.historyStorage.newConversation(userMessage.content());
+            llmConfig.systemMessage().ifPresent(systemMessage -> {
+                var message = Message.systemMessage(systemMessage);
+                this.historyStorage.getConversation().messages().add(message);
+            });
             updateHistoryList();
         }
         historyStorage.getConversation().messages().add(userMessage);
@@ -297,6 +299,8 @@ public class App {
                 final var content = message.content();
                 if (Role.USER == message.role()) {
                     chatController.appendUserMessage(content);
+                } else if (Role.SYSTEM == message.role()) {
+                    chatController.appendSystemMessage(content);
                 } else {
                     var htmlMessage = htmlMessageCache.computeIfAbsent(message,
                             messageToParse -> parseMarkdowToHTML(messageToParse.content()));

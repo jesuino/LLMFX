@@ -14,10 +14,13 @@ public interface LLMConfig {
 
     String model();
 
-    @ConfigProperty(defaultValue =  "200")
+    @ConfigProperty(defaultValue = "200")
     int timeout();
 
     @ConfigProperty(defaultValue = "")
     Optional<String> key();
+
+    @ConfigProperty(defaultValue = "")
+    Optional<String> systemMessage();
 
 }

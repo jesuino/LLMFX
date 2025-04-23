@@ -7,6 +7,7 @@ import java.util.Map;
 import org.fxapps.llmfx.config.LLMConfig;
 
 import dev.langchain4j.data.message.AiMessage;
+import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;
@@ -67,14 +68,15 @@ public class ChatService {
         chatRequest.messages().stream().map(m -> switch (m.role()) {
             case USER -> new UserMessage(m.content());
             case ASSISTANT -> new AiMessage(m.content());
+            case SYSTEM -> new SystemMessage(m.content());
 
         }).forEach(memory::add);
 
         bot.chat(chatRequest.message())
                 .onPartialResponse(token -> {
-                    if(!chatRequest.stop().get()) {
-                        chatRequest.onToken().accept(token); 
-                        // TODO: force streaming stop here                      
+                    if (!chatRequest.stop().get()) {
+                        chatRequest.onToken().accept(token);
+                        // TODO: force streaming stop here
                     }
 
                 })

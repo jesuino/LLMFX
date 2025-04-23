@@ -5,7 +5,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import org.fxapps.llmfx.AlertsHelper;
 import org.fxapps.llmfx.Events.ClearDrawingEvent;
@@ -70,10 +69,17 @@ public class ChatController {
                             border-radius: 20px;
                             color: black;
                             margin: 5px;
-                            padding: 5px;
+                            padding: 5px !important;
+                            padding-left: 10px !important;
                         }
                         .user-message {
                             background-color: lightblue;
+                        }
+                        .system-message {
+                            background-color: #f1f1f1; 
+                            border-left: 4px solid #0056b3; 
+                            color: #DDDDDD !important; 
+                            font-style: italic;
                         }
                         .assistant-message {
                             background-color: lightgray;
@@ -208,8 +214,7 @@ public class ChatController {
         this.historyList.getSelectionModel().selectedIndexProperty().addListener((obs, old, n) -> {
             final var i = n.intValue();
             historySelectedEvent.fire(new HistorySelectedEvent(i));
-
-        });
+        });        
 
         btnTrashConversation.disableProperty()
                 .bind(historyList.getSelectionModel().selectedIndexProperty().isEqualTo(-1));
@@ -308,6 +313,10 @@ public class ChatController {
 
     public void appendUserMessage(String userMessage) {
         runScriptToAppendMessage("<p>" + userMessage + "</p>", "user");
+    }
+
+    public void appendSystemMessage(String systemMessage) {
+        runScriptToAppendMessage("<p>" + systemMessage + "</p>", "system");
     }
 
     public void appendAssistantMessage(String assistantMessage) {

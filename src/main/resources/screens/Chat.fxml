@@ -90,7 +90,7 @@
       </HBox>
    </bottom>
    <center>
-      <SplitPane fx:id="spBody" dividerPositions="0.1, 0.4" BorderPane.alignment="CENTER">
+      <SplitPane fx:id="spBody" dividerPositions="0.1, 0.9" BorderPane.alignment="CENTER">
          <items>
             <StackPane minWidth="0.0">
                <children>

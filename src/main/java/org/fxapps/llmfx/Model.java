@@ -12,7 +12,7 @@ import dev.langchain4j.service.tool.ToolProvider;
 public class Model {
 
     public enum Role {
-        ASSISTANT, USER;
+        ASSISTANT, USER, SYSTEM;
     }
 
     public record Message(String content, Role role) {
@@ -23,6 +23,11 @@ public class Model {
         public static Message assistantMessage(String content) {
             return new Message(content, Role.ASSISTANT);
         }
+
+        public static Message systemMessage(String content) {
+            return new Message(content, Role.SYSTEM);
+        }
+
     }
 
     public record ChatRequest(
