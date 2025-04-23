@@ -45,9 +45,16 @@ public class Events {
     }
 
     public record NewDrawingNodeEvent(Node node) {
+
+    }
+
+    public record ClearDrawingEvent() {
     }
 
     public record NewReportingNodeEvent(Node node, int column, int row) {
+    }
+
+    public record ClearReportEvent() {
     }
 
 }

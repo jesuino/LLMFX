@@ -9,7 +9,7 @@ import io.smallrye.config.ConfigMapping;
 @ConfigMapping(prefix = "app")
 public interface AppConfig {
 
-    @ConfigProperty(defaultValue = "true")
+    @ConfigProperty(defaultValue = "true")    
     Optional<Boolean> alwaysOnTop();
 
     @ConfigProperty

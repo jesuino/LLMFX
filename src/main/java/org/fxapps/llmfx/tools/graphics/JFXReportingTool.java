@@ -1,7 +1,9 @@
-package org.fxapps.llmfx.tools.jfx;
+package org.fxapps.llmfx.tools.graphics;
 
 import java.util.Arrays;
+import java.util.Map;
 
+import org.fxapps.llmfx.Events.ClearReportEvent;
 import org.fxapps.llmfx.Events.NewReportingNodeEvent;
 
 import dev.langchain4j.agent.tool.P;
@@ -12,9 +14,12 @@ import jakarta.inject.Singleton;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.chart.AreaChart;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
+import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
+import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -26,7 +31,14 @@ public class JFXReportingTool {
     @Inject
     Event<NewReportingNodeEvent> newReportingNodeEvent;
 
-    @Tool("Creates or set a title for the report. You can create a title for the report with the specified text and font size.")
+    @Inject
+    Event<ClearReportEvent> clearReportingNodeEvent;
+
+    enum ChartType {
+        AREA, LINE, BAR
+    }
+
+    @Tool("Creates or set a title for a report or dashboard. It is always placed on column 0 and row 0. You can create a title for the report with the specified text and font size.")
     public void title(
             @P("Reporting title text") String text,
             @P("Reporting title font size") int fontSize,
@@ -40,13 +52,13 @@ public class JFXReportingTool {
     }
 
     @Tool("""
-            Creates a table for the report. You can create a table with the specified number of columns and rows.
+            Creates a table for a report or dashboard. You can create a table with the specified number of columns and rows.
             The table will be placed at the specified coordinates.
             Make sure that the columns length matches the number of columns in the data.
             """)
     public void addTable(
-            @P("The column to place the table") int column,
-            @P("The column to place the table") int row,
+            @P("The column to place the table on the report grid. The grid starts on column 1") int column,
+            @P("The row to place the table on the report grid. The grid starts on row 1") int row,
             @P("Table width in pixels") int width,
             @P("Table height in pixels") int height,
             @P("The list of columns") String[] columnsNames,
@@ -71,30 +83,33 @@ public class JFXReportingTool {
         }).toList();
 
         tableView.getColumns().addAll(columns);
-
         tableView.setItems(tableData);
-
         newReportingNodeEvent.fire(new NewReportingNodeEvent(tableView, column, row));
 
     }
 
-    @Tool("Creates a bar chart for the report. You can create a bar chart with the specified title and data. The chart will be placed at the specified coordinates.")
-    public void addBarChart(
+    @Tool("Creates a XY chart for the report. You can create a chart with the specified title and data. The chart will be placed at the specified coordinates.")
+    public void addXYChart(
+            @P("The XY chart type. It can be AREA, LINE or BAR") ChartType type,
             @P("The Chart title") String title,
             @P("The chart width in pixels") int width,
             @P("The chart height in pixels") int height,
-            @P("The column to place the bar chart") int column,
-            @P("The row to place the bar chart") int row,
+            @P("The column to place the chart on the report grid. The grid starts on column 1") int column,
+            @P("The row to place the chart on the report grid. The grid starts on row 1") int row,
             @P("The name of the series") String seriesName,
             @P("The X axis values") String[] categories,
             @P("The y axis values") Float[] values) {
 
         final CategoryAxis xAxis = new CategoryAxis();
         final NumberAxis yAxis = new NumberAxis();
-        var barchart = new BarChart<>(xAxis, yAxis);
-        barchart.setPrefWidth(width);
-        barchart.setPrefHeight(height);
-        barchart.setTitle(title);
+        var chart = switch (type) {
+            case AREA -> new AreaChart<>(xAxis, yAxis);
+            case LINE -> new LineChart<>(xAxis, yAxis);
+            case BAR -> new BarChart<>(xAxis, yAxis);
+        };
+        chart.setPrefWidth(width);
+        chart.setPrefHeight(height);
+        chart.setTitle(title);
 
         var seriesData = new XYChart.Series<String, Number>();
         seriesData.setName(seriesName);
@@ -103,9 +118,34 @@ public class JFXReportingTool {
             seriesData.getData().add(new XYChart.Data<>(categories[i], values[i]));
         }
 
-        barchart.getData().add(seriesData);
-        newReportingNodeEvent.fire(new NewReportingNodeEvent(barchart, column, row));
+        chart.getData().add(seriesData);
+        newReportingNodeEvent.fire(new NewReportingNodeEvent(chart, column, row));
+    }
 
+    @Tool("Creates a pie chart for the report. You can create a Pie chart with the specified title and data. The chart will be placed at the specified coordinates.")
+    public void addPieChart(
+            @P("The Chart title") String title,
+            @P("The chart width in pixels") int width,
+            @P("The chart height in pixels") int height,
+            @P("The column to place the chart on the report grid. The grid starts on column 1") int column,
+            @P("The row to place the chart on the report grid. The grid starts on row 1") int row,
+            @P("The Pie Chart data in format of a map where the key is the category and the value is the value to plotted ") Map<String, Float> data) {
+
+        var pieChart = new PieChart();
+        pieChart.setPrefWidth(width);
+        pieChart.setPrefHeight(height);
+        pieChart.setTitle(title);
+
+        data.forEach((k, v) -> {
+            pieChart.getData().add(new PieChart.Data(k, v));
+        });
+
+        newReportingNodeEvent.fire(new NewReportingNodeEvent(pieChart, column, row));
+    }
+
+    @Tool("Clear the current report or dashboard by removing all elements previously added.")
+    public void clear() {
+        clearReportingNodeEvent.fire(new ClearReportEvent());
     }
 
 }

@@ -6,8 +6,9 @@ import java.util.Map;
 import org.fxapps.llmfx.tools.code.CommandsTool;
 import org.fxapps.llmfx.tools.files.FilesReaderTool;
 import org.fxapps.llmfx.tools.files.FilesWriterTool;
-import org.fxapps.llmfx.tools.jfx.JFXDrawerTool;
-import org.fxapps.llmfx.tools.jfx.JFXReportingTool;
+import org.fxapps.llmfx.tools.graphics.JFXDrawerTool;
+import org.fxapps.llmfx.tools.graphics.JFXPathTool;
+import org.fxapps.llmfx.tools.graphics.JFXReportingTool;
 import org.fxapps.llmfx.tools.time.DateTimeTool;
 import org.fxapps.llmfx.tools.web.WebSearchTool;
 
@@ -19,6 +20,7 @@ import jakarta.inject.Singleton;
 public class ToolsInfo {
 
     private static final String CANVAS_DRAWING = "Canvas Drawing";
+    private static final String PATH_DRAWING = "Path Drawing";
     private static final String REPORTING = "Reporting";
     private static final String FILE_WRITE = "File Write";
     private static final String FILES_READ = "Files Read";
@@ -39,16 +41,20 @@ public class ToolsInfo {
     @Inject
     private JFXDrawerTool drawerTool;
     @Inject
+    private JFXPathTool pathTool;
+    @Inject
     private JFXReportingTool reportingTool;
 
     Map<String, Object> toolsMap;
+
+    // TODO: Create a 3d tool to draw 3d stuff
 
     Map<String, List<String>> toolsCategoryMap = Map.of(
             "Files", List.of(FILES_READ, FILE_WRITE),
             "Web", List.of(WEB_SEARCH),
             "Date and Time", List.of(DATE_TIME),
             "Execute", List.of(COMMANDS),
-            "JFX", List.of(CANVAS_DRAWING, REPORTING));
+            "Graphics", List.of(PATH_DRAWING, CANVAS_DRAWING, REPORTING));
 
     @PostConstruct
     void init() {
@@ -60,7 +66,8 @@ public class ToolsInfo {
                 DATE_TIME, dateTimeTool,
                 COMMANDS, commandsTool,
                 CANVAS_DRAWING, drawerTool,
-                REPORTING, reportingTool);
+                REPORTING, reportingTool,
+                PATH_DRAWING, pathTool);
 
     }
 

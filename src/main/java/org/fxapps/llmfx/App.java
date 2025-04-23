@@ -271,10 +271,12 @@ public class App {
                     showChatMessages();
                 },
                 r -> {
+                    saveHistory();
                     stopStreamingStack.remove(stopFlag);
                     chatController.holdChatProperty().set(false);
                 },
                 e -> {
+                    stopStreamingStack.remove(stopFlag);
                     logger.error("Error during message streaming", e);
                     Platform.runLater(() -> alertsHelper.showError("Error",
                             "There was an error during the conversation",

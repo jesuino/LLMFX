@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.fxapps.llmfx.AlertsHelper;
+import org.fxapps.llmfx.Events.ClearDrawingEvent;
 import org.fxapps.llmfx.Events.DeleteConversationEvent;
 import org.fxapps.llmfx.Events.HistorySelectedEvent;
 import org.fxapps.llmfx.Events.MCPServerSelectEvent;
@@ -50,6 +51,10 @@ import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 
+//TODOS:
+// 1. make the models refresh part of the models menu if a separator
+// 2. add a deselect all tools menu to the tools menu
+// 3. add a deselect all mcp menu to the mcp menu
 @FxView
 @Singleton
 public class ChatController {
@@ -160,6 +165,7 @@ public class ChatController {
     private Tab reportingTab;
 
     private Pane canvasPane;
+
     private GridPane reportingPane;
 
     private SimpleBooleanProperty holdChatProperty;
@@ -275,10 +281,17 @@ public class ChatController {
 
     }
 
+    public void onClearReportingEvent(@Observes NewDrawingNodeEvent event) {
+        Platform.runLater(() -> this.reportingPane.getChildren().clear());
+    }
+
+    public void onClearDrawingNodeEvent(@Observes ClearDrawingEvent event) {
+        Platform.runLater(() -> this.canvasPane.getChildren().clear());
+    }
 
     public void onNewReportingNodeEvent(@Observes NewReportingNodeEvent evt) {
 
-        Platform.runLater(() -> {            
+        Platform.runLater(() -> {
             reportingPane.add(evt.node(), evt.column(), evt.row());
             pnlJFX.getSelectionModel().select(reportingTab);
             spBody.setDividerPosition(2, 0.4);
@@ -406,7 +419,6 @@ public class ChatController {
     @FXML
     void stopStreaming() {
         stopStreamingEvent.fire(new StopStreamingEvent());
-
     }
 
     private void runScriptToAppendMessage(String message, String role) {
