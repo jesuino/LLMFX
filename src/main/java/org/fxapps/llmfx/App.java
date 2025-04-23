@@ -16,7 +16,6 @@ import org.fxapps.llmfx.Events.ChatUpdateEvent;
 import org.fxapps.llmfx.Events.DeleteConversationEvent;
 import org.fxapps.llmfx.Events.HistorySelectedEvent;
 import org.fxapps.llmfx.Events.NewChatEvent;
-import org.fxapps.llmfx.Events.MCPServerSelectEvent;
 import org.fxapps.llmfx.Events.RefreshModelsEvent;
 import org.fxapps.llmfx.Events.SaveChatEvent;
 import org.fxapps.llmfx.Events.SelectedModelEvent;
@@ -94,9 +93,6 @@ public class App {
     private Map<Message, String> htmlMessageCache;
     private Stage stage;
 
-    // TODO: THis could be provided by the UI
-    private List<String> selectedMcpServers;
-
     private String selectedModel;
 
     private Stack<AtomicBoolean> stopStreamingStack;
@@ -129,8 +125,7 @@ public class App {
         chatController.init();
         refreshModels();
         chatController.setMCPServers(mcpClientRepository.mcpServers());
-        chatController.setTools(toolsInfo.getToolsCategoryMap());
-        selectedMcpServers = new ArrayList<>();
+        chatController.setTools(toolsInfo.getToolsCategoryMap());        
 
         if (!historyStorage.getChatHistory().isEmpty()) {
             updateHistoryList();
@@ -200,15 +195,6 @@ public class App {
         refreshModels();
     }
 
-    void onMcpServerSelected(@Observes MCPServerSelectEvent mcpServerSelectEvent) {
-        final var name = mcpServerSelectEvent.name();
-        if (mcpServerSelectEvent.isSelected()) {
-            selectedMcpServers.add(name);
-        } else {
-            selectedMcpServers.remove(name);
-        }
-    }
-
     void onStopStreaming(@Observes StopStreamingEvent stopStreamingEvent) {
         stopStreamingStack.pop().set(true);
         chatController.holdChatProperty().set(!stopStreamingStack.isEmpty());
@@ -226,7 +212,7 @@ public class App {
         saveHistory();
 
         var toolProvider = McpToolProvider.builder()
-                .mcpClients(selectedMcpServers.stream()
+                .mcpClients(chatController.selectedMCPs().stream()
                         .map(mcpClientRepository::getMcpClient).toList())
                 .build();
 

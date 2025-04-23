@@ -11,7 +11,6 @@ import org.fxapps.llmfx.AlertsHelper;
 import org.fxapps.llmfx.Events.ClearDrawingEvent;
 import org.fxapps.llmfx.Events.DeleteConversationEvent;
 import org.fxapps.llmfx.Events.HistorySelectedEvent;
-import org.fxapps.llmfx.Events.MCPServerSelectEvent;
 import org.fxapps.llmfx.Events.NewChatEvent;
 import org.fxapps.llmfx.Events.NewDrawingNodeEvent;
 import org.fxapps.llmfx.Events.NewReportingNodeEvent;
@@ -100,9 +99,6 @@ public class ChatController {
     Event<SaveChatEvent> saveChatEvent;
 
     @Inject
-    Event<MCPServerSelectEvent> mcpServerSelectEvent;
-
-    @Inject
     Event<StopStreamingEvent> stopStreamingEvent;
 
     @Inject
@@ -173,12 +169,14 @@ public class ChatController {
     private Tooltip mcpMenuTooltip;
 
     private Set<String> selectedTools;
+    private Set<String> selectedMCPs;
 
     public void init() {
         this.mcpMenuTooltip = new Tooltip("Select MCP Servers");
         this.canvasPane = new AnchorPane();
         this.reportingPane = new GridPane(5, 5);
         this.selectedTools = new HashSet<>();
+        this.selectedMCPs = new HashSet<>();
 
         canvasTab.setContent(new ScrollPane(canvasPane));
         canvasPane.setTranslateX(5);
@@ -249,6 +247,10 @@ public class ChatController {
 
     public Set<String> selectedTools() {
         return selectedTools;
+    }
+
+    public Set<String> selectedMCPs() {
+        return selectedMCPs;
     }
 
     public void enableMCPMenu(boolean enable) {
@@ -336,22 +338,20 @@ public class ChatController {
     }
 
     public void setMCPServers(Collection<String> mcpServers) {
-        var totalSelectedMCPServers = new AtomicInteger();
         final var mcpMenus = mcpServers.stream().map(mcpServer -> {
             var menu = new CheckMenuItem(mcpServer);
             menu.setOnAction(e -> {
                 var isSelected = menu.isSelected();
                 if (isSelected) {
-                    totalSelectedMCPServers.incrementAndGet();
+                    selectedMCPs.add(mcpServer);
 
                 } else {
-                    totalSelectedMCPServers.decrementAndGet();
+                    selectedMCPs.remove(mcpServer);
                 }
                 mcpMenu.setText("MCP");
-                if (totalSelectedMCPServers.get() > 0) {
-                    mcpMenu.setText(mcpMenu.getText() + " (" + totalSelectedMCPServers.get() + ")");
+                if (!selectedMCPs.isEmpty()) {
+                    mcpMenu.setText(mcpMenu.getText() + " (" + selectedMCPs.size() + ")");
                 }
-                mcpServerSelectEvent.fire(new MCPServerSelectEvent(mcpServer, isSelected));
             });
             return menu;
 
@@ -378,8 +378,9 @@ public class ChatController {
                             toolsMenu.setText("Tools");
                             if (!selectedTools.isEmpty()) {
                                 toolsMenu.setText(toolsMenu.getText() + " (" + selectedTools.size() + ")");
+
                             }
-                            mcpMenu.setDisable(!selectedTools.isEmpty());
+                            enableMCPMenu(selectedTools.isEmpty());
                         });
                         return menu;
 

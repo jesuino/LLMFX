@@ -16,10 +16,6 @@ public class Events {
 
     public record NewChatEvent() {
     }
-
-    public record MCPServerSelectEvent(String name, boolean isSelected) {
-    }
-
     public record SaveChatEvent(SaveFormat saveFormat) {
     }
 
