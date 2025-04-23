@@ -1,8 +1,10 @@
 package org.fxapps.llmfx.controllers;
 
 import java.util.Collection;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.fxapps.llmfx.AlertsHelper;
@@ -18,7 +20,6 @@ import org.fxapps.llmfx.Events.SaveChatEvent;
 import org.fxapps.llmfx.Events.SaveFormat;
 import org.fxapps.llmfx.Events.SelectedModelEvent;
 import org.fxapps.llmfx.Events.StopStreamingEvent;
-import org.fxapps.llmfx.Events.ToolSelectEvent;
 import org.fxapps.llmfx.Events.UserInputEvent;
 import org.w3c.dom.html.HTMLElement;
 
@@ -102,9 +103,6 @@ public class ChatController {
     Event<MCPServerSelectEvent> mcpServerSelectEvent;
 
     @Inject
-    Event<ToolSelectEvent> toolSelectEvent;
-
-    @Inject
     Event<StopStreamingEvent> stopStreamingEvent;
 
     @Inject
@@ -174,10 +172,13 @@ public class ChatController {
 
     private Tooltip mcpMenuTooltip;
 
+    private Set<String> selectedTools;
+
     public void init() {
         this.mcpMenuTooltip = new Tooltip("Select MCP Servers");
         this.canvasPane = new AnchorPane();
         this.reportingPane = new GridPane(5, 5);
+        this.selectedTools = new HashSet<>();
 
         canvasTab.setContent(new ScrollPane(canvasPane));
         canvasPane.setTranslateX(5);
@@ -246,6 +247,10 @@ public class ChatController {
 
     }
 
+    public Set<String> selectedTools() {
+        return selectedTools;
+    }
+
     public void enableMCPMenu(boolean enable) {
         var text = enable ? "MCP Servers are enabled" : "MCP Servers are ignored because Tools are selected";
         mcpMenuTooltip.setText(text);
@@ -312,7 +317,6 @@ public class ChatController {
                 .replaceFirst("</think>", "</i><h4 style=\"color: red !important\">end thinking</h4><hr/>")
                 // TODO: find someway to copy to the clipboard
                 .replaceAll("<code", "<code");
-
         runScriptToAppendMessage(message, "assistant");
 
     }
@@ -356,7 +360,7 @@ public class ChatController {
     }
 
     public void setTools(Map<String, List<String>> toolsCat) {
-        var totalSelectedTools = new AtomicInteger();
+
         var catMenus = toolsCat.entrySet()
                 .stream()
                 .map(e -> {
@@ -366,16 +370,16 @@ public class ChatController {
                         menu.setOnAction(evt -> {
                             final var isSelected = menu.isSelected();
                             if (isSelected) {
-                                totalSelectedTools.incrementAndGet();
+                                selectedTools.add(tool);
                             } else {
-                                totalSelectedTools.decrementAndGet();
+
+                                selectedTools.remove(tool);
                             }
                             toolsMenu.setText("Tools");
-                            if (totalSelectedTools.get() > 0) {
-                                toolsMenu.setText(toolsMenu.getText() + " (" + totalSelectedTools.get() + ")");
+                            if (!selectedTools.isEmpty()) {
+                                toolsMenu.setText(toolsMenu.getText() + " (" + selectedTools.size() + ")");
                             }
-                            toolSelectEvent.fire(new ToolSelectEvent(tool, isSelected));
-
+                            mcpMenu.setDisable(!selectedTools.isEmpty());
                         });
                         return menu;
 

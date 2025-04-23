@@ -4,10 +4,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
@@ -23,7 +21,6 @@ import org.fxapps.llmfx.Events.RefreshModelsEvent;
 import org.fxapps.llmfx.Events.SaveChatEvent;
 import org.fxapps.llmfx.Events.SelectedModelEvent;
 import org.fxapps.llmfx.Events.StopStreamingEvent;
-import org.fxapps.llmfx.Events.ToolSelectEvent;
 import org.fxapps.llmfx.Events.UserInputEvent;
 import org.fxapps.llmfx.Model.ChatHistory;
 import org.fxapps.llmfx.Model.Message;
@@ -99,7 +96,6 @@ public class App {
 
     // TODO: THis could be provided by the UI
     private List<String> selectedMcpServers;
-    private Set<Object> tools;
 
     private String selectedModel;
 
@@ -113,7 +109,6 @@ public class App {
         this.htmlMessageCache = new HashMap<>();
         this.stage = event.getPrimaryStage();
         this.stopStreamingStack = new Stack<AtomicBoolean>();
-        this.tools = new HashSet<>();
 
         final var chatView = (Parent) chatViewData.getRootNode();
         final var scene = new Scene(chatView);
@@ -214,20 +209,6 @@ public class App {
         }
     }
 
-    void onToolSelected(@Observes ToolSelectEvent toolSelectEvent) {
-        final var name = toolSelectEvent.name();
-        var tool = toolsInfo.getToolsMap().get(name);
-
-        if (toolSelectEvent.isSelected()) {
-            tools.add(tool);
-        } else {
-            tools.remove(tool);
-        }
-
-        Platform.runLater(() -> this.chatController.enableMCPMenu(tools.isEmpty()));
-
-    }
-
     void onStopStreaming(@Observes StopStreamingEvent stopStreamingEvent) {
         stopStreamingStack.pop().set(true);
         chatController.holdChatProperty().set(!stopStreamingStack.isEmpty());
@@ -255,6 +236,11 @@ public class App {
         chatController.holdChatProperty().set(true);
         var stopFlag = new AtomicBoolean(false);
         this.stopStreamingStack.push(stopFlag);
+        var selectedTools = chatController.selectedTools();
+        var tools = toolsInfo.getToolsMap().entrySet().stream()
+                .filter(e -> selectedTools.contains(e.getKey()))
+                .map(e -> e.getValue())
+                .collect(Collectors.toSet());
         var request = new Model.ChatRequest(
                 userInput.text(),
                 historyStorage.getConversation().messages(),
