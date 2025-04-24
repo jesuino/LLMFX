@@ -62,6 +62,33 @@ public class ChatController {
     final String CHAT_PAGE = """
                 <html>
                     <style>
+                        table {
+                            border-collapse: collapse;
+                            margin-bottom: 20px; /* Add some space between the table and other content if needed */
+                        }
+
+                        th, td {
+                            padding: 8px 12px;
+                            text-align: left;
+                            vertical-align: top;
+                            background-color: #f4f4f4;
+                            border-bottom: 1px solid #ddd;
+                        }
+                        th {
+                            background-color: #2c3e50; /* Darker background for headers, similar to GitHub */
+                            color: white;
+                            font-weight: bold;
+                        }
+
+                        /* Last column header without a bottom border */
+                        th:last-child {
+                            border-bottom: none;
+                        }
+
+                        /* Last row cell without a bottom border */
+                        tr:last-child td {
+                            border-bottom: none;
+                        }
                         .chat-container {
                             padding: 10px;
                             flex-grow: 1;
@@ -154,7 +181,7 @@ public class ChatController {
     SplitPane spBody;
 
     @FXML
-    TabPane pnlJFX;
+    TabPane graphicsPane;
 
     @FXML
     Button btnClearCanvas;
@@ -165,8 +192,16 @@ public class ChatController {
     @FXML
     private Tab reportingTab;
 
-    private Pane canvasPane;
+    @FXML
+    private Tab webViewTab;
 
+    @FXML
+    WebView webContentView;
+
+    @FXML
+    private AnchorPane canvasPane;
+
+    @FXML
     private GridPane reportingPane;
 
     private SimpleBooleanProperty holdChatProperty;
@@ -180,20 +215,10 @@ public class ChatController {
 
     public void init() {
         this.mcpMenuTooltip = new Tooltip("Select MCP Servers");
-        this.canvasPane = new AnchorPane();
-        this.reportingPane = new GridPane(5, 5);
         this.selectedTools = new HashSet<>();
         this.selectedMCPs = new HashSet<>();
 
-        canvasTab.setContent(new ScrollPane(canvasPane));
-        canvasPane.setTranslateX(5);
-        canvasPane.setTranslateY(5);
-
-        reportingTab.setContent(new ScrollPane(reportingPane));
-        reportingPane.setTranslateX(5);
-        reportingPane.setTranslateY(5);
-
-        pnlJFX.getTabs().addAll(canvasTab, reportingTab);
+        graphicsPane.getTabs().clear();
 
         holdChatProperty = new SimpleBooleanProperty();
         txtInput.disableProperty().bind(holdChatProperty);
@@ -285,13 +310,27 @@ public class ChatController {
     }
 
     public void onNewDrawingNodeEvent(@Observes NewDrawingNodeEvent event) {
-
         Platform.runLater(() -> {
+            if (!graphicsPane.getTabs().contains(canvasTab)) {
+                graphicsPane.getTabs().add(canvasTab);
+            }
             canvasPane.getChildren().add(event.node());
-            pnlJFX.getSelectionModel().select(canvasTab);
-            spBody.setDividerPosition(2, 0.4);
+            graphicsPane.getSelectionModel().select(canvasTab);
+            spBody.setDividerPosition(1, 0.4);
         });
+    }
 
+
+    public void onNewReportingNodeEvent(@Observes NewReportingNodeEvent evt) {
+        Platform.runLater(() -> {
+
+            if (!graphicsPane.getTabs().contains(reportingTab)) {
+                graphicsPane.getTabs().add(reportingTab);
+            }
+            reportingPane.add(evt.node(), evt.column(), evt.row());
+            graphicsPane.getSelectionModel().select(reportingTab);
+            spBody.setDividerPosition(1, 0.4);
+        });
     }
 
     public void onClearReportingEvent(@Observes ClearReportEvent event) {
@@ -301,27 +340,17 @@ public class ChatController {
     public void onClearDrawingNodeEvent(@Observes ClearDrawingEvent event) {
 
         Platform.runLater(() -> {
-            if (this.canvasTab.isSelected()) {
+            var selectedTab = graphicsPane.getSelectionModel().getSelectedItem();
+            if (this.canvasTab == selectedTab) {
                 this.canvasPane.getChildren().clear();
             }
-            if (this.reportingTab.isSelected()) {                
+            if (this.reportingTab == selectedTab) {
                 this.reportingPane.getChildren().removeAll();
-                // workaround to make sure the grid pane is clean
-                this.reportingPane = new GridPane(5, 5);
-                this.reportingTab.setContent(new ScrollPane(reportingPane));
+                this.reportingPane.getChildren().clear();
             }
         });
     }
 
-    public void onNewReportingNodeEvent(@Observes NewReportingNodeEvent evt) {
-
-        Platform.runLater(() -> {
-            reportingPane.add(evt.node(), evt.column(), evt.row());
-            pnlJFX.getSelectionModel().select(reportingTab);
-            spBody.setDividerPosition(2, 0.4);
-        });
-
-    }
 
     public void appendUserMessage(String userMessage) {
         runScriptToAppendMessage("<p>" + userMessage + "</p>", "user");

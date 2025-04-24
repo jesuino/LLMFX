@@ -3,11 +3,14 @@ package org.fxapps.llmfx;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
+import org.commonmark.Extension;
+import org.commonmark.ext.gfm.tables.TablesExtension;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.fxapps.llmfx.Events.ChatUpdateEvent;
@@ -98,12 +101,11 @@ public class App {
     void onPostStartup(@Observes final FxPostStartupEvent event) throws Exception {
         this.chatViewData = viewRepository.getViewData("Chat");
         this.chatController = chatViewData.getController();
-        this.markDownParser = Parser.builder().build();
-        this.markdownRenderer = HtmlRenderer.builder().build();
+        this.markdownRenderer = HtmlRenderer.builder().extensions(List.of(TablesExtension.create())).build();
         this.htmlMessageCache = new HashMap<>();
         this.stage = event.getPrimaryStage();
         this.stopStreamingStack = new Stack<AtomicBoolean>();
-
+        this.markDownParser = Parser.builder().extensions(List.of(TablesExtension.create())).build();
         final var chatView = (Parent) chatViewData.getRootNode();
         final var scene = new Scene(chatView);
 
@@ -113,6 +115,7 @@ public class App {
         stage.setOnCloseRequest(e -> {
             logger.info("Closing application...");
             saveHistory();
+            System.out.println(htmlMessageCache);
             System.exit(0);
         });
 
@@ -145,7 +148,7 @@ public class App {
                 .filter(m -> m.equals(selectedModel))
                 .findAny()
                 .or(() -> modelsList.stream()
-                        .filter(m -> m.equals(llmConfig.model()))
+                        .filter(m -> m.equals(llmConfig.model().orElse("")))
                         .findAny());
         if (currentModel.isPresent()) {
             chatController.setSelectedModel(currentModel.get());

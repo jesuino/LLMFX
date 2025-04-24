@@ -7,6 +7,7 @@
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.MenuButton?>
 <?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.SplitMenuButton?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.Tab?>
@@ -16,7 +17,10 @@
 <?import javafx.scene.effect.Shadow?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
+<?import javafx.scene.layout.ColumnConstraints?>
+<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.paint.Color?>
@@ -90,7 +94,7 @@
       </HBox>
    </bottom>
    <center>
-      <SplitPane fx:id="spBody" dividerPositions="0.1, 0.9" BorderPane.alignment="CENTER">
+      <SplitPane fx:id="spBody" dividerPositions="0.1, 1.0" prefHeight="295.0" prefWidth="565.0" BorderPane.alignment="CENTER">
          <items>
             <StackPane minWidth="0.0">
                <children>
@@ -143,12 +147,47 @@
             </StackPane>
             <StackPane minWidth="0.0">
                <children>
-                  <TabPane fx:id="pnlJFX" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
+                  <TabPane fx:id="graphicsPane" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
                      <tabs>
-                        <Tab fx:id="canvasTab" text="Canvas" />
+                        <Tab fx:id="canvasTab" text="Canvas">
+                          <content>
+                              <ScrollPane>
+                                 <content>
+                                  <AnchorPane fx:id="canvasPane" minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
+                                       <padding>
+                                          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                       </padding>
+                                    </AnchorPane>
+                                 </content>
+                              </ScrollPane>
+                          </content>
+                        </Tab>
                         <Tab fx:id="reportingTab" text="Reporting">
                           <content>
-                            <AnchorPane minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0" />
+                              <ScrollPane>
+                                 <content>
+                                    <GridPane fx:id="reportingPane" hgap="5.0" vgap="5.0">
+                                       <columnConstraints>
+                                          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
+                                       </columnConstraints>
+                                       <rowConstraints>
+                                          <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
+                                       </rowConstraints>
+                                       <padding>
+                                          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
+                                       </padding>
+                                    </GridPane>
+                                 </content>
+                              </ScrollPane>
+                          </content>
+                        </Tab>
+                        <Tab text="Web View">
+                          <content>
+                              <StackPane>
+                                 <children>
+                                    <WebView fx:id="webContentView" prefHeight="200.0" prefWidth="200.0" />
+                                 </children>
+                              </StackPane>
                           </content>
                         </Tab>
                      </tabs></TabPane>

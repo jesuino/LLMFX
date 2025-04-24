@@ -31,7 +31,6 @@ public class OpenAiService {
 
         var response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
         var json = Json.createReader(response.body()).read();
-        System.out.println(json);
         return json.asJsonObject()
                 .get("data")
                 .asJsonArray()
