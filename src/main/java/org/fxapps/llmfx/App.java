@@ -35,6 +35,7 @@ import org.fxapps.llmfx.services.OpenAiService;
 import org.fxapps.llmfx.tools.ToolsInfo;
 import org.jboss.logging.Logger;
 
+import atlantafx.base.theme.PrimerLight;
 import dev.langchain4j.mcp.McpToolProvider;
 import io.quarkiverse.fx.FxPostStartupEvent;
 import io.quarkiverse.fx.RunOnFxThread;
@@ -44,6 +45,7 @@ import jakarta.enterprise.event.Event;
 import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
@@ -99,6 +101,10 @@ public class App {
     private Stack<AtomicBoolean> stopStreamingStack;
 
     void onPostStartup(@Observes final FxPostStartupEvent event) throws Exception {
+
+        Application.setUserAgentStylesheet(new PrimerLight().getUserAgentStylesheet());
+      //  Application.setUserAgentStylesheet(new PrimerDark().getUserAgentStylesheet());
+
         this.chatViewData = viewRepository.getViewData("Chat");
         this.chatController = chatViewData.getController();
         this.markdownRenderer = HtmlRenderer.builder().extensions(List.of(TablesExtension.create())).build();
