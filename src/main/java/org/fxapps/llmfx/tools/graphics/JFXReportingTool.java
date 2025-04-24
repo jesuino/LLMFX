@@ -23,6 +23,12 @@ import javafx.scene.chart.PieChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.layout.Background;
+import javafx.scene.layout.FlowPane;
+import javafx.scene.paint.Color;
+import javafx.scene.text.Font;
+import javafx.scene.text.FontPosture;
+import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 
 @Singleton
@@ -38,18 +44,6 @@ public class JFXReportingTool {
         AREA, LINE, BAR
     }
 
-    @Tool("Creates or set a title for a report or dashboard. It is always placed on column 0 and row 0. You can create a title for the report with the specified text and font size.")
-    public void title(
-            @P("Reporting title text") String text,
-            @P("Reporting title font size") int fontSize,
-            @P("Reporting title text color in CSS format") String color) {
-
-        Text title = new Text(text);
-        title.setFont(javafx.scene.text.Font.font(fontSize));
-        title.setFill(javafx.scene.paint.Color.valueOf(color));
-
-        newReportingNodeEvent.fire(new NewReportingNodeEvent(title, 0, 0));
-    }
 
     @Tool("""
             Creates a table for a report or dashboard. You can create a table with the specified number of columns and rows.
@@ -57,8 +51,10 @@ public class JFXReportingTool {
             Make sure that the columns length matches the number of columns in the data.
             """)
     public void addTable(
-            @P("The column to place the table on the report grid. The grid starts on column 1") int column,
-            @P("The row to place the table on the report grid. The grid starts on row 1") int row,
+            @P("The column to place the table on the report grid") int column,
+            @P("The row to place the table on the report grid") int row,
+            @P("The number of columns the table should span") int colSpan,
+            @P("the number of rows the table should span") int rowspan,
             @P("Table width in pixels") int width,
             @P("Table height in pixels") int height,
             @P("The list of columns") String[] columnsNames,
@@ -84,8 +80,7 @@ public class JFXReportingTool {
 
         tableView.getColumns().addAll(columns);
         tableView.setItems(tableData);
-        newReportingNodeEvent.fire(new NewReportingNodeEvent(tableView, column, row));
-
+        newReportingNodeEvent.fire(new NewReportingNodeEvent(tableView, column, row, colSpan, rowspan));
     }
 
     @Tool("Creates a XY chart for the report. You can create a chart with the specified title and data. The chart will be placed at the specified coordinates.")
@@ -94,8 +89,10 @@ public class JFXReportingTool {
             @P("The Chart title") String title,
             @P("The chart width in pixels") int width,
             @P("The chart height in pixels") int height,
-            @P("The column to place the chart on the report grid. The grid starts on column 1") int column,
-            @P("The row to place the chart on the report grid. The grid starts on row 1") int row,
+            @P("The column to place the chart on the report grid.") int column,
+            @P("The row to place the chart on the report grid.") int row,
+            @P("The number of columns the chart should span") int colSpan,
+            @P("the number of rows the chart should span") int rowspan,
             @P("The name of the series") String seriesName,
             @P("The X axis values") String[] categories,
             @P("The y axis values") Float[] values) {
@@ -119,7 +116,7 @@ public class JFXReportingTool {
         }
 
         chart.getData().add(seriesData);
-        newReportingNodeEvent.fire(new NewReportingNodeEvent(chart, column, row));
+        newReportingNodeEvent.fire(new NewReportingNodeEvent(chart, column, row, colSpan, rowspan));
     }
 
     @Tool("Creates a pie chart for the report. You can create a Pie chart with the specified title and data. The chart will be placed at the specified coordinates.")
@@ -127,8 +124,10 @@ public class JFXReportingTool {
             @P("The Chart title") String title,
             @P("The chart width in pixels") int width,
             @P("The chart height in pixels") int height,
-            @P("The column to place the chart on the report grid. The grid starts on column 1") int column,
-            @P("The row to place the chart on the report grid. The grid starts on row 1") int row,
+            @P("The column to place the chart on the report grid.") int column,
+            @P("The row to place the chart on the report grid. ") int row,
+            @P("The number of columns the chart should span") int colSpan,
+            @P("the number of rows the chart should span") int rowspan,
             @P("The Pie Chart data in format of a map where the key is the category and the value is the value to plotted ") Map<String, Float> data) {
 
         var pieChart = new PieChart();
@@ -140,7 +139,43 @@ public class JFXReportingTool {
             pieChart.getData().add(new PieChart.Data(k, v));
         });
 
-        newReportingNodeEvent.fire(new NewReportingNodeEvent(pieChart, column, row));
+        newReportingNodeEvent.fire(new NewReportingNodeEvent(pieChart, column, row, colSpan, rowspan));
+    }
+
+    @Tool("Creates a text chart for the report. The text will be placed at the specified coordinates.")
+    public void addText(
+            @P("The column to place the text on the report grid.") int column,
+            @P("The row to place the text on the report grid. ") int row,
+            @P("The number of columns the text should span") int colSpan,
+            @P("the number of rows the text should span") int rowspan,
+            @P("The text to be drawn") String text,
+            @P("The text wrapping width in pixels") int width,
+            @P("The text font value. Use free and open source fonts") String fontFamily,
+            @P("Font size") int fontSize,
+            @P("Font color in web format") String fontColor,
+            @P("Background color in web format") String backgrounColor,
+            @P("The font Posture. Possible values are ITALIC or REGULAR ") String fontPosture,
+            @P("The font weight. Values start at 0 and goes to 100. The smaller the value, the thinner the font") int fontWeight,
+            @P("Stroke color in web format") String strokeColor,
+            @P("The text stroke width ") int strokeWidth
+            
+
+    ) {
+        Text textNode = new Text(text);
+        textNode.setFont(Font.font(
+                fontFamily,
+                FontWeight.findByWeight(fontWeight),
+                FontPosture.findByName(fontPosture),
+                fontSize));
+        textNode.setWrappingWidth(width);
+        
+        textNode.setFill(Color.valueOf(fontColor));
+        textNode.setStroke(Color.valueOf(strokeColor));
+        textNode.setStrokeWidth(strokeWidth);
+        FlowPane flowPane = new FlowPane();
+        flowPane.getChildren().add(textNode);
+        flowPane.setBackground(Background.fill(Color.valueOf(backgrounColor)));
+        newReportingNodeEvent.fire(new NewReportingNodeEvent(flowPane, column, row, colSpan, rowspan));
     }
 
     @Tool("Clear the current report or dashboard by removing all elements previously added.")

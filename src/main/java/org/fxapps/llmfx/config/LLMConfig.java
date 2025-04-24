@@ -12,7 +12,7 @@ public interface LLMConfig {
     @ConfigProperty(defaultValue = "http://localhost:11434/v1")
     String url();
 
-    String model();
+    Optional<String> model();
 
     @ConfigProperty(defaultValue = "200")
     int timeout();

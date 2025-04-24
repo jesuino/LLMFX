@@ -44,7 +44,7 @@ public class Events {
     public record ClearDrawingEvent() {
     }
 
-    public record NewReportingNodeEvent(Node node, int column, int row) {
+    public record NewReportingNodeEvent(Node node, int column, int row, int colspan, int rowspan) { 
     }
 
     public record ClearReportEvent() {

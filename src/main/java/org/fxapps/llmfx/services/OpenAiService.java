@@ -21,13 +21,17 @@ public class OpenAiService {
     public List<String> listModels() throws Exception {
         var httpClient = HttpClient.newHttpClient();
         var endpoint = URI.create(getBaseUrl() + "/models");
-        var request = HttpRequest.newBuilder()
+        var requestBuilder = HttpRequest.newBuilder()
                 .uri(endpoint)
-                .header("Accepts", "application/json")
-                .build();
+                .header("Accepts", "application/json");
+
+        llmConfig.key().ifPresent(key -> requestBuilder.header("Authorization", "Bearer " + key));
+
+        var request = requestBuilder.build();
 
         var response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
         var json = Json.createReader(response.body()).read();
+        System.out.println(json);
         return json.asJsonObject()
                 .get("data")
                 .asJsonArray()

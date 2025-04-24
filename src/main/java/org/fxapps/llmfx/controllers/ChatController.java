@@ -8,6 +8,7 @@ import java.util.Set;
 
 import org.fxapps.llmfx.AlertsHelper;
 import org.fxapps.llmfx.Events.ClearDrawingEvent;
+import org.fxapps.llmfx.Events.ClearReportEvent;
 import org.fxapps.llmfx.Events.DeleteConversationEvent;
 import org.fxapps.llmfx.Events.HistorySelectedEvent;
 import org.fxapps.llmfx.Events.NewChatEvent;
@@ -76,9 +77,9 @@ public class ChatController {
                             background-color: lightblue;
                         }
                         .system-message {
-                            background-color: #f1f1f1; 
-                            border-left: 4px solid #0056b3; 
-                            color: #DDDDDD !important; 
+                            background-color: #f1f1f1;
+                            border-left: 4px solid #0056b3;
+                            color: #DDDDDD !important;
                             font-style: italic;
                         }
                         .assistant-message {
@@ -214,7 +215,7 @@ public class ChatController {
         this.historyList.getSelectionModel().selectedIndexProperty().addListener((obs, old, n) -> {
             final var i = n.intValue();
             historySelectedEvent.fire(new HistorySelectedEvent(i));
-        });        
+        });
 
         btnTrashConversation.disableProperty()
                 .bind(historyList.getSelectionModel().selectedIndexProperty().isEqualTo(-1));
@@ -293,12 +294,23 @@ public class ChatController {
 
     }
 
-    public void onClearReportingEvent(@Observes NewDrawingNodeEvent event) {
+    public void onClearReportingEvent(@Observes ClearReportEvent event) {
         Platform.runLater(() -> this.reportingPane.getChildren().clear());
     }
 
     public void onClearDrawingNodeEvent(@Observes ClearDrawingEvent event) {
-        Platform.runLater(() -> this.canvasPane.getChildren().clear());
+
+        Platform.runLater(() -> {
+            if (this.canvasTab.isSelected()) {
+                this.canvasPane.getChildren().clear();
+            }
+            if (this.reportingTab.isSelected()) {                
+                this.reportingPane.getChildren().removeAll();
+                // workaround to make sure the grid pane is clean
+                this.reportingPane = new GridPane(5, 5);
+                this.reportingTab.setContent(new ScrollPane(reportingPane));
+            }
+        });
     }
 
     public void onNewReportingNodeEvent(@Observes NewReportingNodeEvent evt) {
