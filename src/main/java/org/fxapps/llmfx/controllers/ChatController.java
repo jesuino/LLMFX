@@ -62,55 +62,66 @@ public class ChatController {
     final String CHAT_PAGE = """
                 <html>
                     <style>
+                        * {
+                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, sans-serif;
+                        }
+
                         table {
                             border-collapse: collapse;
-                            margin-bottom: 20px; /* Add some space between the table and other content if needed */
+                            margin-bottom: 20px;
+                            border-radius: 8px;
+                            overflow: hidden;
                         }
 
                         th, td {
-                            padding: 8px 12px;
+                            padding: 12px 16px;
                             text-align: left;
                             vertical-align: top;
-                            background-color: #f4f4f4;
-                            border-bottom: 1px solid #ddd;
-                        }
-                        th {
-                            background-color: #2c3e50; /* Darker background for headers, similar to GitHub */
-                            color: white;
-                            font-weight: bold;
+                            background-color: #fafafa;
+                            border-bottom: 1px solid #eaeaea;
                         }
 
-                        /* Last column header without a bottom border */
+                        th {
+                            background-color: #1a73e8;
+                            color: white;
+                            font-weight: 500;
+                        }
+
                         th:last-child {
                             border-bottom: none;
                         }
 
-                        /* Last row cell without a bottom border */
                         tr:last-child td {
                             border-bottom: none;
                         }
+
                         .chat-container {
-                            padding: 10px;
+                            padding: 16px;
                             flex-grow: 1;
+                            line-height: 1.5;
                         }
+
                         .chat-container > p {
-                            border-radius: 20px;
-                            color: black;
-                            margin: 5px;
-                            padding: 5px !important;
-                            padding-left: 10px !important;
+                            border-radius: 12px;
+                            color: #1f1f1f;
+                            margin: 8px 0;
+                            padding: 12px 16px !important;
+                            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
                         }
+
                         .user-message {
-                            background-color: lightblue;
+                            background-color: #e3f2fd;
                         }
+
                         .system-message {
-                            background-color: #f1f1f1;
-                            border-left: 4px solid #0056b3;
-                            color: #DDDDDD !important;
+                            background-color: #f5f5f5;
+                            border-left: 4px solid #1a73e8;
+                            color: #757575 !important;
                             font-style: italic;
                         }
+
                         .assistant-message {
-                            background-color: lightgray;
+                            background-color: #eeeeee;
                         }
                     </style>
                     <body>
