@@ -121,7 +121,6 @@ public class App {
         stage.setOnCloseRequest(e -> {
             logger.info("Closing application...");
             saveHistory();
-            System.out.println(htmlMessageCache);
             System.exit(0);
         });
 

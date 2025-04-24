@@ -16,6 +16,7 @@ public class Events {
 
     public record NewChatEvent() {
     }
+
     public record SaveChatEvent(SaveFormat saveFormat) {
     }
 
@@ -44,7 +45,10 @@ public class Events {
     public record ClearDrawingEvent() {
     }
 
-    public record NewReportingNodeEvent(Node node, int column, int row, int colspan, int rowspan) { 
+    public record NewReportingNodeEvent(Node node, int column, int row, int colspan, int rowspan) {
+    }
+
+    public record NewHTMLContentEvent(String htmlContent) {
     }
 
     public record ClearReportEvent() {

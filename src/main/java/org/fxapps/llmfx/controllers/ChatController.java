@@ -13,6 +13,7 @@ import org.fxapps.llmfx.Events.DeleteConversationEvent;
 import org.fxapps.llmfx.Events.HistorySelectedEvent;
 import org.fxapps.llmfx.Events.NewChatEvent;
 import org.fxapps.llmfx.Events.NewDrawingNodeEvent;
+import org.fxapps.llmfx.Events.NewHTMLContentEvent;
 import org.fxapps.llmfx.Events.NewReportingNodeEvent;
 import org.fxapps.llmfx.Events.RefreshModelsEvent;
 import org.fxapps.llmfx.Events.SaveChatEvent;
@@ -20,6 +21,7 @@ import org.fxapps.llmfx.Events.SaveFormat;
 import org.fxapps.llmfx.Events.SelectedModelEvent;
 import org.fxapps.llmfx.Events.StopStreamingEvent;
 import org.fxapps.llmfx.Events.UserInputEvent;
+import org.fxapps.llmfx.config.AppConfig;
 import org.w3c.dom.html.HTMLElement;
 
 import io.quarkiverse.fx.views.FxView;
@@ -130,6 +132,9 @@ public class ChatController {
                     </body>
                 </html>
             """;
+
+    @Inject
+    private AppConfig appConfig;
 
     @Inject
     Event<UserInputEvent> onUserInputEvent;
@@ -255,6 +260,10 @@ public class ChatController {
 
         btnTrashConversation.disableProperty()
                 .bind(historyList.getSelectionModel().selectedIndexProperty().isEqualTo(-1));
+
+        if (appConfig.historyFile().isEmpty()) {
+            spBody.setDividerPositions(new double[] { 0, 1d });
+        }
     }
 
     @FXML
@@ -331,10 +340,19 @@ public class ChatController {
         });
     }
 
+    public void onNewHTMLContentEvent(@Observes NewHTMLContentEvent event) {
+        Platform.runLater(() -> {
+            if (!graphicsPane.getTabs().contains(webViewTab)) {
+                graphicsPane.getTabs().add(webViewTab);
+            }
+            webContentView.getEngine().loadContent(event.htmlContent());
+            graphicsPane.getSelectionModel().select(webViewTab);
+            spBody.setDividerPosition(1, 0.4);
+        });
+    }
 
     public void onNewReportingNodeEvent(@Observes NewReportingNodeEvent evt) {
         Platform.runLater(() -> {
-
             if (!graphicsPane.getTabs().contains(reportingTab)) {
                 graphicsPane.getTabs().add(reportingTab);
             }
@@ -361,7 +379,6 @@ public class ChatController {
             }
         });
     }
-
 
     public void appendUserMessage(String userMessage) {
         runScriptToAppendMessage("<p>" + userMessage + "</p>", "user");

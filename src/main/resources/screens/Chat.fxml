@@ -30,7 +30,7 @@
 <?import javafx.scene.text.Text?>
 <?import javafx.scene.web.WebView?>
 
-<BorderPane prefHeight="400.0" prefWidth="700.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.fxapps.llmfx.controllers.ChatController">
+<BorderPane prefHeight="900.0" prefWidth="1200.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="org.fxapps.llmfx.controllers.ChatController">
    <top>
       <HBox alignment="CENTER" prefHeight="33.0" prefWidth="1172.0" spacing="10.0" BorderPane.alignment="CENTER">
          <children>
@@ -94,7 +94,7 @@
       </HBox>
    </bottom>
    <center>
-      <SplitPane fx:id="spBody" dividerPositions="0.1, 1.0" prefHeight="295.0" prefWidth="565.0" BorderPane.alignment="CENTER">
+      <SplitPane fx:id="spBody" dividerPositions="0.2, 1.0" prefHeight="295.0" prefWidth="565.0" BorderPane.alignment="CENTER">
          <items>
             <StackPane minWidth="0.0">
                <children>
@@ -181,7 +181,7 @@
                               </ScrollPane>
                           </content>
                         </Tab>
-                        <Tab text="Web View">
+                        <Tab fx:id="webViewTab" text="Web View">
                           <content>
                               <StackPane>
                                  <children>

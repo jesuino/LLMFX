@@ -25,11 +25,13 @@ import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.Background;
 import javafx.scene.layout.FlowPane;
+import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
+import javafx.scene.text.TextAlignment;
 
 @Singleton
 public class JFXReportingTool {
@@ -43,7 +45,6 @@ public class JFXReportingTool {
     enum ChartType {
         AREA, LINE, BAR
     }
-
 
     @Tool("""
             Creates a table for a report or dashboard. You can create a table with the specified number of columns and rows.
@@ -156,9 +157,9 @@ public class JFXReportingTool {
             @P("Background color in web format") String backgrounColor,
             @P("The font Posture. Possible values are ITALIC or REGULAR ") String fontPosture,
             @P("The font weight. Values start at 0 and goes to 100. The smaller the value, the thinner the font") int fontWeight,
+            @P("The text alignment. Possible values are LEFT, CENTER, RIGHT and JUSTIFY") String textAligment,
             @P("Stroke color in web format") String strokeColor,
             @P("The text stroke width ") int strokeWidth
-            
 
     ) {
         Text textNode = new Text(text);
@@ -168,14 +169,14 @@ public class JFXReportingTool {
                 FontPosture.findByName(fontPosture),
                 fontSize));
         textNode.setWrappingWidth(width);
-        
+
         textNode.setFill(Color.valueOf(fontColor));
         textNode.setStroke(Color.valueOf(strokeColor));
         textNode.setStrokeWidth(strokeWidth);
-        FlowPane flowPane = new FlowPane();
-        flowPane.getChildren().add(textNode);
-        flowPane.setBackground(Background.fill(Color.valueOf(backgrounColor)));
-        newReportingNodeEvent.fire(new NewReportingNodeEvent(flowPane, column, row, colSpan, rowspan));
+        textNode.setTextAlignment(TextAlignment.valueOf(textAligment));
+        var textContainer = new StackPane(textNode);
+        textContainer.setBackground(Background.fill(Color.valueOf(backgrounColor)));
+        newReportingNodeEvent.fire(new NewReportingNodeEvent(textContainer, column, row, colSpan, rowspan));
     }
 
     @Tool("Clear the current report or dashboard by removing all elements previously added.")
