@@ -5,7 +5,11 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import javax.imageio.ImageIO;
 
@@ -46,6 +50,8 @@ import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuButton;
+import javafx.scene.control.MenuItem;
+import javafx.scene.control.SeparatorMenuItem;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -63,6 +69,8 @@ import javafx.scene.web.WebView;
 @FxView
 @Singleton
 public class ChatController {
+
+    private static final String TOOLS_LABEL = "Tools";
 
     final String CHAT_PAGE = """
                 <html>
@@ -229,13 +237,27 @@ public class ChatController {
 
     private Tooltip mcpMenuTooltip;
 
-    private Set<String> selectedTools;
     private Set<String> selectedMCPs;
+
+    private MenuItem clearToolsMenuItem;
 
     public void init() {
         this.mcpMenuTooltip = new Tooltip("Select MCP Servers");
-        this.selectedTools = new HashSet<>();
         this.selectedMCPs = new HashSet<>();
+        this.clearToolsMenuItem = new MenuItem("Clear all tools");
+
+        clearToolsMenuItem.setOnAction(e -> {
+            toolsMenu.getItems().forEach(item -> {
+                if (item instanceof Menu catMenu) {
+                    catMenu.getItems().forEach(it -> {
+                        if (it instanceof CheckMenuItem checkMenuItem) {
+                            checkMenuItem.setSelected(false);
+                        }
+                    });
+                }
+            });
+            toolsMenu.setText(TOOLS_LABEL);
+        });
 
         graphicsPane.getTabs().clear();
 
@@ -324,7 +346,15 @@ public class ChatController {
     }
 
     public Set<String> selectedTools() {
-        return selectedTools;
+        return toolsMenu.getItems().stream().flatMap(item -> {
+            if (item instanceof Menu catMenu) {
+                return catMenu.getItems()
+                        .stream()
+                        .filter(it -> it instanceof CheckMenuItem check && check.isSelected())
+                        .map(it -> ((CheckMenuItem) it).getText());
+            }
+            return Stream.empty();
+        }).collect(Collectors.toSet());
     }
 
     public Set<String> selectedMCPs() {
@@ -455,27 +485,19 @@ public class ChatController {
     }
 
     public void setTools(Map<String, List<String>> toolsCat) {
-
         var catMenus = toolsCat.entrySet()
                 .stream()
                 .map(e -> {
                     Menu mnCat = new Menu(e.getKey());
                     e.getValue().stream().map(tool -> {
                         var menu = new CheckMenuItem(tool);
-                        menu.setOnAction(evt -> {
-                            final var isSelected = menu.isSelected();
-                            if (isSelected) {
-                                selectedTools.add(tool);
-                            } else {
+                        menu.selectedProperty().addListener((obs, old, n) -> {
+                            toolsMenu.setText(TOOLS_LABEL
+                                    + (selectedTools().isEmpty()
+                                            ? ""
+                                            : " (" + selectedTools().size() + ")"));
 
-                                selectedTools.remove(tool);
-                            }
-                            toolsMenu.setText("Tools");
-                            if (!selectedTools.isEmpty()) {
-                                toolsMenu.setText(toolsMenu.getText() + " (" + selectedTools.size() + ")");
-
-                            }
-                            enableMCPMenu(selectedTools.isEmpty());
+                            enableMCPMenu(selectedTools().isEmpty());
                         });
                         return menu;
 
@@ -483,6 +505,8 @@ public class ChatController {
                     return mnCat;
                 }).toList();
         toolsMenu.getItems().addAll(catMenus);
+        toolsMenu.getItems().add(new SeparatorMenuItem());
+        toolsMenu.getItems().add(clearToolsMenuItem);
     }
 
     @FXML
