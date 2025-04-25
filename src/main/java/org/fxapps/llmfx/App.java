@@ -214,8 +214,7 @@ public class App {
             });
             updateHistoryList();
         }
-        historyStorage.getConversation().messages().add(userMessage);
-        chatController.setAutoScroll(true);
+        historyStorage.getConversation().messages().add(userMessage);        
         showChatMessages();
         saveHistory();
 

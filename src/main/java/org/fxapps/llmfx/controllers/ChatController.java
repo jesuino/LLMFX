@@ -2,19 +2,15 @@ package org.fxapps.llmfx.controllers;
 
 import java.io.IOException;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.imageio.ImageIO;
 
 import org.fxapps.llmfx.AlertsHelper;
-import org.fxapps.llmfx.FXUtils;
 import org.fxapps.llmfx.Events.ClearDrawingEvent;
 import org.fxapps.llmfx.Events.ClearReportEvent;
 import org.fxapps.llmfx.Events.DeleteConversationEvent;
@@ -29,8 +25,8 @@ import org.fxapps.llmfx.Events.SaveFormat;
 import org.fxapps.llmfx.Events.SelectedModelEvent;
 import org.fxapps.llmfx.Events.StopStreamingEvent;
 import org.fxapps.llmfx.Events.UserInputEvent;
+import org.fxapps.llmfx.FXUtils;
 import org.fxapps.llmfx.config.AppConfig;
-import org.w3c.dom.html.HTMLElement;
 
 import io.quarkiverse.fx.views.FxView;
 import jakarta.enterprise.event.Event;
@@ -56,7 +52,6 @@ import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
-import javafx.scene.control.Tooltip;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
@@ -74,83 +69,14 @@ public class ChatController {
 
     private static final String TOOLS_LABEL = "Tools";
 
-    final String CHAT_PAGE = """
-                <html>
-                    <style>
-                        * {
-                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, sans-serif;
-                        }
-
-                        table {
-                            border-collapse: collapse;
-                            margin-bottom: 20px;
-                            border-radius: 8px;
-                            overflow: hidden;
-                        }
-
-                        th, td {
-                            padding: 12px 16px;
-                            text-align: left;
-                            vertical-align: top;
-                            background-color: #fafafa;
-                            border-bottom: 1px solid #eaeaea;
-                        }
-
-                        th {
-                            background-color: #1a73e8;
-                            color: white;
-                            font-weight: 500;
-                        }
-
-                        th:last-child {
-                            border-bottom: none;
-                        }
-
-                        tr:last-child td {
-                            border-bottom: none;
-                        }
-
-                        .chat-container {
-                            padding: 16px;
-                            flex-grow: 1;
-                            line-height: 1.5;
-                        }
-
-                        .chat-container > p {
-                            border-radius: 12px;
-                            color: #1f1f1f;
-                            margin: 8px 0;
-                            padding: 12px 16px !important;
-                            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                        }
-
-                        .user-message {
-                            background-color: #e3f2fd;
-                        }
-
-                        .system-message {
-                            background-color: #f5f5f5;
-                            border-left: 4px solid #1a73e8;
-                            color: #757575 !important;
-                            font-style: italic;
-                        }
-
-                        .assistant-message {
-                            background-color: #eeeeee;
-                        }
-                    </style>
-                    <body>
-                        <div id="chatContent" class="chat-container">
-                        </div>
-                    </body>
-                </html>
-            """;
-
     @Inject
     private AppConfig appConfig;
 
     @Inject
     Event<UserInputEvent> onUserInputEvent;
+
+    @Inject
+    ChatMessagesView chatMessagesView;
 
     @Inject
     Event<SelectedModelEvent> selectedModelEvent;
@@ -235,12 +161,11 @@ public class ChatController {
 
     private SimpleBooleanProperty holdChatProperty;
 
-    private boolean autoScroll;
-
     private MenuItem clearToolsMenuItem;
 
     public void init() {
         this.clearToolsMenuItem = new MenuItem("Clear all tools");
+        this.chatMessagesView.init(chatOutput);
 
         clearToolsMenuItem.setOnAction(e -> {
             toolsMenu.getItems().forEach(item -> {
@@ -262,10 +187,6 @@ public class ChatController {
         btnNewChat.disableProperty().bind(holdChatProperty);
         historyList.disableProperty().bind(holdChatProperty);
         btnStop.disableProperty().bind(holdChatProperty.not());
-
-        chatOutput.setOnScroll(e -> autoScroll = false);
-
-        chatOutput.getEngine().loadContent(CHAT_PAGE);
 
         this.historyList.setOnMouseClicked(e -> {
             var i = historyList.getSelectionModel().getSelectedIndex();
@@ -299,7 +220,6 @@ public class ChatController {
                 alertsHelper.showError("Error", "Error saving image", e.getMessage());
                 e.printStackTrace();
             }
-
         });
     }
 
@@ -368,11 +288,6 @@ public class ChatController {
         historyList.getItems().clear();
         historyList.getItems().addAll(items);
         historyList.getSelectionModel().selectLast();
-
-    }
-
-    public void setAutoScroll(boolean isAutoScroll) {
-        this.autoScroll = isAutoScroll;
     }
 
     public void fillModels(List<String> modelsNames) {
@@ -420,43 +335,21 @@ public class ChatController {
         Platform.runLater(() -> this.canvasPane.getChildren().clear());
     }
 
-    public void appendUserMessage(String userMessage) {
-        runScriptToAppendMessage("<p>" + userMessage + "</p>", "user");
-    }
-
-    public void appendSystemMessage(String systemMessage) {
-        runScriptToAppendMessage("<p>" + systemMessage + "</p>", "system");
-    }
-
-    public void appendAssistantMessage(String assistantMessage) {
-        var message = assistantMessage.replaceFirst("<think>",
-                """
-                            <h4 style=\"color: red !important\">Thinking</h4>
-                            <i style=\"color: gray\">
-                        """)
-                .replaceFirst("</think>", "</i><h4 style=\"color: red !important\">end thinking</h4><hr/>")
-                // TODO: find someway to copy to the clipboard
-                .replaceAll("<code", "<code");
-        runScriptToAppendMessage(message, "assistant");
-
-    }
-
     public void setSelectedModel(String model) {
         cmbModels.getSelectionModel().select(model);
     }
 
     public void clearChatHistoy() {
         vbWelcomeMessage.setVisible(true);
-        chatOutput.getEngine().executeScript("document.getElementById('chatContent').innerHTML = ''");
+        chatMessagesView.clearChatHistory();
     }
 
     public String getChatHistoryHTML() {
-        return (String) chatOutput.getEngine().executeScript("document.documentElement.outerHTML");
-
+        return chatMessagesView.getChatHistoryHTML();
     }
 
     public void setMCPServers(Collection<String> mcpServers) {
-        final var mcpMenus = mcpServers.stream().map(mcpServer -> {
+        mcpServers.stream().map(mcpServer -> {
             var menu = new CheckMenuItem(mcpServer);
             menu.selectedProperty().addListener((obs, old, n) -> mcpMenu
                     .setText(MCP_LABEL +
@@ -466,13 +359,12 @@ public class ChatController {
 
             );
             return menu;
+        }).forEach(mcpMenu.getItems()::add);
 
-        }).toList();
-        mcpMenu.getItems().addAll(mcpMenus);
     }
 
     public void setTools(Map<String, List<String>> toolsCat) {
-        var catMenus = toolsCat.entrySet()
+        toolsCat.entrySet()
                 .stream()
                 .map(e -> {
                     Menu mnCat = new Menu(e.getKey());
@@ -491,8 +383,7 @@ public class ChatController {
 
                     }).forEach(mnCat.getItems()::add);
                     return mnCat;
-                }).toList();
-        toolsMenu.getItems().addAll(catMenus);
+                }).forEach(toolsMenu.getItems()::add);
         toolsMenu.getItems().add(new SeparatorMenuItem());
         toolsMenu.getItems().add(clearToolsMenuItem);
     }
@@ -533,26 +424,19 @@ public class ChatController {
         stopStreamingEvent.fire(new StopStreamingEvent());
     }
 
-    private void runScriptToAppendMessage(String message, String role) {
+    public void appendUserMessage(String content) {
         vbWelcomeMessage.setVisible(false);
-        // workaround because I don't have an innerHTML method in Java API!
-        var script = """
-                var messageContent = document.createElement('p');
-                var tmp = document.querySelector('#tmp');
-                messageContent.setAttribute("class", '%s-message');
-                messageContent.innerHTML = tmp.textContent;
-                document.querySelector('#chatContent').appendChild(messageContent);
-                tmp.remove();
-                """.formatted(role);
+        chatMessagesView.setAutoScroll(true);
+        chatMessagesView.appendUserMessage(content);
+    }
 
-        var el = chatOutput.getEngine().getDocument().createElement("p");
-        el.setTextContent(message);
-        el.setAttribute("id", "tmp");
-        el.setAttribute("hidden", "true");
-        var chatRoot = (HTMLElement) chatOutput.getEngine().getDocument().getElementById("chatContent");
-        chatRoot.appendChild(el);
-        chatOutput.getEngine().executeScript(script);
-        if (autoScroll)
-            chatOutput.getEngine().executeScript("window.scrollTo(0, document.body.scrollHeight);");
+    public void appendSystemMessage(String content) {
+        vbWelcomeMessage.setVisible(false);
+        chatMessagesView.appendSystemMessage(content);
+    }
+
+    public void appendAssistantMessage(String htmlMessage) {
+        vbWelcomeMessage.setVisible(false);
+        chatMessagesView.appendAssistantMessage(htmlMessage);
     }
 }
