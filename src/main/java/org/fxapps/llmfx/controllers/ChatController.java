@@ -70,6 +70,8 @@ import javafx.scene.web.WebView;
 @Singleton
 public class ChatController {
 
+    private static final String MCP_LABEL = "MCP";
+
     private static final String TOOLS_LABEL = "Tools";
 
     final String CHAT_PAGE = """
@@ -235,15 +237,9 @@ public class ChatController {
 
     private boolean autoScroll;
 
-    private Tooltip mcpMenuTooltip;
-
-    private Set<String> selectedMCPs;
-
     private MenuItem clearToolsMenuItem;
 
     public void init() {
-        this.mcpMenuTooltip = new Tooltip("Select MCP Servers");
-        this.selectedMCPs = new HashSet<>();
         this.clearToolsMenuItem = new MenuItem("Clear all tools");
 
         clearToolsMenuItem.setOnAction(e -> {
@@ -266,7 +262,6 @@ public class ChatController {
         btnNewChat.disableProperty().bind(holdChatProperty);
         historyList.disableProperty().bind(holdChatProperty);
         btnStop.disableProperty().bind(holdChatProperty.not());
-        mcpMenu.setTooltip(mcpMenuTooltip);
 
         chatOutput.setOnScroll(e -> autoScroll = false);
 
@@ -358,13 +353,11 @@ public class ChatController {
     }
 
     public Set<String> selectedMCPs() {
-        return selectedMCPs;
-    }
-
-    public void enableMCPMenu(boolean enable) {
-        var text = enable ? "MCP Servers are enabled" : "MCP Servers are ignored because Tools are selected";
-        mcpMenuTooltip.setText(text);
-        mcpMenu.setDisable(!enable);
+        return mcpMenu.getItems()
+                .stream()
+                .filter(item -> item instanceof CheckMenuItem check && check.isSelected())
+                .map(MenuItem::getText)
+                .collect(Collectors.toSet());
     }
 
     public BooleanProperty holdChatProperty() {
@@ -465,19 +458,13 @@ public class ChatController {
     public void setMCPServers(Collection<String> mcpServers) {
         final var mcpMenus = mcpServers.stream().map(mcpServer -> {
             var menu = new CheckMenuItem(mcpServer);
-            menu.setOnAction(e -> {
-                var isSelected = menu.isSelected();
-                if (isSelected) {
-                    selectedMCPs.add(mcpServer);
+            menu.selectedProperty().addListener((obs, old, n) -> mcpMenu
+                    .setText(MCP_LABEL +
+                            (selectedMCPs().isEmpty()
+                                    ? ""
+                                    : " (" + selectedMCPs().size() + ")"))
 
-                } else {
-                    selectedMCPs.remove(mcpServer);
-                }
-                mcpMenu.setText("MCP");
-                if (!selectedMCPs.isEmpty()) {
-                    mcpMenu.setText(mcpMenu.getText() + " (" + selectedMCPs.size() + ")");
-                }
-            });
+            );
             return menu;
 
         }).toList();
@@ -497,7 +484,8 @@ public class ChatController {
                                             ? ""
                                             : " (" + selectedTools().size() + ")"));
 
-                            enableMCPMenu(selectedTools().isEmpty());
+                            mcpMenu.setDisable(!selectedTools().isEmpty());
+
                         });
                         return menu;
 
