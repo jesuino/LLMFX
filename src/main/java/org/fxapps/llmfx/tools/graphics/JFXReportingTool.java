@@ -24,7 +24,6 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.Background;
-import javafx.scene.layout.FlowPane;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -170,18 +169,35 @@ public class JFXReportingTool {
                 fontSize));
         textNode.setWrappingWidth(width);
 
-        textNode.setFill(Color.valueOf(fontColor));
-        textNode.setStroke(Color.valueOf(strokeColor));
+        textNode.setFill(fixColor(fontColor));
+        textNode.setStroke(fixColor(strokeColor));
         textNode.setStrokeWidth(strokeWidth);
         textNode.setTextAlignment(TextAlignment.valueOf(textAligment));
         var textContainer = new StackPane(textNode);
-        textContainer.setBackground(Background.fill(Color.valueOf(backgrounColor)));
+        textContainer.setBackground(Background.fill(fixColor(backgrounColor)));
         newReportingNodeEvent.fire(new NewReportingNodeEvent(textContainer, column, row, colSpan, rowspan));
     }
 
     @Tool("Clear the current report or dashboard by removing all elements previously added.")
     public void clear() {
         clearReportingNodeEvent.fire(new ClearReportEvent());
+    }
+
+    // this is a workaround to convert the color provided by the LLM to a valid
+    // color
+    // I see that sometimes it halucinates or provides invalid colors and JavaFX is
+    // strict
+    // about the color format. So we need to fix it.
+    Color fixColor(String color) {
+        if (color == null || "none".equalsIgnoreCase(color) || "null".equalsIgnoreCase(color)) {
+            return Color.TRANSPARENT;
+        }
+        try {
+            return Color.valueOf(color);
+        } catch (IllegalArgumentException e) {
+            // if the color is not valid, return a default color
+            return Color.TRANSPARENT;
+        }
     }
 
 }

@@ -8,8 +8,6 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-
-import org.commonmark.Extension;
 import org.commonmark.ext.gfm.tables.TablesExtension;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
@@ -49,7 +47,6 @@ import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.scene.Parent;
 import javafx.scene.Scene;
-import javafx.stage.FileChooser;
 import javafx.stage.Stage;
 
 // TODO: Support Image upload and response!
@@ -103,7 +100,8 @@ public class App {
     void onPostStartup(@Observes final FxPostStartupEvent event) throws Exception {
 
         Application.setUserAgentStylesheet(new PrimerLight().getUserAgentStylesheet());
-      //  Application.setUserAgentStylesheet(new PrimerDark().getUserAgentStylesheet());
+        // Application.setUserAgentStylesheet(new
+        // PrimerDark().getUserAgentStylesheet());
 
         this.chatViewData = viewRepository.getViewData("Chat");
         this.chatController = chatViewData.getController();
@@ -281,18 +279,15 @@ public class App {
                     .map(m -> m.role() + ": " + m.content())
                     .collect(Collectors.joining("\n"));
         };
-        var fileChooser = new FileChooser();
-        var dest = fileChooser.showSaveDialog(stage);
-
-        if (dest != null) {
-            try {
-                Files.writeString(dest.toPath(), content);
-            } catch (IOException e) {
-                logger.error("Error saving file", e);
-                alertsHelper.showError("Error", "Error saving chat History", "Error: " + e.getMessage());
-            }
-        }
-
+        alertsHelper.showFileChooser("Save chat history", saveChatEvent.saveFormat().name().toLowerCase())
+                .ifPresent(dest -> {
+                    try {
+                        Files.writeString(dest.toPath(), content);
+                    } catch (IOException e) {
+                        logger.error("Error saving file", e);
+                        alertsHelper.showError("Error", "Error saving chat History", "Error: " + e.getMessage());
+                    }
+                });
     }
 
     private void updateHistoryList() {

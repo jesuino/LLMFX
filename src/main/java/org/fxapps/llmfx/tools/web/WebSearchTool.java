@@ -1,6 +1,7 @@
 package org.fxapps.llmfx.tools.web;
 
 import java.io.IOException;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -28,8 +29,10 @@ public class WebSearchTool {
         // https://medium.com/@sethsubr/fetch-duckduckgo-web-search-results-in-20-lines-of-java-code-3a34ea9da085
         Document doc = null;
 
-        try {
-            doc = Jsoup.connect(DUCKDUCKGO_SEARCH_URL + query).get();
+        try {         
+            final var url = DUCKDUCKGO_SEARCH_URL + URLEncoder.encode(query, "UTF-8");
+            System.out.println("serching using url " + url);
+            doc = Jsoup.connect(url).get();
             var results = doc.getElementById("links").getElementsByClass("results_links");
             var resultMap = new HashMap<String, String>();
 

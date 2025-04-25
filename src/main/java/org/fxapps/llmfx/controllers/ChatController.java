@@ -1,12 +1,16 @@
 package org.fxapps.llmfx.controllers;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import javax.imageio.ImageIO;
+
 import org.fxapps.llmfx.AlertsHelper;
+import org.fxapps.llmfx.FXUtils;
 import org.fxapps.llmfx.Events.ClearDrawingEvent;
 import org.fxapps.llmfx.Events.ClearReportEvent;
 import org.fxapps.llmfx.Events.DeleteConversationEvent;
@@ -35,13 +39,13 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ComboBox;
 import javafx.scene.control.ListView;
 import javafx.scene.control.Menu;
 import javafx.scene.control.MenuButton;
-import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
@@ -49,7 +53,6 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.Tooltip;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
-import javafx.scene.layout.Pane;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 
@@ -243,7 +246,6 @@ public class ChatController {
         btnStop.disableProperty().bind(holdChatProperty.not());
         mcpMenu.setTooltip(mcpMenuTooltip);
 
-        btnClearCanvas.setOnAction(e -> canvasPane.getChildren().clear());
         chatOutput.setOnScroll(e -> autoScroll = false);
 
         chatOutput.getEngine().loadContent(CHAT_PAGE);
@@ -268,7 +270,32 @@ public class ChatController {
 
     @FXML
     void onDownloadImage() {
-        // TODO: implement
+        var selectedTab = graphicsPane.getSelectionModel().getSelectedItem();
+
+        var image = selectedTab.getContent().snapshot(new SnapshotParameters(), null);
+
+        alertsHelper.showFileChooser("Save image", "png").ifPresent(f -> {
+            try {
+                var bufferedImage = FXUtils.fromFXImage(image);
+                ImageIO.write(bufferedImage, "png", f);
+            } catch (IOException e) {
+                alertsHelper.showError("Error", "Error saving image", e.getMessage());
+                e.printStackTrace();
+            }
+
+        });
+    }
+
+    @FXML
+    void clearCurrentGraphicsTab() {
+        var selectedTab = graphicsPane.getSelectionModel().getSelectedItem();
+        if (this.canvasTab == selectedTab) {
+            this.canvasPane.getChildren().clear();
+        }
+        if (this.reportingTab == selectedTab) {
+            this.reportingPane.getChildren().removeAll();
+            this.reportingPane.getChildren().clear();
+        }
     }
 
     @FXML
@@ -367,17 +394,7 @@ public class ChatController {
     }
 
     public void onClearDrawingNodeEvent(@Observes ClearDrawingEvent event) {
-
-        Platform.runLater(() -> {
-            var selectedTab = graphicsPane.getSelectionModel().getSelectedItem();
-            if (this.canvasTab == selectedTab) {
-                this.canvasPane.getChildren().clear();
-            }
-            if (this.reportingTab == selectedTab) {
-                this.reportingPane.getChildren().removeAll();
-                this.reportingPane.getChildren().clear();
-            }
-        });
+        Platform.runLater(() -> this.canvasPane.getChildren().clear());
     }
 
     public void appendUserMessage(String userMessage) {

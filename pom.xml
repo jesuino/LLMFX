@@ -20,6 +20,8 @@
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.5.2</surefire-plugin.version>
         <langchain4j.version>1.0.0-beta3</langchain4j.version>
+        <!--Matches the version used by JFX quarkus ext-->
+        <openjfx.version>22.0.2</openjfx.version>
         <mcpsdk.version>0.8.0</mcpsdk.version>
     </properties>
 
@@ -37,11 +39,11 @@
     </dependencyManagement>
 
     <dependencies>
-    <dependency>
-        <groupId>io.github.mkpaz</groupId>
-        <artifactId>atlantafx-base</artifactId>
-        <version>2.0.1</version>
-    </dependency>
+        <dependency>
+            <groupId>io.github.mkpaz</groupId>
+            <artifactId>atlantafx-base</artifactId>
+            <version>2.0.1</version>
+        </dependency>
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-mcp</artifactId>
@@ -74,7 +76,7 @@
         <dependency>
             <groupId>org.openjfx</groupId>
             <artifactId>javafx-web</artifactId>
-            <version>23</version>
+            <version>${openjfx.version}</version>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
@@ -84,7 +86,7 @@
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
             <version>1.10.3</version>
-            </dependency>
+        </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
             <artifactId>quarkus-junit5</artifactId>

@@ -82,11 +82,7 @@
                   <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
                </padding>
             </TextField>
-            <Button fx:id="btnStop" alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false" onAction="#stopStreaming" prefHeight="39.0" prefWidth="38.0" text="■" textAlignment="CENTER" textFill="#e40a0a">
-               <font>
-                  <Font size="15.0" />
-               </font>
-            </Button>
+            <Button fx:id="btnStop" alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false" onAction="#stopStreaming" prefHeight="39.0" prefWidth="38.0" text="■" textAlignment="CENTER" textFill="#e40a0a" />
          </children>
          <BorderPane.margin>
             <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
@@ -193,7 +189,7 @@
                      </tabs></TabPane>
                   <HBox alignment="CENTER" maxHeight="25.0" maxWidth="60.0" prefHeight="30.0" prefWidth="52.0" spacing="5.0" StackPane.alignment="BOTTOM_RIGHT">
                      <children>
-                        <Button fx:id="btnClearCanvas" mnemonicParsing="false" text="🗑">
+                        <Button fx:id="btnClearCanvas" mnemonicParsing="false" onAction="#clearCurrentGraphicsTab" text="🗑">
                            <font>
                               <Font size="10.0" />
                            </font>
