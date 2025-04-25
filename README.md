@@ -1,3 +1,4 @@
+[![Build](https://github.com/jesuino/LLMFX/actions/workflows/build.yml/badge.svg)](https://github.com/jesuino/LLMFX/actions/workflows/build.yml)
 LLM FX
 --
 A LLM Desktop Client free for everyone! 
