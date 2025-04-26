@@ -8,6 +8,7 @@ import java.util.List;
 
 import org.fxapps.llmfx.config.LLMConfig;
 
+import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.json.Json;
@@ -17,13 +18,22 @@ public class OpenAiService {
 
     @Inject
     LLMConfig llmConfig;
+    private HttpClient httpClient;
+
+    @PostConstruct
+    void init() {
+        this.httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)                
+                .build();
+    }
 
     public List<String> listModels() throws Exception {
-        var httpClient = HttpClient.newHttpClient();
         var endpoint = URI.create(getBaseUrl() + "/models");
+
         var requestBuilder = HttpRequest.newBuilder()
                 .uri(endpoint)
-                .header("Accepts", "application/json");
+                .header("Accept", "application/json")                
+                .header("Cache-Control", "no-cache");
 
         llmConfig.key().ifPresent(key -> requestBuilder.header("Authorization", "Bearer " + key));
 

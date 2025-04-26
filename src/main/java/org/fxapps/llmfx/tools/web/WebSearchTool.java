@@ -31,7 +31,6 @@ public class WebSearchTool {
 
         try {         
             final var url = DUCKDUCKGO_SEARCH_URL + URLEncoder.encode(query, "UTF-8");
-            System.out.println("serching using url " + url);
             doc = Jsoup.connect(url).get();
             var results = doc.getElementById("links").getElementsByClass("results_links");
             var resultMap = new HashMap<String, String>();
