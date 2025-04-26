@@ -11,13 +11,14 @@ import java.util.stream.Stream;
 import javax.imageio.ImageIO;
 
 import org.fxapps.llmfx.AlertsHelper;
-import org.fxapps.llmfx.Events.ClearDrawingEvent;
+
 import org.fxapps.llmfx.Events.ClearReportEvent;
 import org.fxapps.llmfx.Events.DeleteConversationEvent;
+import org.fxapps.llmfx.Events.DrawingStartedEvent;
 import org.fxapps.llmfx.Events.HistorySelectedEvent;
 import org.fxapps.llmfx.Events.New3DContentEvent;
 import org.fxapps.llmfx.Events.NewChatEvent;
-import org.fxapps.llmfx.Events.NewDrawingNodeEvent;
+
 import org.fxapps.llmfx.Events.NewHTMLContentEvent;
 import org.fxapps.llmfx.Events.NewReportingNodeEvent;
 import org.fxapps.llmfx.Events.RefreshModelsEvent;
@@ -28,6 +29,7 @@ import org.fxapps.llmfx.Events.StopStreamingEvent;
 import org.fxapps.llmfx.Events.UserInputEvent;
 import org.fxapps.llmfx.FXUtils;
 import org.fxapps.llmfx.config.AppConfig;
+import org.fxapps.llmfx.tools.graphics.JFXCanvasTool;
 
 import io.quarkiverse.fx.views.FxView;
 import jakarta.enterprise.event.Event;
@@ -42,9 +44,9 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.Camera;
 import javafx.scene.Group;
-import javafx.scene.PerspectiveCamera;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.SubScene;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ComboBox;
@@ -57,7 +59,6 @@ import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.AnchorPane;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
@@ -106,6 +107,9 @@ public class ChatController {
 
     @Inject
     AlertsHelper alertsHelper;
+
+    @Inject
+    JFXCanvasTool jfxCanvasTool;
 
     @FXML
     private WebView chatOutput;
@@ -162,7 +166,7 @@ public class ChatController {
     WebView webContentView;
 
     @FXML
-    private Group canvasPane;
+    private Canvas canvas;
 
     @FXML
     private GridPane reportingPane;
@@ -218,6 +222,11 @@ public class ChatController {
         if (appConfig.historyFile().isEmpty()) {
             spBody.setDividerPositions(new double[] { 0, 1d });
         }
+
+        // init tooling
+        jfxCanvasTool.setContext(canvas.getGraphicsContext2D());
+        // TODO: Open tabs according to selected tool
+        this.onDrawingStarted(null);
     }
 
     @FXML
@@ -240,16 +249,17 @@ public class ChatController {
     @FXML
     void clearCurrentGraphicsTab() {
         var selectedTab = graphicsPane.getSelectionModel().getSelectedItem();
-        var parent = this.canvasPane;
         if (this.reportingTab == selectedTab) {
-            parent = grp3d;
+            reportingPane.getChildren().clear();
         }
 
         if (this.tab3d == selectedTab) {
-            parent = grp3d;
+            grp3d.getChildren().clear();
         }
 
-        parent.getChildren().clear();
+        if (this.canvasTab == selectedTab) {
+            this.canvas.getGraphicsContext2D().clearRect(0, 0, 10000, 10000);
+        }
 
     }
 
@@ -312,17 +322,6 @@ public class ChatController {
         cmbModels.setItems(FXCollections.observableList(modelsNames));
     }
 
-    public void onNewDrawingNodeEvent(@Observes NewDrawingNodeEvent event) {
-        Platform.runLater(() -> {
-            if (!graphicsPane.getTabs().contains(canvasTab)) {
-                graphicsPane.getTabs().add(canvasTab);
-            }
-            canvasPane.getChildren().add(event.node());
-            graphicsPane.getSelectionModel().select(canvasTab);
-            spBody.setDividerPosition(1, 0.4);
-        });
-    }
-
     public void onNewHTMLContentEvent(@Observes NewHTMLContentEvent event) {
         Platform.runLater(() -> {
             if (!graphicsPane.getTabs().contains(webViewTab)) {
@@ -332,6 +331,18 @@ public class ChatController {
             graphicsPane.getSelectionModel().select(webViewTab);
             spBody.setDividerPosition(1, 0.4);
         });
+    }
+
+    public void onDrawingStarted(@Observes DrawingStartedEvent evt) {
+
+        Platform.runLater(() -> {
+            if (!graphicsPane.getTabs().contains(canvasTab)) {
+                graphicsPane.getTabs().add(canvasTab);
+            }
+            graphicsPane.getSelectionModel().select(canvasTab);
+            spBody.setDividerPosition(1, 0.4);
+        });
+
     }
 
     public void onNewReportingNodeEvent(@Observes NewReportingNodeEvent evt) {
@@ -364,10 +375,6 @@ public class ChatController {
 
     public void onClearReportingEvent(@Observes ClearReportEvent event) {
         Platform.runLater(() -> this.reportingPane.getChildren().clear());
-    }
-
-    public void onClearDrawingNodeEvent(@Observes ClearDrawingEvent event) {
-        Platform.runLater(() -> this.canvasPane.getChildren().clear());
     }
 
     public void setSelectedModel(String model) {

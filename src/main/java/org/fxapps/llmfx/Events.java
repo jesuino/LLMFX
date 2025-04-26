@@ -38,15 +38,9 @@ public class Events {
     public record DeleteConversationEvent(int index) {
     }
 
-    public record NewDrawingNodeEvent(Node node) {
-
-    }
-
-    public record ClearDrawingEvent() {
-    }
-
     public record NewReportingNodeEvent(Node node, int column, int row, int colspan, int rowspan) {
     }
+
     public record ClearReportEvent() {
     }
 
@@ -56,6 +50,7 @@ public class Events {
     public record New3DContentEvent(Node node) {
     }
 
-
+    public record DrawingStartedEvent() {
+    }
 
 }

@@ -7,8 +7,7 @@ import org.fxapps.llmfx.tools.code.CommandsTool;
 import org.fxapps.llmfx.tools.files.FilesReaderTool;
 import org.fxapps.llmfx.tools.files.FilesWriterTool;
 import org.fxapps.llmfx.tools.graphics.JFX3dTool;
-import org.fxapps.llmfx.tools.graphics.JFXDrawerTool;
-import org.fxapps.llmfx.tools.graphics.JFXPathTool;
+import org.fxapps.llmfx.tools.graphics.JFXCanvasTool;
 import org.fxapps.llmfx.tools.graphics.JFXReportingTool;
 import org.fxapps.llmfx.tools.graphics.JFXWebRenderingTool;
 import org.fxapps.llmfx.tools.time.DateTimeTool;
@@ -21,8 +20,7 @@ import jakarta.inject.Singleton;
 @Singleton
 public class ToolsInfo {
 
-    private static final String CANVAS_DRAWING = "Canvas Drawing";
-    private static final String PATH_DRAWING = "Path Drawing";
+    private static final String CANVAS_DRAWING = "Canvas Drawing";    
     private static final String WEB_RENDER = "Web Render";
     private static final String REPORTING = "Reporting";
     private static final String FILE_WRITE = "File Write";
@@ -43,9 +41,7 @@ public class ToolsInfo {
     @Inject
     private CommandsTool commandsTool;
     @Inject
-    private JFXDrawerTool drawerTool;
-    @Inject
-    private JFXPathTool pathTool;
+    private JFXCanvasTool drawingTool;
     @Inject
     private JFXReportingTool reportingTool;
     @Inject
@@ -62,7 +58,7 @@ public class ToolsInfo {
             "Web", List.of(WEB_SEARCH),
             "Date and Time", List.of(DATE_TIME),
             "Execute", List.of(COMMANDS),
-            "Graphics", List.of(PATH_DRAWING, CANVAS_DRAWING, REPORTING, WEB_RENDER, _3D));
+            "Graphics", List.of(CANVAS_DRAWING, REPORTING, WEB_RENDER, _3D));
 
     @PostConstruct
     void init() {
@@ -73,9 +69,8 @@ public class ToolsInfo {
                 WEB_SEARCH, webSearchTool,
                 DATE_TIME, dateTimeTool,
                 COMMANDS, commandsTool,
-                CANVAS_DRAWING, drawerTool,
-                REPORTING, reportingTool,
-                PATH_DRAWING, pathTool,
+                CANVAS_DRAWING, drawingTool,
+                REPORTING, reportingTool,                
                 WEB_RENDER, webTool,
                 _3D, _3dTools);
 
