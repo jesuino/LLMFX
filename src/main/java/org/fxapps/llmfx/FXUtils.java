@@ -7,11 +7,32 @@ import java.awt.image.SinglePixelPackedSampleModel;
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.PixelReader;
+import javafx.scene.paint.Color;
 
-// had to create this because SwingFXUtils is bringing me classloading conflicts:
-// java.lang.NoClassDefFoundError: com/sun/javafx/collections/MappingChange$Map
-// Code got from: https://github.com/openjdk/jfx/blob/master/modules/javafx.swing/src/main/java/javafx/embed/swing/SwingFXUtils.java
 public class FXUtils {
+
+    // this is a workaround to convert the color provided by the LLM to a valid
+    // color
+    // I see that sometimes it halucinates or provides invalid colors and JavaFX is
+    // strict
+    // about the color format. So we need to fix it.
+    public static Color fixColor(String color) {
+        if (color == null || "none".equalsIgnoreCase(color) || "null".equalsIgnoreCase(color)) {
+            return Color.TRANSPARENT;
+        }
+        try {
+            return Color.valueOf(color);
+        } catch (IllegalArgumentException e) {
+            // if the color is not valid, return a default color
+            return Color.TRANSPARENT;
+        }
+    }
+
+    // had to create this because SwingFXUtils is bringing me classloading
+    // conflicts:
+    // java.lang.NoClassDefFoundError: com/sun/javafx/collections/MappingChange$Map
+    // Code got from:
+    // https://github.com/openjdk/jfx/blob/master/modules/javafx.swing/src/main/java/javafx/embed/swing/SwingFXUtils.java
 
     public static BufferedImage fromFXImage(Image img) {
         PixelReader pr = img.getPixelReader();
@@ -20,7 +41,7 @@ public class FXUtils {
         }
         int iw = (int) img.getWidth();
         int ih = (int) img.getHeight();
-        PixelFormat<?> fxFormat = pr.getPixelFormat();        
+        PixelFormat<?> fxFormat = pr.getPixelFormat();
         int prefBimgType = switch (fxFormat.getType()) {
             case BYTE_BGRA_PRE, INT_ARGB_PRE -> BufferedImage.TYPE_INT_ARGB_PRE;
             case BYTE_BGRA, INT_ARGB -> BufferedImage.TYPE_INT_ARGB;

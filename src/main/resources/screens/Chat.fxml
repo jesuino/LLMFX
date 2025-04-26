@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.Group?>
+<?import javafx.scene.SubScene?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
@@ -15,11 +17,11 @@
 <?import javafx.scene.control.TextField?>
 <?import javafx.scene.effect.Glow?>
 <?import javafx.scene.effect.Shadow?>
-<?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.BorderPane?>
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
@@ -149,11 +151,7 @@
                           <content>
                               <ScrollPane>
                                  <content>
-                                  <AnchorPane fx:id="canvasPane" minHeight="0.0" minWidth="0.0" prefHeight="180.0" prefWidth="200.0">
-                                       <padding>
-                                          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                       </padding>
-                                    </AnchorPane>
+                                    <Group fx:id="canvasPane" />
                                  </content>
                               </ScrollPane>
                           </content>
@@ -184,6 +182,19 @@
                                     <WebView fx:id="webContentView" prefHeight="200.0" prefWidth="200.0" />
                                  </children>
                               </StackPane>
+                          </content>
+                        </Tab>
+                        <Tab fx:id="tab3d" text="3d">
+                          <content>
+                              <ScrollPane>
+                                 <content>
+                                    <SubScene fx:id="_3dSubscene" height="900.0" width="1200.0">
+                                      <root>
+                                        <Region />
+                                      </root>
+                                    </SubScene>
+                                 </content>
+                              </ScrollPane>
                           </content>
                         </Tab>
                      </tabs></TabPane>

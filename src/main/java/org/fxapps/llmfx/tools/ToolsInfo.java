@@ -6,6 +6,7 @@ import java.util.Map;
 import org.fxapps.llmfx.tools.code.CommandsTool;
 import org.fxapps.llmfx.tools.files.FilesReaderTool;
 import org.fxapps.llmfx.tools.files.FilesWriterTool;
+import org.fxapps.llmfx.tools.graphics.JFX3dTool;
 import org.fxapps.llmfx.tools.graphics.JFXDrawerTool;
 import org.fxapps.llmfx.tools.graphics.JFXPathTool;
 import org.fxapps.llmfx.tools.graphics.JFXReportingTool;
@@ -29,6 +30,7 @@ public class ToolsInfo {
     private static final String WEB_SEARCH = "Web Search";
     private static final String DATE_TIME = "Date and Time";
     private static final String COMMANDS = "Commands";
+    private static final String _3D = "3D";
 
     @Inject
     private FilesReaderTool filesReaderTool;
@@ -48,6 +50,8 @@ public class ToolsInfo {
     private JFXReportingTool reportingTool;
     @Inject
     private JFXWebRenderingTool webTool;
+    @Inject
+    private JFX3dTool _3dTools;
 
     Map<String, Object> toolsMap;
 
@@ -58,7 +62,7 @@ public class ToolsInfo {
             "Web", List.of(WEB_SEARCH),
             "Date and Time", List.of(DATE_TIME),
             "Execute", List.of(COMMANDS),
-            "Graphics", List.of(PATH_DRAWING, CANVAS_DRAWING, REPORTING, WEB_RENDER));
+            "Graphics", List.of(PATH_DRAWING, CANVAS_DRAWING, REPORTING, WEB_RENDER, _3D));
 
     @PostConstruct
     void init() {
@@ -72,7 +76,8 @@ public class ToolsInfo {
                 CANVAS_DRAWING, drawerTool,
                 REPORTING, reportingTool,
                 PATH_DRAWING, pathTool,
-                WEB_RENDER, webTool);
+                WEB_RENDER, webTool,
+                _3D, _3dTools);
 
     }
 

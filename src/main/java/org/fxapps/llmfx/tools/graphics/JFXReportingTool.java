@@ -1,5 +1,7 @@
 package org.fxapps.llmfx.tools.graphics;
 
+import static org.fxapps.llmfx.FXUtils.fixColor;
+
 import java.util.Arrays;
 import java.util.Map;
 
@@ -153,7 +155,7 @@ public class JFXReportingTool {
             @P("The text font value. Use free and open source fonts") String fontFamily,
             @P("Font size") int fontSize,
             @P("Font color in web format") String fontColor,
-            @P("Background color in web format") String backgrounColor,
+            @P("Background color in web format") String backgroundColor,
             @P("The font Posture. Possible values are ITALIC or REGULAR ") String fontPosture,
             @P("The font weight. Values start at 0 and goes to 100. The smaller the value, the thinner the font") int fontWeight,
             @P("The text alignment. Possible values are LEFT, CENTER, RIGHT and JUSTIFY") String textAligment,
@@ -174,7 +176,7 @@ public class JFXReportingTool {
         textNode.setStrokeWidth(strokeWidth);
         textNode.setTextAlignment(TextAlignment.valueOf(textAligment));
         var textContainer = new StackPane(textNode);
-        textContainer.setBackground(Background.fill(fixColor(backgrounColor)));
+        textContainer.setBackground(Background.fill(fixColor(backgroundColor)));
         newReportingNodeEvent.fire(new NewReportingNodeEvent(textContainer, column, row, colSpan, rowspan));
     }
 
@@ -183,21 +185,6 @@ public class JFXReportingTool {
         clearReportingNodeEvent.fire(new ClearReportEvent());
     }
 
-    // this is a workaround to convert the color provided by the LLM to a valid
-    // color
-    // I see that sometimes it halucinates or provides invalid colors and JavaFX is
-    // strict
-    // about the color format. So we need to fix it.
-    Color fixColor(String color) {
-        if (color == null || "none".equalsIgnoreCase(color) || "null".equalsIgnoreCase(color)) {
-            return Color.TRANSPARENT;
-        }
-        try {
-            return Color.valueOf(color);
-        } catch (IllegalArgumentException e) {
-            // if the color is not valid, return a default color
-            return Color.TRANSPARENT;
-        }
-    }
+
 
 }

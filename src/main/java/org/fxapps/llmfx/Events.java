@@ -47,11 +47,15 @@ public class Events {
 
     public record NewReportingNodeEvent(Node node, int column, int row, int colspan, int rowspan) {
     }
+    public record ClearReportEvent() {
+    }
 
     public record NewHTMLContentEvent(String htmlContent) {
     }
 
-    public record ClearReportEvent() {
+    public record New3DContentEvent(Node node) {
     }
+
+
 
 }
