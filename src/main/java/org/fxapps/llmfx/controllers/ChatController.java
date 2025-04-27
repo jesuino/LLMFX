@@ -29,6 +29,7 @@ import org.fxapps.llmfx.Events.StopStreamingEvent;
 import org.fxapps.llmfx.Events.UserInputEvent;
 import org.fxapps.llmfx.FXUtils;
 import org.fxapps.llmfx.config.AppConfig;
+import org.fxapps.llmfx.tools.graphics.JFXCanvasPixelTool;
 import org.fxapps.llmfx.tools.graphics.JFXCanvasTool;
 
 import io.quarkiverse.fx.views.FxView;
@@ -110,6 +111,10 @@ public class ChatController {
 
     @Inject
     JFXCanvasTool jfxCanvasTool;
+
+
+    @Inject
+    JFXCanvasPixelTool jfxCanvasPixelTool;
 
     @FXML
     private WebView chatOutput;
@@ -225,6 +230,7 @@ public class ChatController {
 
         // init tooling
         jfxCanvasTool.setContext(canvas.getGraphicsContext2D());
+        jfxCanvasPixelTool.setCanvas(canvas);
         // TODO: Open tabs according to selected tool
         this.onDrawingStarted(null);
     }

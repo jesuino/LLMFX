@@ -7,6 +7,7 @@ import org.fxapps.llmfx.tools.code.CommandsTool;
 import org.fxapps.llmfx.tools.files.FilesReaderTool;
 import org.fxapps.llmfx.tools.files.FilesWriterTool;
 import org.fxapps.llmfx.tools.graphics.JFX3dTool;
+import org.fxapps.llmfx.tools.graphics.JFXCanvasPixelTool;
 import org.fxapps.llmfx.tools.graphics.JFXCanvasTool;
 import org.fxapps.llmfx.tools.graphics.JFXReportingTool;
 import org.fxapps.llmfx.tools.graphics.JFXWebRenderingTool;
@@ -21,6 +22,7 @@ import jakarta.inject.Singleton;
 public class ToolsInfo {
 
     private static final String CANVAS_DRAWING = "Canvas Drawing";    
+    private static final String CANVAS_PIXELS = "Canvas Pixels";   
     private static final String WEB_RENDER = "Web Render";
     private static final String REPORTING = "Reporting";
     private static final String FILE_WRITE = "File Write";
@@ -48,6 +50,8 @@ public class ToolsInfo {
     private JFXWebRenderingTool webTool;
     @Inject
     private JFX3dTool _3dTools;
+    @Inject
+    private JFXCanvasPixelTool canvasPixelTool;
 
     Map<String, Object> toolsMap;
 
@@ -58,7 +62,7 @@ public class ToolsInfo {
             "Web", List.of(WEB_SEARCH),
             "Date and Time", List.of(DATE_TIME),
             "Execute", List.of(COMMANDS),
-            "Graphics", List.of(CANVAS_DRAWING, REPORTING, WEB_RENDER, _3D));
+            "Graphics", List.of(CANVAS_DRAWING, REPORTING, WEB_RENDER, _3D, CANVAS_PIXELS));
 
     @PostConstruct
     void init() {
@@ -72,7 +76,8 @@ public class ToolsInfo {
                 CANVAS_DRAWING, drawingTool,
                 REPORTING, reportingTool,                
                 WEB_RENDER, webTool,
-                _3D, _3dTools);
+                _3D, _3dTools,
+                CANVAS_PIXELS, canvasPixelTool);
 
     }
 

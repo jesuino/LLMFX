@@ -2,8 +2,6 @@ package org.fxapps.llmfx.tools.graphics;
 
 import static org.fxapps.llmfx.FXUtils.fixColor;
 
-import java.util.List;
-
 import org.fxapps.llmfx.Events.New3DContentEvent;
 
 import dev.langchain4j.agent.tool.P;
