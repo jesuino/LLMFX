@@ -1,59 +1,54 @@
 package org.fxapps.llmfx.services;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import static java.util.stream.StreamSupport.stream;
+
 import java.util.List;
 
+import org.eclipse.microprofile.rest.client.annotation.RegisterClientHeaders;
+import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
+import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.fxapps.llmfx.config.LLMConfig;
 
-import jakarta.annotation.PostConstruct;
+import com.fasterxml.jackson.databind.JsonNode;
+
+import io.quarkus.rest.client.reactive.Url;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
-import jakarta.json.Json;
+import jakarta.ws.rs.GET;
+import jakarta.ws.rs.Path;
 
 @ApplicationScoped
 public class OpenAiService {
 
     @Inject
     LLMConfig llmConfig;
-    private HttpClient httpClient;
 
-    @PostConstruct
-    void init() {
-        this.httpClient = HttpClient.newBuilder()
-                .version(HttpClient.Version.HTTP_1_1)                
-                .build();
+    @RegisterRestClient(baseUri = "notused")
+    @RegisterClientHeaders(BearerTokenHeaderFactory.class)
+    public interface OpenAiServiceRest {
+        @GET
+        @Path("/models")
+        public ModelListResponse listModels(@Url String url);
+
+        
     }
 
-    public List<String> listModels() throws Exception {
-        var endpoint = URI.create(getBaseUrl() + "/models");
+    public record ModelListResponse(String object, List<ModelInfo> data) {}
+    public record ModelInfo(String id, String object, long created, String owned_by) {}
+    
+    @Inject
+    @RestClient
+    OpenAiServiceRest openAiServiceRest;
 
-        var requestBuilder = HttpRequest.newBuilder()
-                .uri(endpoint)
-                .header("Accept", "application/json")                
-                .header("Cache-Control", "no-cache");
-
-        llmConfig.key().ifPresent(key -> requestBuilder.header("Authorization", "Bearer " + key));
-
-        var request = requestBuilder.build();
-
-        var response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
-        var json = Json.createReader(response.body()).read();
-        return json.asJsonObject()
-                .get("data")
-                .asJsonArray()
-                .stream()
-                .map(j -> j.asJsonObject().getString("id"))
-                .toList();
-
+    public List<String> listModels() {
+        var models = openAiServiceRest.listModels(getBaseUrl());
+        return models.data().stream().map(ModelInfo::id).toList();
     }
 
     public String getBaseUrl() {
         var baseUrl = llmConfig.url();
         return baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
-
     }
 
+    
 }

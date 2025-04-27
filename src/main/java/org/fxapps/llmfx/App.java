@@ -126,27 +126,43 @@ public class App {
         stage.setTitle("LLM FX: A desktop App for LLM Servers");
         stage.show();
 
-        chatController.init();
-        refreshModels();
-        chatController.setMCPServers(mcpClientRepository.mcpServers());
-        chatController.setTools(toolsInfo.getToolsCategoryMap());
 
-        if (!historyStorage.getChatHistory().isEmpty()) {
-            updateHistoryList();
-            showChatMessages();
-        }
+        Platform.runLater(() -> {
+            chatController.init();
+            refreshModels();
+            chatController.setMCPServers(mcpClientRepository.mcpServers());
+            chatController.setTools(toolsInfo.getToolsCategoryMap());
+
+            if (!historyStorage.getChatHistory().isEmpty()) {
+                updateHistoryList();
+                showChatMessages();
+            }
+        });
     }
 
-    private void refreshModels() throws Exception {
-        final var modelsList = openApiService.listModels();
-        chatController.fillModels(modelsList);
+    private void refreshModels() {
+        List<String> tryList = null;
+        try {
+            tryList = openApiService.listModels();
+        } catch (RuntimeException e) {
+            logger.error("Error listing models", e);
+            alertsHelper.showError("Problem with the LLM Server",
+                    "Could not list models from the LLM Server",
+                    "Error when trying to list models from the LLM Server. Exiting...");
+            System.exit(0);
+        }
 
+        final var modelsList = tryList;
         if (modelsList.isEmpty()) {
             alertsHelper.showError("No model",
                     "No Model is available on the server",
                     "No Model found, Check if the server has at least one model available for use. Exiting...");
             System.exit(0);
         }
+
+        chatController.fillModels(modelsList);
+
+       
         var currentModel = modelsList.stream()
                 .filter(m -> m.equals(selectedModel))
                 .findAny()
