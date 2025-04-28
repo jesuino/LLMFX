@@ -10,3 +10,4 @@ target/
 build/
 /.vscode/
 
+.DS_Store
