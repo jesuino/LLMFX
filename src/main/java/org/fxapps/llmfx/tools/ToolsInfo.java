@@ -21,16 +21,16 @@ import jakarta.inject.Singleton;
 @Singleton
 public class ToolsInfo {
 
-    private static final String CANVAS_DRAWING = "Canvas Drawing";    
-    private static final String CANVAS_PIXELS = "Canvas Pixels";   
-    private static final String WEB_RENDER = "Web Render";
-    private static final String REPORTING = "Reporting";
-    private static final String FILE_WRITE = "File Write";
-    private static final String FILES_READ = "Files Read";
-    private static final String WEB_SEARCH = "Web Search";
-    private static final String DATE_TIME = "Date and Time";
-    private static final String COMMANDS = "Commands";
-    private static final String _3D = "3D";
+    public static final String CANVAS_DRAWING = "Canvas Drawing";
+    public static final String CANVAS_PIXELS = "Canvas Pixels";
+    public static final String WEB_RENDER = "Web Render";
+    public static final String REPORTING = "Reporting";
+    public static final String FILE_WRITE = "File Write";
+    public static final String FILES_READ = "Files Read";
+    public static final String WEB_SEARCH = "Web Search";
+    public static final String DATE_TIME = "Date and Time";
+    public static final String COMMANDS = "Commands";
+    public static final String _3D = "3D";
 
     @Inject
     private FilesReaderTool filesReaderTool;
@@ -74,7 +74,7 @@ public class ToolsInfo {
                 DATE_TIME, dateTimeTool,
                 COMMANDS, commandsTool,
                 CANVAS_DRAWING, drawingTool,
-                REPORTING, reportingTool,                
+                REPORTING, reportingTool,
                 WEB_RENDER, webTool,
                 _3D, _3dTools,
                 CANVAS_PIXELS, canvasPixelTool);

@@ -38,19 +38,4 @@ public class Events {
     public record DeleteConversationEvent(int index) {
     }
 
-    public record NewReportingNodeEvent(Node node, int column, int row, int colspan, int rowspan) {
-    }
-
-    public record ClearReportEvent() {
-    }
-
-    public record NewHTMLContentEvent(String htmlContent) {
-    }
-
-    public record New3DContentEvent(Node node) {
-    }
-
-    public record DrawingStartedEvent() {
-    }
-
 }

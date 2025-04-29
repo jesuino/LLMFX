@@ -1,10 +1,17 @@
 package org.fxapps.llmfx.controllers;
 
+import static org.fxapps.llmfx.tools.ToolsInfo.CANVAS_DRAWING;
+import static org.fxapps.llmfx.tools.ToolsInfo.CANVAS_PIXELS;
+import static org.fxapps.llmfx.tools.ToolsInfo.REPORTING;
+import static org.fxapps.llmfx.tools.ToolsInfo.WEB_RENDER;
+import static org.fxapps.llmfx.tools.ToolsInfo._3D;
+
 import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -12,15 +19,10 @@ import javax.imageio.ImageIO;
 
 import org.fxapps.llmfx.AlertsHelper;
 
-import org.fxapps.llmfx.Events.ClearReportEvent;
 import org.fxapps.llmfx.Events.DeleteConversationEvent;
-import org.fxapps.llmfx.Events.DrawingStartedEvent;
 import org.fxapps.llmfx.Events.HistorySelectedEvent;
-import org.fxapps.llmfx.Events.New3DContentEvent;
 import org.fxapps.llmfx.Events.NewChatEvent;
 
-import org.fxapps.llmfx.Events.NewHTMLContentEvent;
-import org.fxapps.llmfx.Events.NewReportingNodeEvent;
 import org.fxapps.llmfx.Events.RefreshModelsEvent;
 import org.fxapps.llmfx.Events.SaveChatEvent;
 import org.fxapps.llmfx.Events.SaveFormat;
@@ -29,12 +31,14 @@ import org.fxapps.llmfx.Events.StopStreamingEvent;
 import org.fxapps.llmfx.Events.UserInputEvent;
 import org.fxapps.llmfx.FXUtils;
 import org.fxapps.llmfx.config.AppConfig;
+import org.fxapps.llmfx.tools.graphics.JFX3dTool;
 import org.fxapps.llmfx.tools.graphics.JFXCanvasPixelTool;
 import org.fxapps.llmfx.tools.graphics.JFXCanvasTool;
+import org.fxapps.llmfx.tools.graphics.JFXReportingTool;
+import org.fxapps.llmfx.tools.graphics.JFXWebRenderingTool;
 
 import io.quarkiverse.fx.views.FxView;
 import jakarta.enterprise.event.Event;
-import jakarta.enterprise.event.Observes;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 import javafx.application.Platform;
@@ -43,7 +47,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.Camera;
 import javafx.scene.Group;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.SubScene;
@@ -109,12 +112,21 @@ public class ChatController {
     @Inject
     AlertsHelper alertsHelper;
 
+    // Tools to be initiated
     @Inject
     JFXCanvasTool jfxCanvasTool;
 
-
     @Inject
     JFXCanvasPixelTool jfxCanvasPixelTool;
+
+    @Inject
+    JFXReportingTool jfxReportingTool;
+
+    @Inject
+    JFXWebRenderingTool jfxWebRenderingTool;
+
+    @Inject
+    JFX3dTool jfx3dTool;
 
     @FXML
     private WebView chatOutput;
@@ -231,8 +243,9 @@ public class ChatController {
         // init tooling
         jfxCanvasTool.setContext(canvas.getGraphicsContext2D());
         jfxCanvasPixelTool.setCanvas(canvas);
-        // TODO: Open tabs according to selected tool
-        this.onDrawingStarted(null);
+        jfxReportingTool.setGridPane(reportingPane);
+        jfxWebRenderingTool.setWebView(webContentView);
+        jfx3dTool.setSubScene(_3dSubscene, grp3d);
     }
 
     @FXML
@@ -328,61 +341,6 @@ public class ChatController {
         cmbModels.setItems(FXCollections.observableList(modelsNames));
     }
 
-    public void onNewHTMLContentEvent(@Observes NewHTMLContentEvent event) {
-        Platform.runLater(() -> {
-            if (!graphicsPane.getTabs().contains(webViewTab)) {
-                graphicsPane.getTabs().add(webViewTab);
-            }
-            webContentView.getEngine().loadContent(event.htmlContent());
-            graphicsPane.getSelectionModel().select(webViewTab);
-            spBody.setDividerPosition(1, 0.4);
-        });
-    }
-
-    public void onDrawingStarted(@Observes DrawingStartedEvent evt) {
-
-        Platform.runLater(() -> {
-            if (!graphicsPane.getTabs().contains(canvasTab)) {
-                graphicsPane.getTabs().add(canvasTab);
-            }
-            graphicsPane.getSelectionModel().select(canvasTab);
-            spBody.setDividerPosition(1, 0.4);
-        });
-
-    }
-
-    public void onNewReportingNodeEvent(@Observes NewReportingNodeEvent evt) {
-        Platform.runLater(() -> {
-            if (!graphicsPane.getTabs().contains(reportingTab)) {
-                graphicsPane.getTabs().add(reportingTab);
-            }
-            reportingPane.add(evt.node(), evt.column(), evt.row());
-            graphicsPane.getSelectionModel().select(reportingTab);
-            spBody.setDividerPosition(1, 0.4);
-        });
-    }
-
-    public void onNew3dNodeEvent(@Observes New3DContentEvent evt) {
-        Platform.runLater(() -> {
-            if (!graphicsPane.getTabs().contains(tab3d)) {
-                graphicsPane.getTabs().add(tab3d);
-            }
-
-            if (evt.node() instanceof Camera camera) {
-                _3dSubscene.setCamera(camera);
-                grp3d.getChildren().stream().filter(n -> n instanceof Camera).findFirst()
-                        .ifPresent(grp3d.getChildren()::remove);
-            }
-            grp3d.getChildren().add(evt.node());
-            graphicsPane.getSelectionModel().select(tab3d);
-            spBody.setDividerPosition(1, 0.4);
-        });
-    }
-
-    public void onClearReportingEvent(@Observes ClearReportEvent event) {
-        Platform.runLater(() -> this.reportingPane.getChildren().clear());
-    }
-
     public void setSelectedModel(String model) {
         cmbModels.getSelectionModel().select(model);
     }
@@ -425,6 +383,7 @@ public class ChatController {
                                             : " (" + selectedTools().size() + ")"));
 
                             mcpMenu.setDisable(!selectedTools().isEmpty());
+                            Platform.runLater(this::onSelectTool);
 
                         });
                         return menu;
@@ -434,6 +393,27 @@ public class ChatController {
                 }).forEach(toolsMenu.getItems()::add);
         toolsMenu.getItems().add(new SeparatorMenuItem());
         toolsMenu.getItems().add(clearToolsMenuItem);
+    }
+
+    public void onSelectTool() {
+        graphicsPane.getTabs().clear();
+        spBody.setDividerPosition(1, 1);
+        var tabs = Map.of(CANVAS_DRAWING, canvasTab,
+                CANVAS_PIXELS, canvasTab,
+                REPORTING, reportingTab,
+                _3D, tab3d,
+                WEB_RENDER, webViewTab)
+                .entrySet()
+                .stream()
+                .filter(e -> selectedTools().contains(e.getKey()))
+                .map(Entry::getValue)
+                .toList();
+        graphicsPane.getTabs().addAll(tabs);
+
+        if (!tabs.isEmpty()) {
+            spBody.setDividerPosition(1, 0.4);
+        }
+
     }
 
     @FXML

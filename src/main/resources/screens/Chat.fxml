@@ -21,6 +21,7 @@
 <?import javafx.scene.layout.ColumnConstraints?>
 <?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
+<?import javafx.scene.layout.Pane?>
 <?import javafx.scene.layout.Region?>
 <?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
@@ -186,15 +187,15 @@
                         </Tab>
                         <Tab fx:id="tab3d" text="3d">
                           <content>
-                              <ScrollPane>
-                                 <content>
+                              <Pane>
+                                 <children>
                                     <SubScene fx:id="_3dSubscene" height="900.0" width="1200.0">
                                       <root>
                                         <Region />
                                       </root>
                                     </SubScene>
-                                 </content>
-                              </ScrollPane>
+                                 </children>
+                              </Pane>
                           </content>
                         </Tab>
                      </tabs></TabPane>

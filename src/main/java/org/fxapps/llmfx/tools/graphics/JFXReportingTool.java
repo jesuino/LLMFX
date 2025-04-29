@@ -5,17 +5,14 @@ import static org.fxapps.llmfx.FXUtils.fixColor;
 import java.util.Arrays;
 import java.util.Map;
 
-import org.fxapps.llmfx.Events.ClearReportEvent;
-import org.fxapps.llmfx.Events.NewReportingNodeEvent;
-
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
-import jakarta.enterprise.event.Event;
-import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
+import javafx.scene.Node;
 import javafx.scene.chart.AreaChart;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.CategoryAxis;
@@ -26,8 +23,8 @@ import javafx.scene.chart.XYChart;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.Background;
+import javafx.scene.layout.GridPane;
 import javafx.scene.layout.StackPane;
-import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
@@ -37,14 +34,16 @@ import javafx.scene.text.TextAlignment;
 @Singleton
 public class JFXReportingTool {
 
-    @Inject
-    Event<NewReportingNodeEvent> newReportingNodeEvent;
 
-    @Inject
-    Event<ClearReportEvent> clearReportingNodeEvent;
+    private GridPane gridPane;
 
     enum ChartType {
         AREA, LINE, BAR
+    }
+
+    public void setGridPane(GridPane gridPane) {
+        this.gridPane = gridPane;
+
     }
 
     @Tool("""
@@ -82,8 +81,10 @@ public class JFXReportingTool {
 
         tableView.getColumns().addAll(columns);
         tableView.setItems(tableData);
-        newReportingNodeEvent.fire(new NewReportingNodeEvent(tableView, column, row, colSpan, rowspan));
+        add(tableView, column, row, colSpan, rowspan);
     }
+
+
 
     @Tool("Creates a XY chart for the report. You can create a chart with the specified title and data. The chart will be placed at the specified coordinates.")
     public void addXYChart(
@@ -118,7 +119,7 @@ public class JFXReportingTool {
         }
 
         chart.getData().add(seriesData);
-        newReportingNodeEvent.fire(new NewReportingNodeEvent(chart, column, row, colSpan, rowspan));
+        add(chart, column, row, colSpan, rowspan);        
     }
 
     @Tool("Creates a pie chart for the report. You can create a Pie chart with the specified title and data. The chart will be placed at the specified coordinates.")
@@ -141,10 +142,10 @@ public class JFXReportingTool {
             pieChart.getData().add(new PieChart.Data(k, v));
         });
 
-        newReportingNodeEvent.fire(new NewReportingNodeEvent(pieChart, column, row, colSpan, rowspan));
+        this.gridPane.add(pieChart, column, row, colSpan, rowspan);
     }
 
-    @Tool("Creates a text chart for the report. The text will be placed at the specified coordinates.")
+    @Tool("Creates a text chart for the report. The text will be placed at the specified coordinates. Use this for titles, insights or explanation.")
     public void addText(
             @P("The column to place the text on the report grid.") int column,
             @P("The row to place the text on the report grid. ") int row,
@@ -177,12 +178,17 @@ public class JFXReportingTool {
         textNode.setTextAlignment(TextAlignment.valueOf(textAligment));
         var textContainer = new StackPane(textNode);
         textContainer.setBackground(Background.fill(fixColor(backgroundColor)));
-        newReportingNodeEvent.fire(new NewReportingNodeEvent(textContainer, column, row, colSpan, rowspan));
+        add(textNode, column, row, colSpan, rowspan);
     }
 
     @Tool("Clear the current report or dashboard by removing all elements previously added.")
     public void clear() {
-        clearReportingNodeEvent.fire(new ClearReportEvent());
+        Platform.runLater(() -> gridPane.getChildren().clear());
+        
+    }
+
+    private void add(Node node, int column, int row, int colSpan, int rowspan) {
+        Platform.runLater(() -> this.gridPane.add(node, column, row, colSpan, rowspan));
     }
 
 
