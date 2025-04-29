@@ -6,7 +6,6 @@ import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import jakarta.inject.Singleton;
 import javafx.application.Platform;
-import javafx.geometry.Point3D;
 import javafx.scene.Camera;
 import javafx.scene.Group;
 import javafx.scene.Node;

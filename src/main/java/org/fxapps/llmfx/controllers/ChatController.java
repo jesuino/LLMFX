@@ -7,7 +7,9 @@ import static org.fxapps.llmfx.tools.ToolsInfo.WEB_RENDER;
 import static org.fxapps.llmfx.tools.ToolsInfo._3D;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -370,11 +372,15 @@ public class ChatController {
     }
 
     public void setTools(Map<String, List<String>> toolsCat) {
-        toolsCat.entrySet()
+        var sortedCategories = new ArrayList<>(toolsCat.keySet());
+        Collections.sort(sortedCategories);
+
+        sortedCategories
                 .stream()
-                .map(e -> {
-                    Menu mnCat = new Menu(e.getKey());
-                    e.getValue().stream().map(tool -> {
+                .map(cat -> {
+                    var tools = toolsCat.get(cat);
+                    Menu mnCat = new Menu(cat);
+                    tools.stream().map(tool -> {
                         var menu = new CheckMenuItem(tool);
                         menu.selectedProperty().addListener((obs, old, n) -> {
                             toolsMenu.setText(TOOLS_LABEL

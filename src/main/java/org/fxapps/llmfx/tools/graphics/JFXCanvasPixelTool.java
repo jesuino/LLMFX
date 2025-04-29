@@ -33,7 +33,7 @@ public class JFXCanvasPixelTool {
         return new double[] { canvas.getWidth() / RESOLUTION, canvas.getHeight() / RESOLUTION };
     }
 
-    @Tool("Writes pixels at he canvas. It receives all pixels values at once")
+   // @Tool("Writes pixels at he canvas. It receives all pixels values at once")
     public void writePixelsColors(
             @P("""
                     The matrix of colors to be written. Each matrix position matches a pixel x,y position.
@@ -48,7 +48,7 @@ public class JFXCanvasPixelTool {
         }
     }
 
-    // @Tool("Writes pixels at specific position and color RGB")
+    @Tool("Writes pixels at specific position and web color")
     public void writePixelColor(double x, double y, String color) {
         ctx.setFill(fixColor(color));
         ctx.fillRect(x * RESOLUTION, y * RESOLUTION, RESOLUTION, RESOLUTION);
