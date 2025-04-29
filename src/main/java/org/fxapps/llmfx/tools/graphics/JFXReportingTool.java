@@ -15,10 +15,12 @@ import javafx.collections.ObservableList;
 import javafx.scene.Node;
 import javafx.scene.chart.AreaChart;
 import javafx.scene.chart.BarChart;
+import javafx.scene.chart.BubbleChart;
 import javafx.scene.chart.CategoryAxis;
 import javafx.scene.chart.LineChart;
 import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.PieChart;
+import javafx.scene.chart.ScatterChart;
 import javafx.scene.chart.XYChart;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
@@ -38,7 +40,7 @@ public class JFXReportingTool {
     private GridPane gridPane;
 
     enum ChartType {
-        AREA, LINE, BAR
+        AREA, LINE, BAR, SCATTER;
     }
 
     public void setGridPane(GridPane gridPane) {
@@ -88,7 +90,7 @@ public class JFXReportingTool {
 
     @Tool("Creates a XY chart for the report. You can create a chart with the specified title and data. The chart will be placed at the specified coordinates.")
     public void addXYChart(
-            @P("The XY chart type. It can be AREA, LINE or BAR") ChartType type,
+            @P("The XY chart type.") ChartType type,
             @P("The Chart title") String title,
             @P("The chart width in pixels") int width,
             @P("The chart height in pixels") int height,
@@ -106,6 +108,7 @@ public class JFXReportingTool {
             case AREA -> new AreaChart<>(xAxis, yAxis);
             case LINE -> new LineChart<>(xAxis, yAxis);
             case BAR -> new BarChart<>(xAxis, yAxis);
+            case SCATTER -> new ScatterChart<>(xAxis, yAxis);
         };
         chart.setPrefWidth(width);
         chart.setPrefHeight(height);
@@ -116,6 +119,39 @@ public class JFXReportingTool {
 
         for (int i = 0; i < categories.length; i++) {
             seriesData.getData().add(new XYChart.Data<>(categories[i], values[i]));
+        }
+
+        chart.getData().add(seriesData);
+        add(chart, column, row, colSpan, rowspan);        
+    }
+
+
+    @Tool("Creates a Bubble chart for the report. You can create a chart with the specified title and data. The chart will be placed at the specified coordinates.")
+    public void addBubbleChart(            
+            @P("The Chart title") String title,
+            @P("The chart width in pixels") int width,
+            @P("The chart height in pixels") int height,
+            @P("The column to place the chart on the report grid.") int column,
+            @P("The row to place the chart on the report grid.") int row,
+            @P("The number of columns the chart should span") int colSpan,
+            @P("the number of rows the chart should span") int rowspan,
+            @P("The name of the series") String seriesName,
+            @P("The X axis values") Double[] xValues,
+            @P("The y axis values") Double[] yValues,
+            @P("The bubble size values. It determines the bubble size") Double[] bubbleValues) {
+
+        var xAxis = new NumberAxis();
+        var yAxis = new NumberAxis();        
+        var chart = new BubbleChart<>(xAxis, yAxis);
+        chart.setPrefWidth(width);
+        chart.setPrefHeight(height);
+        chart.setTitle(title);
+
+        var seriesData = new XYChart.Series<Number, Number>();
+        seriesData.setName(seriesName);
+
+        for (int i = 0; i < xValues.length; i++) {
+            seriesData.getData().add(new BubbleChart.Data<>(xValues[i], yValues[i], bubbleValues[i]));
         }
 
         chart.getData().add(seriesData);
@@ -142,7 +178,7 @@ public class JFXReportingTool {
             pieChart.getData().add(new PieChart.Data(k, v));
         });
 
-        this.gridPane.add(pieChart, column, row, colSpan, rowspan);
+        add(pieChart, column, row, colSpan, rowspan);
     }
 
     @Tool("Creates a text chart for the report. The text will be placed at the specified coordinates. Use this for titles, insights or explanation.")
