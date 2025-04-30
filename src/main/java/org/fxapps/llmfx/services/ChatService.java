@@ -7,16 +7,22 @@ import java.util.Map;
 
 import org.fxapps.llmfx.config.LLMConfig;
 
+import dev.langchain4j.data.document.loader.FileSystemDocumentLoader;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.UserMessage;
+import dev.langchain4j.data.segment.TextSegment;
 import dev.langchain4j.http.client.jdk.JdkHttpClient;
 import dev.langchain4j.http.client.jdk.JdkHttpClientBuilder;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
+import dev.langchain4j.rag.content.retriever.ContentRetriever;
+import dev.langchain4j.rag.content.retriever.EmbeddingStoreContentRetriever;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.TokenStream;
+import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
+import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
 import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -34,6 +40,8 @@ public class ChatService {
 
     private JdkHttpClientBuilder jdkHttpClientBuilder;
 
+    private ContentRetriever contentRetriever;
+
     @PostConstruct
     public void init() {
         modelCache = new HashMap<>();
@@ -42,6 +50,13 @@ public class ChatService {
         this.jdkHttpClientBuilder = JdkHttpClient.builder()
                 .httpClientBuilder(HttpClient.newBuilder()
                         .version(HttpClient.Version.HTTP_1_1));
+
+        if (llmConfig.documents().isPresent()) {
+            var documents = FileSystemDocumentLoader.loadDocuments(llmConfig.documents().get());
+            var embeddingStore = new InMemoryEmbeddingStore<TextSegment>();
+            EmbeddingStoreIngestor.ingest(documents, embeddingStore);
+            this.contentRetriever = EmbeddingStoreContentRetriever.from(embeddingStore);
+        }
     }
 
     public interface AsyncChatBot {
@@ -73,6 +88,9 @@ public class ChatService {
         } else {
             botBuilder.toolProvider(chatRequest.toolProvider());
         }
+
+        if (contentRetriever != null) {
+            botBuilder.contentRetriever(contentRetriever);        }
 
         var bot = botBuilder.build();
 

@@ -17,10 +17,13 @@ public interface LLMConfig {
     @ConfigProperty(defaultValue = "200")
     int timeout();
 
-    @ConfigProperty(defaultValue = "")
+    @ConfigProperty
     Optional<String> key();
 
-    @ConfigProperty(defaultValue = "")
+    @ConfigProperty
     Optional<String> systemMessage();
+
+    @ConfigProperty
+    Optional<String> documents();
 
 }
