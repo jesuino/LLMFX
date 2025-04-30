@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import org.fxapps.llmfx.config.LLMConfig;
+import org.jboss.logging.Logger;
 
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.SystemMessage;
@@ -29,6 +30,8 @@ public class ChatService {
 
     @Inject
     LLMConfig llmConfig;
+
+    Logger logger = Logger.getLogger(ChatService.class);
 
     Map<String, StreamingChatLanguageModel> modelCache;
 
@@ -87,14 +90,33 @@ public class ChatService {
                 .onPartialResponse(token -> {
                     if (!chatRequest.stop().get()) {
                         chatRequest.onToken().accept(token);
-                        // TODO: force streaming stop here
                     }
 
                 })
-                .onRetrieved(contents -> System.out.println(contents))
-                .onToolExecuted(execution -> System.out.println(execution))
-                .onCompleteResponse(chatRequest.onComplete())
-                .onError(chatRequest.onError())
+                .onRetrieved(contents -> {
+                    if (!chatRequest.stop().get()) {
+                        logger.info("Content retrieved: " + contents);
+                    }
+                })
+                .onToolExecuted(execution -> {
+                    if (!chatRequest.stop().get()) {
+                        logger.info("Tool Execution: " + execution);
+                    }
+                })
+                .onCompleteResponse(response -> {
+                    if (!chatRequest.stop().get()) {
+                        chatRequest.onComplete().accept(response);
+                    }
+                })
+                .onError(e -> {
+                    if (!chatRequest.stop().get()) {
+                        chatRequest.onError().accept(e);
+                        logger.error("Error during LLM Service call", e);
+                    } else {
+                        logger.debug("Error during LLM Service call", e);
+                    }
+
+                })
                 .start();
     }
 }

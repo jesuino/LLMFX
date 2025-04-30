@@ -23,7 +23,7 @@ All the features of LLM FX were conceived by basically me trying to make it usab
 
 LLM FX is a single JAR file which requires the following:
 
-* Java 23
+* Java 24
 * Any LLM Server. Can be local or a remote server, you just need to configure the Base URL and the API token for remote servers
 
 ## Installation

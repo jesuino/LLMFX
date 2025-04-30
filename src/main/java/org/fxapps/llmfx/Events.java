@@ -1,7 +1,5 @@
 package org.fxapps.llmfx;
 
-import javafx.scene.Node;
-
 public class Events {
 
     private Events() {
