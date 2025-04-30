@@ -85,6 +85,7 @@
                   <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
                </padding>
             </TextField>
+            <Button fx:id="btnContent" alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false" onAction="#choseContent" prefHeight="39.0" prefWidth="38.0" text="📁" textAlignment="CENTER" textFill="#e40a0a" />
             <Button fx:id="btnStop" alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false" onAction="#stopStreaming" prefHeight="39.0" prefWidth="38.0" text="■" textAlignment="CENTER" textFill="#e40a0a" />
          </children>
          <BorderPane.margin>
@@ -138,7 +139,7 @@
                      </StackPane.margin>
                      <children>
                         <MenuButton fx:id="toolsMenu" mnemonicParsing="false" text="Tools" />
-                        <MenuButton fx:id="mcpMenu" mnemonicParsing="false" text="MCP" />
+                        <MenuButton fx:id="mcpMenu" disable="true" mnemonicParsing="false" text="MCP" />
                         <Button fx:id="btnNewChat" mnemonicParsing="false" onAction="#newChat" prefHeight="26.0" prefWidth="33.0" text="🗎" textFill="#dd0606" />
                      </children>
                   </HBox>

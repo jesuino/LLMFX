@@ -9,5 +9,5 @@ history.json
 target/
 build/
 /.vscode/
-
+/.continue/
 .DS_Store

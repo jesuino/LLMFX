@@ -1,5 +1,6 @@
 package org.fxapps.llmfx.controllers;
 
+import org.fxapps.llmfx.Model.Message;
 import org.w3c.dom.html.HTMLElement;
 
 import jakarta.inject.Singleton;
@@ -16,6 +17,11 @@ public class ChatMessagesView {
                     <style>
                         * {
                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, sans-serif;
+                        }
+                        img {
+                            height: auto;
+                            width: 100%;
+                            max-height: 300px;
                         }
 
                         table {
@@ -91,8 +97,16 @@ public class ChatMessagesView {
         chatOutput.setOnScroll(e -> autoScroll = false);
     }
 
-    public void appendUserMessage(String userMessage) {
-        runScriptToAppendMessage("<p>" + userMessage + "</p>", "user");
+    public void appendUserMessage(Message userMessage) {
+        var message = new StringBuffer("<p>");
+        message.append(userMessage.text());
+        userMessage.content()
+                .stream()
+                .map(content -> "data:" + content.mimeType() + ";base64, " + content.content())
+                .findAny()
+                .ifPresent(content -> message.append("<br /><img src=\"" + content + "\"/>"));
+        message.append("</p>");
+        runScriptToAppendMessage(message.toString(), "user");
     }
 
     public void appendSystemMessage(String systemMessage) {
@@ -137,12 +151,12 @@ public class ChatMessagesView {
         this.autoScroll = autoScroll;
     }
 
-	public String getChatHistoryHTML() {
-		return (String) chatOutput.getEngine().executeScript("document.documentElement.outerHTML");
-	}
+    public String getChatHistoryHTML() {
+        return (String) chatOutput.getEngine().executeScript("document.documentElement.outerHTML");
+    }
 
-	public void clearChatHistory() {
-		chatOutput.getEngine().executeScript("document.getElementById('chatContent').innerHTML = ''");
-	}
+    public void clearChatHistory() {
+        chatOutput.getEngine().executeScript("document.getElementById('chatContent').innerHTML = ''");
+    }
 
 }

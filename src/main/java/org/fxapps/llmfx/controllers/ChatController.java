@@ -6,12 +6,17 @@ import static org.fxapps.llmfx.tools.ToolsInfo.REPORTING;
 import static org.fxapps.llmfx.tools.ToolsInfo.WEB_RENDER;
 import static org.fxapps.llmfx.tools.ToolsInfo._3D;
 
+import java.io.File;
 import java.io.IOException;
+import java.net.URI;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.Map.Entry;
 import java.util.stream.Collectors;
@@ -31,13 +36,18 @@ import org.fxapps.llmfx.Events.SaveFormat;
 import org.fxapps.llmfx.Events.SelectedModelEvent;
 import org.fxapps.llmfx.Events.StopStreamingEvent;
 import org.fxapps.llmfx.Events.UserInputEvent;
+import org.fxapps.llmfx.Model.Content;
+import org.fxapps.llmfx.Model.ContentType;
+import org.fxapps.llmfx.Model.Message;
 import org.fxapps.llmfx.FXUtils;
 import org.fxapps.llmfx.config.AppConfig;
+import org.fxapps.llmfx.services.ChatService;
 import org.fxapps.llmfx.tools.graphics.JFX3dTool;
 import org.fxapps.llmfx.tools.graphics.JFXCanvasPixelTool;
 import org.fxapps.llmfx.tools.graphics.JFXCanvasTool;
 import org.fxapps.llmfx.tools.graphics.JFXReportingTool;
 import org.fxapps.llmfx.tools.graphics.JFXWebRenderingTool;
+import org.jboss.logging.Logger;
 
 import io.quarkiverse.fx.views.FxView;
 import jakarta.enterprise.event.Event;
@@ -80,6 +90,8 @@ public class ChatController {
     private static final String MCP_LABEL = "MCP";
 
     private static final String TOOLS_LABEL = "Tools";
+
+    Logger logger = Logger.getLogger(ChatController.class);
 
     @Inject
     private AppConfig appConfig;
@@ -150,6 +162,9 @@ public class ChatController {
 
     @FXML
     private Button btnStop;
+
+    @FXML
+    private Button btnContent;
 
     @FXML
     private Button btnTrashConversation;
@@ -223,6 +238,7 @@ public class ChatController {
         txtInput.disableProperty().bind(holdChatProperty);
         btnNewChat.disableProperty().bind(holdChatProperty);
         historyList.disableProperty().bind(holdChatProperty);
+        btnContent.disableProperty().bind(holdChatProperty);
         btnStop.disableProperty().bind(holdChatProperty.not());
 
         this.historyList.setOnMouseClicked(e -> {
@@ -256,7 +272,7 @@ public class ChatController {
 
         var image = selectedTab.getContent().snapshot(new SnapshotParameters(), null);
 
-        alertsHelper.showFileChooser("Save image", "png").ifPresent(f -> {
+        alertsHelper.showSaveFileChooser("Save image", "png").ifPresent(f -> {
             try {
                 var bufferedImage = FXUtils.fromFXImage(image);
                 ImageIO.write(bufferedImage, "png", f);
@@ -285,11 +301,16 @@ public class ChatController {
     }
 
     @FXML
-    void onInputAction() {
+    void onInputAction() throws IOException {
         final var input = txtInput.getText();
         if (!input.isBlank()) {
             txtInput.setText("");
-            onUserInputEvent.fire(new UserInputEvent(input));
+            Content content = null;
+            if (btnContent.getUserData() != null) {
+                content = (Content) btnContent.getUserData();
+                btnContent.setUserData(null);
+            }
+            onUserInputEvent.fire(new UserInputEvent(input, Optional.ofNullable(content)));
         }
     }
 
@@ -357,6 +378,7 @@ public class ChatController {
     }
 
     public void setMCPServers(Collection<String> mcpServers) {
+        mcpMenu.setDisable(false);
         mcpServers.stream().map(mcpServer -> {
             var menu = new CheckMenuItem(mcpServer);
             menu.selectedProperty().addListener((obs, old, n) -> mcpMenu
@@ -458,10 +480,30 @@ public class ChatController {
         stopStreamingEvent.fire(new StopStreamingEvent());
     }
 
-    public void appendUserMessage(String content) {
+    @FXML
+    void choseContent() {
+
+        alertsHelper.showFileChooser("Select file")
+                .ifPresent(file -> {
+                    var path = file.toPath();
+                    try {
+                        var imageBase64 = Base64.getEncoder().encodeToString(Files.readAllBytes(path));
+                        var content = new Content(imageBase64, ContentType.IMAGE, Files.probeContentType(path));
+                        btnContent.setUserData(content);
+                    } catch (Exception e) {
+                        alertsHelper.showError("Error reading content",
+                                "Error reading content",
+                                "content could not be open: " + e.getMessage());
+                        logger.error("Errror opening content", e);
+                    }
+                });
+
+    }
+
+    public void appendUserMessage(Message message) {
         vbWelcomeMessage.setVisible(false);
         chatMessagesView.setAutoScroll(true);
-        chatMessagesView.appendUserMessage(content);
+        chatMessagesView.appendUserMessage(message);
     }
 
     public void appendSystemMessage(String content) {

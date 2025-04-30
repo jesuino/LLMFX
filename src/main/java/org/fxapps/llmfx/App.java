@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+
 import org.commonmark.ext.gfm.tables.TablesExtension;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
@@ -221,9 +222,9 @@ public class App {
     }
 
     public void onUserInput(@Observes UserInputEvent userInput) {
-        final var userMessage = Message.userMessage(userInput.text());
+        final var userMessage = Message.userMessage(userInput.text(), userInput.content());
         if (this.historyStorage.getConversation().isEmpty()) {
-            this.historyStorage.newConversation(userMessage.content());
+            this.historyStorage.newConversation(userMessage.text());
             llmConfig.systemMessage().ifPresent(systemMessage -> {
                 var message = Message.systemMessage(systemMessage);
                 this.historyStorage.getConversation().messages().add(message);
@@ -239,7 +240,7 @@ public class App {
                         .map(mcpClientRepository::getMcpClient).toList())
                 .build();
 
-        final var tempMessage = new Message("", Role.ASSISTANT);
+        final var tempMessage = Message.assistantMessage("");
         historyStorage.getConversation().messages().add(tempMessage);
 
         chatController.holdChatProperty().set(true);
@@ -252,6 +253,7 @@ public class App {
                 .collect(Collectors.toSet());
         var request = new Model.ChatRequest(
                 userInput.text(),
+                userInput.content(),
                 historyStorage.getConversation().messages(),
                 selectedModel,
                 tools,
@@ -261,7 +263,7 @@ public class App {
                     Platform.runLater(() -> {
                         final var previous = historyStorage.getConversation().messages().removeLast();
                         historyStorage.getConversation().messages()
-                                .add(new Message(previous.content() + token, Role.ASSISTANT));
+                                .add(Message.assistantMessage(previous.text() + token));
                     });
                     showChatMessages();
                 },
@@ -291,10 +293,10 @@ public class App {
                     .collect(Collectors.joining(",", "[", "]"));
             case TEXT -> historyStorage.getConversation().messages()
                     .stream()
-                    .map(m -> m.role() + ": " + m.content())
+                    .map(m -> m.role() + ": " + m.text())
                     .collect(Collectors.joining("\n"));
         };
-        alertsHelper.showFileChooser("Save chat history", saveChatEvent.saveFormat().name().toLowerCase())
+        alertsHelper.showSaveFileChooser("Save chat history", saveChatEvent.saveFormat().name().toLowerCase())
                 .ifPresent(dest -> {
                     try {
                         Files.writeString(dest.toPath(), content);
@@ -314,14 +316,14 @@ public class App {
         Platform.runLater(() -> {
             chatController.clearChatHistoy();
             historyStorage.getConversation().messages().stream().forEach(message -> {
-                final var content = message.content();
+                final var content = message.text();
                 if (Role.USER == message.role()) {
-                    chatController.appendUserMessage(content);
+                    chatController.appendUserMessage(message);
                 } else if (Role.SYSTEM == message.role()) {
                     chatController.appendSystemMessage(content);
                 } else {
                     var htmlMessage = htmlMessageCache.computeIfAbsent(message,
-                            messageToParse -> parseMarkdowToHTML(messageToParse.content()));
+                            messageToParse -> parseMarkdowToHTML(messageToParse.text()));
                     chatController.appendAssistantMessage(htmlMessage);
                 }
             });

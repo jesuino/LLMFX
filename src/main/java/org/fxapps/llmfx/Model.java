@@ -1,7 +1,9 @@
 package org.fxapps.llmfx;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -15,24 +17,41 @@ public class Model {
         ASSISTANT, USER, SYSTEM;
     }
 
-    public record Message(String content, Role role) {
-        public static Message userMessage(String content) {
-            return new Message(content, Role.USER);
+    public enum ContentType {
+        IMAGE, AUDIO, VIDEO, PDF;
+    }
+
+    public record Content(String content, ContentType type, String mimeType) {
+
+        static Content empty() {
+            return new Content(null, null, null);
+        }
+
+        public boolean isEmpty() {
+            return this.equals(empty());
+        }
+
+    }
+
+    public record Message(String text, Role role, Optional<Content> content) {
+        public static Message userMessage(String text, Optional<Content> content) {
+            return new Message(text, Role.USER, content);
         }
 
         public static Message assistantMessage(String content) {
-            return new Message(content, Role.ASSISTANT);
+            return new Message(content, Role.ASSISTANT, Optional.empty());
         }
 
         public static Message systemMessage(String content) {
-            return new Message(content, Role.SYSTEM);
+            return new Message(content, Role.SYSTEM, Optional.empty());
         }
 
     }
 
     public record ChatRequest(
             String message,
-            List<Message> messages,
+            Optional<Content> content,
+            List<Message> history,
             String model,
             Set<Object> tools,
             ToolProvider toolProvider,
@@ -40,6 +59,10 @@ public class Model {
             Consumer<String> onToken,
             Consumer<ChatResponse> onComplete,
             Consumer<Throwable> onError) {
+
+        public boolean isRunning() {
+            return !this.stop.get();
+        }
     }
 
     public record ChatHistory(
@@ -62,7 +85,5 @@ public class Model {
             return this.messages.isEmpty();
         }
     }
-
-    
 
 }

@@ -1,5 +1,9 @@
 package org.fxapps.llmfx;
 
+import java.util.Optional;
+
+import org.fxapps.llmfx.Model.Content;
+
 public class Events {
 
     private Events() {
@@ -24,7 +28,7 @@ public class Events {
     public record StopStreamingEvent() {
     }
 
-    public record UserInputEvent(String text) {
+    public record UserInputEvent(String text, Optional<Content> content) {
     }
 
     public record RefreshModelsEvent() {

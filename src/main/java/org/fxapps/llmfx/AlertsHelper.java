@@ -39,13 +39,19 @@ public class AlertsHelper {
         errroDialog.showAndWait();
     }
 
-    public Optional<File> showFileChooser(String title, String fileExtension) {
+    public Optional<File> showSaveFileChooser(String title, String fileExtension) {
         var fileChooser = new FileChooser();
         fileChooser.setTitle(title);
         return Optional.ofNullable(fileChooser.showSaveDialog(ownerWindow))
                 .map(file -> file.getName().endsWith(fileExtension)
                         ? file
                         : new File(file.getAbsolutePath() + "." + fileExtension));
+    }
+
+    public Optional<File> showFileChooser(String title) {
+        var fileChooser = new FileChooser();
+        fileChooser.setTitle(title);
+        return Optional.ofNullable(fileChooser.showOpenDialog(ownerWindow));
     }
 
 }
