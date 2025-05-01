@@ -1,7 +1,6 @@
 package org.fxapps.llmfx.services;
 
 import java.net.http.HttpClient;
-import java.nio.file.Files;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -125,8 +124,8 @@ public class ChatService {
 
             @Override
             public void onCompleteResponse(ChatResponse response) {
-                if (response.aiMessage().hasToolExecutionRequests()) {
-                    logger.warn("Function calls with image not supported at the moment");
+                if (response.aiMessage().hasToolExecutionRequests()) {                    
+                    logger.warn("Function calls with image are not supported at the moment");
                 }
 
             }

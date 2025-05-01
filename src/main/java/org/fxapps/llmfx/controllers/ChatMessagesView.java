@@ -18,6 +18,15 @@ public class ChatMessagesView {
                         * {
                             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, sans-serif;
                         }
+                        .think-box {
+                            font-style: italic !important;
+                            border-left: 4px solid rgb(124, 132, 143);
+                            padding: 0 0 0 10px
+                            color: lightgray;
+                        }
+                        .think-box > h4 {
+                            color: red !important;
+                        }
                         img {
                             height: auto;
                             width: 100%;
@@ -114,12 +123,13 @@ public class ChatMessagesView {
     }
 
     public void appendAssistantMessage(String assistantMessage) {
-        var message = assistantMessage.replaceFirst("<think>",
+        var message = assistantMessage.replaceAll("<think>",
                 """
-                            <h4 style=\"color: red !important\">Thinking</h4>
-                            <i style=\"color: gray\">
+                        <div class="think-box">
+                            <h4>Thinking</h4>                            
                         """)
-                .replaceFirst("</think>", "</i><h4 style=\"color: red !important\">end thinking</h4><hr/>")
+                .replaceAll("</think>",
+                        "><h4 >end thinking</h4></div>")
                 // TODO: find someway to copy to the clipboard
                 .replaceAll("<code", "<code");
         runScriptToAppendMessage(message, "assistant");

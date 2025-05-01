@@ -6,9 +6,7 @@ import static org.fxapps.llmfx.tools.ToolsInfo.REPORTING;
 import static org.fxapps.llmfx.tools.ToolsInfo.WEB_RENDER;
 import static org.fxapps.llmfx.tools.ToolsInfo._3D;
 
-import java.io.File;
 import java.io.IOException;
-import java.net.URI;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -16,32 +14,29 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.imageio.ImageIO;
 
 import org.fxapps.llmfx.AlertsHelper;
-
 import org.fxapps.llmfx.Events.DeleteConversationEvent;
 import org.fxapps.llmfx.Events.HistorySelectedEvent;
 import org.fxapps.llmfx.Events.NewChatEvent;
-
 import org.fxapps.llmfx.Events.RefreshModelsEvent;
 import org.fxapps.llmfx.Events.SaveChatEvent;
 import org.fxapps.llmfx.Events.SaveFormat;
 import org.fxapps.llmfx.Events.SelectedModelEvent;
 import org.fxapps.llmfx.Events.StopStreamingEvent;
 import org.fxapps.llmfx.Events.UserInputEvent;
+import org.fxapps.llmfx.FXUtils;
 import org.fxapps.llmfx.Model.Content;
 import org.fxapps.llmfx.Model.ContentType;
 import org.fxapps.llmfx.Model.Message;
-import org.fxapps.llmfx.FXUtils;
 import org.fxapps.llmfx.config.AppConfig;
-import org.fxapps.llmfx.services.ChatService;
 import org.fxapps.llmfx.tools.graphics.JFX3dTool;
 import org.fxapps.llmfx.tools.graphics.JFXCanvasPixelTool;
 import org.fxapps.llmfx.tools.graphics.JFXCanvasTool;
@@ -239,7 +234,7 @@ public class ChatController {
         btnNewChat.disableProperty().bind(holdChatProperty);
         historyList.disableProperty().bind(holdChatProperty);
         btnContent.disableProperty().bind(holdChatProperty);
-        btnStop.disableProperty().bind(holdChatProperty.not());
+        btnStop.disableProperty().bind(holdChatProperty.not());        
 
         this.historyList.setOnMouseClicked(e -> {
             var i = historyList.getSelectionModel().getSelectedIndex();

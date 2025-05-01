@@ -1,9 +1,11 @@
 package org.fxapps.llmfx.tools;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.fxapps.llmfx.tools.code.CommandsTool;
+import org.fxapps.llmfx.tools.code.PythonTool;
 import org.fxapps.llmfx.tools.files.FilesReaderTool;
 import org.fxapps.llmfx.tools.files.FilesWriterTool;
 import org.fxapps.llmfx.tools.graphics.JFX3dTool;
@@ -30,6 +32,7 @@ public class ToolsInfo {
     public static final String WEB_SEARCH = "Web Search";
     public static final String DATE_TIME = "Date and Time";
     public static final String COMMANDS = "Commands";
+    public static final String PYTHON = "Python";
     public static final String _3D = "3D";
 
     @Inject
@@ -42,6 +45,8 @@ public class ToolsInfo {
     private DateTimeTool dateTimeTool;
     @Inject
     private CommandsTool commandsTool;
+    @Inject
+    private PythonTool pythonTool;
     @Inject
     private JFXCanvasTool drawingTool;
     @Inject
@@ -61,23 +66,29 @@ public class ToolsInfo {
             "Files", List.of(FILES_READ, FILE_WRITE),
             "Web", List.of(WEB_SEARCH),
             "Date and Time", List.of(DATE_TIME),
-            "Execute", List.of(COMMANDS),
+            "Execute", List.of(COMMANDS, PYTHON),
             "Graphics", List.of(CANVAS_DRAWING, REPORTING, WEB_RENDER, _3D, CANVAS_PIXELS));
 
     @PostConstruct
     void init() {
 
-        toolsMap = Map.of(
+        toolsMap = new HashMap<>();
+
+        // graphics
+        toolsMap.putAll(Map.of(
+                CANVAS_DRAWING, drawingTool,
+                REPORTING, reportingTool,
+                WEB_RENDER, webTool,
+                _3D, _3dTools,
+                CANVAS_PIXELS, canvasPixelTool));
+
+        toolsMap.putAll(Map.of(
                 FILES_READ, filesReaderTool,
                 FILE_WRITE, filesWriterTool,
                 WEB_SEARCH, webSearchTool,
                 DATE_TIME, dateTimeTool,
                 COMMANDS, commandsTool,
-                CANVAS_DRAWING, drawingTool,
-                REPORTING, reportingTool,
-                WEB_RENDER, webTool,
-                _3D, _3dTools,
-                CANVAS_PIXELS, canvasPixelTool);
+                PYTHON, pythonTool));
 
     }
 

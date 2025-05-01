@@ -1,15 +1,11 @@
 package org.fxapps.llmfx.services;
 
-import static java.util.stream.StreamSupport.stream;
-
 import java.util.List;
 
 import org.eclipse.microprofile.rest.client.annotation.RegisterClientHeaders;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 import org.fxapps.llmfx.config.LLMConfig;
-
-import com.fasterxml.jackson.databind.JsonNode;
 
 import io.quarkus.rest.client.reactive.Url;
 import jakarta.enterprise.context.ApplicationScoped;
