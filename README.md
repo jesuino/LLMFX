@@ -3,6 +3,8 @@
 # LLM FX
 
 A LLM Desktop Client free for everyone! 
+![image](https://github.com/user-attachments/assets/192216a6-46f9-475d-a71c-2fa4e4f61409)
+
 
 
 
