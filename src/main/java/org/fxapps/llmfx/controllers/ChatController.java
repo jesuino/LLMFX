@@ -331,7 +331,7 @@ public class ChatController {
                 return catMenu.getItems()
                         .stream()
                         .filter(it -> it instanceof CheckMenuItem check && check.isSelected())
-                        .map(it -> ((CheckMenuItem) it).getText());
+                        .map(MenuItem::getText);
             }
             return Stream.empty();
         }).collect(Collectors.toSet());
@@ -350,8 +350,7 @@ public class ChatController {
     }
 
     public void setHistoryItems(Collection<String> items) {
-        historyList.getItems().clear();
-        historyList.getItems().addAll(items);
+        historyList.getItems().setAll(items);
         historyList.getSelectionModel().selectLast();
     }
 
@@ -363,7 +362,7 @@ public class ChatController {
         cmbModels.getSelectionModel().select(model);
     }
 
-    public void clearChatHistoy() {
+    public void clearChatHistory() {
         vbWelcomeMessage.setVisible(true);
         chatMessagesView.clearChatHistory();
     }

@@ -1,7 +1,10 @@
 package org.fxapps.llmfx.controllers;
 
+
 import jakarta.inject.Singleton;
 import javafx.scene.web.WebView;
+import org.apache.commons.text.StringEscapeUtils;
+
 import org.fxapps.llmfx.Model.Message;
 import org.w3c.dom.html.HTMLElement;
 
@@ -34,11 +37,13 @@ public class ChatMessagesView {
         webView.getEngine().loadContent(CHAT_PAGE, "text/html");
 
         chatOutput.setOnScroll(e -> autoScroll = false);
+
     }
 
     public void appendUserMessage(Message userMessage) {
         var message = new StringBuffer("<p>");
-        message.append(userMessage.text());
+        String escapeMessage = StringEscapeUtils.escapeHtml4(userMessage.text());
+        message.append(escapeMessage);
         userMessage.content()
                 .stream()
                 .map(content -> "data:" + content.mimeType() + ";base64, " + content.content())
@@ -60,9 +65,9 @@ public class ChatMessagesView {
                             <h4>Thinking</h4>                            
                         """)
                 .replaceAll("</think>",
-                        "><h4 >end thinking</h4></div>")
+                        "><h4>end thinking</h4></div>");
                 // TODO: find someway to copy to the clipboard
-                .replaceAll("<code", "<code");
+                //.replaceAll("<code", "<code");
         runScriptToAppendMessage(message, "assistant");
     }
 
