@@ -185,7 +185,7 @@ public class App {
 
     @RunOnFxThread
     void onClearChat(@Observes NewChatEvent evt) {
-        this.chatController.clearChatHistoy();
+        this.chatController.clearChatHistory();
         this.historyStorage.clearConversation();
     }
 
@@ -208,7 +208,7 @@ public class App {
         if (selectedHistory != null) {
             historyStorage.getChatHistory().remove(selectedHistory);
             updateHistoryList();
-            chatController.clearChatHistoy();
+            chatController.clearChatHistory();
         }
     }
 
@@ -314,7 +314,7 @@ public class App {
 
     private void showChatMessages() {
         Platform.runLater(() -> {
-            chatController.clearChatHistoy();
+            chatController.clearChatHistory();
             historyStorage.getConversation().messages().stream().forEach(message -> {
                 final var content = message.text();
                 if (Role.USER == message.role()) {

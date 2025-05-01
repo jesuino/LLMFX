@@ -22,6 +22,7 @@
         <!--Matches the version used by JFX quarkus ext-->
         <openjfx.version>22.0.2</openjfx.version>
         <mcpsdk.version>0.8.0</mcpsdk.version>
+        <commonmark.version>0.24.0</commonmark.version>
     </properties>
 
     <dependencyManagement>
@@ -56,12 +57,12 @@
         <dependency>
             <groupId>org.commonmark</groupId>
             <artifactId>commonmark</artifactId>
-            <version>0.24.0</version>
+            <version>${commonmark.version}</version>
         </dependency>
         <dependency>
             <groupId>org.commonmark</groupId>
             <artifactId>commonmark-ext-gfm-tables</artifactId>
-            <version>0.24.0</version>
+            <version>${commonmark.version}</version>
         </dependency>
         <dependency>
             <groupId>io.quarkiverse.fx</groupId>
@@ -88,7 +89,13 @@
         <dependency>
             <groupId>org.jsoup</groupId>
             <artifactId>jsoup</artifactId>
-            <version>1.10.3</version>
+            <version>1.20.1</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-text -->
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-text</artifactId>
+            <version>1.13.1</version>
         </dependency>
         <dependency>
             <groupId>io.quarkus</groupId>
