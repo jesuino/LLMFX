@@ -35,7 +35,7 @@ There's no installation, no docker, no shell script, just download the JAR and r
 * Any OpenAI compatible LLM server: use it locally with ollama, ramalama or remotely with any OpenAI compatible server;
 * Chat: Chat in streaming mode and export the chat anytime
 * History: Keep a history of your chat for future references;
-* Tools: Local tools to do anything you want! YOu have the freedom to select which tool you want the LLM to have access or let the LLM select the tools based on your prompt (TBD)
+* Tools: Local tools to do anything you want! You have the freedom to select which tool you want the LLM to have access or let the LLM select the tools based on your prompt (TBD)
 * MCP: Add MCP to your local LLM with a simple configuration;
 * Graphic Tools: Let the LLM generate dashoards, create web pages and drawings for you and quickly visualize on a side pane
 
@@ -55,7 +55,7 @@ Yes, please contribute to this project. You can write issues or make minor fixes
 
 LLM FX is Java, JavaFX, Quarkus and Langchain4j. To contribute you will need maven and Java JDK 23, then clone this repo and import it into VSCode. 
 
-Then you can run the code simply using `mvn clean compile quarkus:dev`. YOu will find the built JAR in `target/llm-fx-{version}-runner.jar`
+Then you can run the code simply using `mvn clean compile quarkus:dev`. You will find the built JAR in `target/llm-fx-{version}-runner.jar`
 
 I recommend using the Red Hat Java Language Pack and Quarkus extension. If you want to change the application layout you can use SceneBuilder and open the file Chat.fxml, which is the only screen at the moment.
 
