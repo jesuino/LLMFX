@@ -109,7 +109,7 @@ public class App {
         this.markdownRenderer = HtmlRenderer.builder().extensions(List.of(TablesExtension.create())).build();
         this.htmlMessageCache = new HashMap<>();
         this.stage = event.getPrimaryStage();
-        this.stopStreamingStack = new Stack<AtomicBoolean>();
+        this.stopStreamingStack = new Stack<>();
         this.markDownParser = Parser.builder().extensions(List.of(TablesExtension.create())).build();
         final var chatView = (Parent) chatViewData.getRootNode();
         final var scene = new Scene(chatView);
@@ -117,7 +117,7 @@ public class App {
         stage.setAlwaysOnTop(appConfig.alwaysOnTop().orElse(true));
         stage.setMinWidth(700);
         stage.setMinHeight(400);
-        stage.setOnCloseRequest(e -> {
+        stage.setOnCloseRequest(_ -> {
             logger.info("Closing application...");
             saveHistory();
             System.exit(0);
