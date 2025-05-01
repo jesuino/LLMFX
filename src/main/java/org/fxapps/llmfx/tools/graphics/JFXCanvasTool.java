@@ -8,6 +8,9 @@ import jakarta.inject.Singleton;
 
 import javafx.geometry.VPos;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.paint.CycleMethod;
+import javafx.scene.paint.LinearGradient;
+import javafx.scene.paint.Stop;
 import javafx.scene.shape.ArcType;
 import javafx.scene.shape.FillRule;
 import javafx.scene.shape.StrokeLineCap;
@@ -27,44 +30,104 @@ public class JFXCanvasTool {
     }
 
     @Tool("""
-            Fills an oval using the current fill paint.
+            Clears the rect area, deleting all the drawn objects on that area
             """)
-    void fillOval(double x, double y, double width, double height, @P("Color in web format") String color) {
+    void clearRect(double x, double y, double width, double height) {
+        ctx.clearRect(x, y, width, height);
+    }
+
+    @Tool("""
+            Set the color for shapes and lines stroke.
+            Call this to set the stroke color of anything you are drawing.
+            Make sure to call this before drawing something
+            """)
+    void setStrokeColor(@P("Color in web format") String color) {
+        ctx.setStroke(fixColor(color));
+    }
+
+    @Tool("""
+            Set the color for shapes and lines fill.
+            Call this to set the fill color of anything you are drawing.
+            Make sure to call this before drawing something
+            """)
+    void setColor(@P("Color in web format") String color) {
         ctx.setFill(fixColor(color));
+    }
+
+    @Tool("""
+            Set a gradient as the color.
+            """)
+    void setGradient(
+
+            @P("the X coordinate of the gradient axis start point. Values are from 0.0 to 1.0") double startX,
+            @P(" the Y coordinate of the gradient axis start point. Values are from 0.0 to 1.0") double startY,
+            @P("the X coordinate of the gradient axis end point. Values are from 0.0 to 1.0") double endX,
+            @P("the Y coordinate of the gradient axis end point. Values are from 0.0 to 1.0") double endY,
+
+            String[] colorStops) {
+        var stops = new Stop[colorStops.length];
+        var offsetStep = 1.0 / colorStops.length;
+        for (int i = 0; i < colorStops.length; i++) {
+            stops[i] = new Stop(i * offsetStep, fixColor(colorStops[i]));
+        }
+        var fill = new LinearGradient(
+                startX,
+                startY,
+                endX,
+                endY,
+                true,
+                CycleMethod.REPEAT,
+                stops);
+        ctx.setFill(fill);
+    }
+
+    @Tool("""
+            Draw a circle at the specificed position
+            """)
+    void drawCircle(double x, double y, double radius) {
+        ctx.strokeOval(x, y, y, radius);
+        ctx.fillOval(x, y, radius, radius);
+    }
+
+    @Tool("""
+            Draw an oval with the provided parameters
+            """)
+    void drawOval(double x, double y, double width, double height) {
+        ctx.strokeOval(x, y, width, height);
         ctx.fillOval(x, y, width, height);
     }
 
     @Tool("""
-            Fills a polygon with the given points using the currently set fill paint.
+            Draws a polygon with the given points using the provided parameters
             """)
-    void fillPolygon(double[] xPoints, double[] yPoints, int nPoints, @P("Color in web format") String color) {
-        ctx.setFill(fixColor(color));
+    void drawPolygon(double[] xPoints, double[] yPoints, int nPoints) {
+        ctx.strokePolygon(xPoints, yPoints, nPoints);
         ctx.fillPolygon(xPoints, yPoints, nPoints);
     }
 
     @Tool("""
-            Fills a rectangle using the current fill paint.
+            Draws a rectangle using the provided parameters
             """)
-    void fillRect(double x, double y, double width, double height, @P("Color in web format") String color) {
-        ctx.setFill(fixColor(color));
+    void drawRect(double x, double y, double width, double height) {
+        ctx.strokeRect(x, y, width, height);
         ctx.fillRect(x, y, width, height);
     }
 
     @Tool("""
-            Fills a rounded rectangle using the current fill paint.
+            Draws a rounded rectangle using the provided parameters
             """)
-    void fillRoundRect(double x, double y, double width, double height, double arcWidth, double arcHeight,
-            @P("Color in web format") String color) {
-        ctx.setFill(fixColor(color));
+    void drawRoundRect(double x, double y, double width, double height, double arcWidth, double arcHeight) {
+        ctx.strokeRoundRect(x, y, width, height, arcWidth, arcHeight);
         ctx.fillRoundRect(x, y, width, height, arcWidth, arcHeight);
     }
 
     @Tool("""
-            Fills the given string of text at position x, y with the current fill paint attribute.
+            Draws the the given string of text at position x, y.
             To change the font settings you must call setFont before.
+
             """)
-    void fillText(String text, double x, double y, @P("Color in web format") String color) {
-        ctx.setFill(fixColor(color));
+    void drawText(String text, double x, double y) {
+        ctx.strokeText(text, x, y);
         ctx.fillText(text, x, y);
     }
 
@@ -113,6 +176,7 @@ public class JFXCanvasTool {
 
     @Tool("""
             Defines horizontal text alignment, relative to the text x origin.
+            Call this before drawing text
             """)
     void setTextAlign(TextAlignment align) {
         ctx.setTextAlign(align);
@@ -184,7 +248,8 @@ public class JFXCanvasTool {
             Strokes a rounded rectangle using the current stroke paint.
             This tool draws only the stroke of the shape, with no fill
             """)
-    void strokeRoundRect(double x, double y, double width, double height, double arcWidth, double arcHeight, @P("Color in web format") String color) {
+    void strokeRoundRect(double x, double y, double width, double height, double arcWidth, double arcHeight,
+            @P("Color in web format") String color) {
         ctx.setStroke(fixColor(color));
         ctx.strokeRoundRect(x, y, width, height, arcWidth, arcHeight);
     }
@@ -197,4 +262,13 @@ public class JFXCanvasTool {
         ctx.setStroke(fixColor(color));
         ctx.strokeText(text, x, y, maxWidth);
     }
+
+    @Tool("""
+            Draws a line using the current stroke paint.
+            This tool draw only the stroke of the shape, with no fill
+            """)
+    void drawLine(double x1, double y1, double x2, double y2) {
+        ctx.strokeLine(x1, y1, x2, y2);
+    }
+
 }
