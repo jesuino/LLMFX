@@ -54,9 +54,6 @@ public class ChatMessagesView {
     }
 
     public void appendAssistantMessage(String assistantMessage) {
-
-        System.out.println(assistantMessage);
-
         var message = assistantMessage.replaceAll("<think>",
                 """
                         <div class="think-box">
