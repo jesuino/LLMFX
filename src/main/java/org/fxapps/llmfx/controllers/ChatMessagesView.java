@@ -1,11 +1,14 @@
 package org.fxapps.llmfx.controllers;
 
-import org.apache.commons.text.StringEscapeUtils;
-import org.fxapps.llmfx.Model.Message;
-import org.w3c.dom.html.HTMLElement;
 
 import jakarta.inject.Singleton;
 import javafx.scene.web.WebView;
+import org.apache.commons.text.StringEscapeUtils;
+
+import org.fxapps.llmfx.Model.Message;
+import org.w3c.dom.html.HTMLElement;
+
+import java.net.URL;
 
 /*
  * This class will be responsible for rendering and displaying the chat messages in the WebView
@@ -13,98 +16,28 @@ import javafx.scene.web.WebView;
 @Singleton
 public class ChatMessagesView {
 
-    final String CHAT_PAGE = """
-                <html>
-                    <style>
-                        * {
-                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, sans-serif;
-                        }
-                        .think-box {
-                            font-style: italic !important;
-                            border-left: 4px solid rgb(124, 132, 143);
-                            padding: 0 0 0 10px
-                            color: lightgray;
-                        }
-                        .think-box > h4 {
-                            color: red !important;
-                        }
-                        img {
-                            height: auto;
-                            width: 100%;
-                            max-height: 300px;
-                        }
+    private static final String CHAT_PAGE = """
+        <html>
+            <body>
+                <div id="chatContent" class="chat-container">
+                </div>
+            </body>
+        </html>
+        """;
 
-                        table {
-                            border-collapse: collapse;
-                            margin-bottom: 20px;
-                            border-radius: 8px;
-                            overflow: hidden;
-                        }
+    public static final String STYLE = "/style/chat-messages.css";
 
-                        th, td {
-                            padding: 12px 16px;
-                            text-align: left;
-                            vertical-align: top;
-                            background-color: #fafafa;
-                            border-bottom: 1px solid #eaeaea;
-                        }
-
-                        th {
-                            background-color: #1a73e8;
-                            color: white;
-                            font-weight: 500;
-                        }
-
-                        th:last-child {
-                            border-bottom: none;
-                        }
-
-                        tr:last-child td {
-                            border-bottom: none;
-                        }
-
-                        .chat-container {
-                            padding: 16px;
-                            flex-grow: 1;
-                            line-height: 1.5;
-                        }
-
-                        .chat-container > p {
-                            border-radius: 12px;
-                            color: #1f1f1f;
-                            margin: 8px 0;
-                            padding: 12px 16px !important;
-                            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                        }
-
-                        .user-message {
-                            background-color: #e3f2fd;
-                        }
-
-                        .system-message {
-                            background-color: #f5f5f5;
-                            border-left: 4px solid #1a73e8;
-                            color: #757575 !important;
-                            font-style: italic;
-                        }
-
-                        .assistant-message {
-                            background-color: #eeeeee;
-                        }
-                    </style>
-                    <body>
-                        <div id="chatContent" class="chat-container">
-                        </div>
-                    </body>
-                </html>
-            """;
     private WebView chatOutput;
     private boolean autoScroll;
 
     public void init(WebView webView) {
         this.chatOutput = webView;
-        webView.getEngine().loadContent(CHAT_PAGE);
-        chatOutput.setOnScroll(_ -> autoScroll = false);
+        URL styleUrl = getClass().getResource(STYLE);
+        webView.getEngine().setUserStyleSheetLocation(styleUrl.toExternalForm());
+        webView.getEngine().loadContent(CHAT_PAGE, "text/html");
+
+        chatOutput.setOnScroll(e -> autoScroll = false);
+
     }
 
     public void appendUserMessage(Message userMessage) {
@@ -115,7 +48,8 @@ public class ChatMessagesView {
                 .stream()
                 .map(content -> "data:" + content.mimeType() + ";base64, " + content.content())
                 .findAny()
-                .ifPresent(content -> message.append("<br /><img src=\"" + content + "\"/>"));
+                .map(content -> "<br /><img src=\"" + content + "\" />")
+                .ifPresent(message::append);
         message.append("</p>");
         runScriptToAppendMessage(message.toString(), "user");
     }
@@ -155,8 +89,9 @@ public class ChatMessagesView {
         var chatRoot = (HTMLElement) chatOutput.getEngine().getDocument().getElementById("chatContent");
         chatRoot.appendChild(el);
         chatOutput.getEngine().executeScript(script);
-        if (autoScroll)
+        if (autoScroll) {
             chatOutput.getEngine().executeScript("window.scrollTo(0, document.body.scrollHeight);");
+        }
     }
 
     public void setAutoScroll(boolean autoScroll) {
