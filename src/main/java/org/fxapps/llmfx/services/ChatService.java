@@ -49,7 +49,7 @@ public class ChatService {
 
     ChatService() {
 
-        modelCache = new HashMap<>();
+        this.modelCache = new HashMap<>();
 
         // some LLM servers (e.g. lmstudio) require HTTP/1.1
         this.jdkHttpClientBuilder = JdkHttpClient.builder()
