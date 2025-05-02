@@ -316,7 +316,7 @@ public class ChatController {
             return;
         }
         final var confirmDelete = alertsHelper.showWarningWithConfirmation("Delete conversation",
-                "Are you sure you want to delete the conversation?");
+                "Are you sure you want to delete the conversation ?");
 
         if (confirmDelete) {
             deleteConversationEvent.fire(new DeleteConversationEvent(i));
@@ -488,7 +488,7 @@ public class ChatController {
                         alertsHelper.showError("Error reading content",
                                 "Error reading content",
                                 "content could not be open: " + e.getMessage());
-                        logger.error("Errror opening content", e);
+                        logger.error("Error opening content", e);
                     }
                 });
 

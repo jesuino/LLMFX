@@ -10,8 +10,8 @@ public class Events {
     }
 
     public enum SaveFormat {
-        TEXT, JSON, HTML;
-    };
+        TEXT, JSON, HTML
+    }
 
     public record ChatUpdateEvent(String chat) {
     }

@@ -212,7 +212,7 @@ public class App {
         }
     }
 
-    void onRefreshModels(@Observes RefreshModelsEvent evt) throws Exception {
+    void onRefreshModels(@Observes RefreshModelsEvent evt) {
         refreshModels();
     }
 
@@ -277,7 +277,7 @@ public class App {
                     logger.error("Error during message streaming", e);
                     Platform.runLater(() -> alertsHelper.showError("Error",
                             "There was an error during the conversation",
-                            "The following error happend: " + e.getMessage()));
+                            "The following error happened: " + e.getMessage()));
                     chatController.holdChatProperty().set(false);
                 });
         chatService.chatAsync(request);
@@ -302,7 +302,7 @@ public class App {
                         Files.writeString(dest.toPath(), content);
                     } catch (IOException e) {
                         logger.error("Error saving file", e);
-                        alertsHelper.showError("Error", "Error saving chat History", "Error: " + e.getMessage());
+                        alertsHelper.showError("Error", "Error saving chat history", "Error: " + e.getMessage());
                     }
                 });
     }

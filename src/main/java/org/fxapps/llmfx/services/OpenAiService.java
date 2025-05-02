@@ -24,9 +24,7 @@ public class OpenAiService {
     public interface OpenAiServiceRest {
         @GET
         @Path("/models")
-        public ModelListResponse listModels(@Url String url);
-
-        
+        ModelListResponse listModels(@Url String url);
     }
 
     public record ModelListResponse(String object, List<ModelInfo> data) {}
