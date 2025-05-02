@@ -36,7 +36,6 @@ public class JFXCanvasTool {
 
     @Tool("""
             Fills a polygon with the given points using the currently set fill paint.
-
             """)
     void fillPolygon(double[] xPoints, double[] yPoints, int nPoints, @P("Color in web format") String color) {
         ctx.setFill(fixColor(color));
@@ -45,7 +44,6 @@ public class JFXCanvasTool {
 
     @Tool("""
             Fills a rectangle using the current fill paint.
-
             """)
     void fillRect(double x, double y, double width, double height, @P("Color in web format") String color) {
         ctx.setFill(fixColor(color));
@@ -78,14 +76,13 @@ public class JFXCanvasTool {
     }
 
     @Tool("""
-                Sets the current Font.
+            Sets the current Font.
             """)
     void setFont(String family, FontWeight weight, FontPosture posture, double size) {
         ctx.setFont(Font.font(family, weight, posture, size));
     }
 
     @Tool("""
-
             Sets the current Font Smoothing Type.
             """)
     void setFontSmoothingType(FontSmoothingType fontsmoothing) {
@@ -122,7 +119,6 @@ public class JFXCanvasTool {
     }
 
     @Tool("""
-
             Sets the current Text Baseline.
             """)
     void setTextBaseline(VPos baseline) {
@@ -130,8 +126,8 @@ public class JFXCanvasTool {
     }
 
     @Tool("""
-                Strokes an Arc using the current stroke paint.
-            This tool draw only the stroke of the shape, with no fill
+            Strokes an Arc using the current stroke paint.
+            This tool draws only the stroke of the shape, with no fill
             """)
     void strokeArc(double x, double y, double width, double height, double startAngle, double arcExtent,
             ArcType closure, @P("Color in web format") String color) {
@@ -141,7 +137,7 @@ public class JFXCanvasTool {
 
     @Tool("""
             Strokes a line using the current stroke paint.
-            This tool draw only the stroke of the shape, with no fill
+            This tool draws only the stroke of the shape, with no fill
             """)
     void strokeLine(double x1, double y1, double x2, double y2, @P("Color in web format") String color) {
         ctx.setStroke(fixColor(color));
@@ -150,7 +146,7 @@ public class JFXCanvasTool {
 
     @Tool("""
             Strokes an oval using the current stroke paint.
-            This tool draw only the stroke of the shape, with no fill
+            This tool draws only the stroke of the shape, with no fill
             """)
     void strokeOval(double x, double y, double width, double height, @P("Color in web format") String color) {
         ctx.setStroke(fixColor(color));
@@ -159,7 +155,7 @@ public class JFXCanvasTool {
 
     @Tool("""
             Strokes a polygon with the given points using the currently set stroke paint.
-            This tool draw only the stroke of the shape, with no fill
+            This tool draws only the stroke of the shape, with no fill
             """)
     void strokePolygon(double[] xPoints, double[] yPoints, int nPoints, @P("Color in web format") String color) {
         ctx.setStroke(fixColor(color));
@@ -168,7 +164,7 @@ public class JFXCanvasTool {
 
     @Tool("""
             Strokes a polyline with the given points using the currently set stroke paint attribute.
-            This tool draw only the stroke of the shape, with no fill
+            This tool draws only the stroke of the shape, with no fill
             """)
     void strokePolyline(double[] xPoints, double[] yPoints, int nPoints, @P("Color in web format") String color) {
         ctx.setStroke(fixColor(color));
@@ -177,7 +173,7 @@ public class JFXCanvasTool {
 
     @Tool("""
             Strokes a rectangle using the current stroke paint.
-            This tool draw only the stroke of the shape, with no fill
+            This tool draws only the stroke of the shape, with no fill
             """)
     void strokeRect(double x, double y, double width, double height, @P("Color in web format") String color) {
         ctx.setStroke(fixColor(color));
@@ -186,7 +182,7 @@ public class JFXCanvasTool {
 
     @Tool("""
             Strokes a rounded rectangle using the current stroke paint.
-            This tool draw only the stroke of the shape, with no fill
+            This tool draws only the stroke of the shape, with no fill
             """)
     void strokeRoundRect(double x, double y, double width, double height, double arcWidth, double arcHeight, @P("Color in web format") String color) {
         ctx.setStroke(fixColor(color));
@@ -195,7 +191,7 @@ public class JFXCanvasTool {
 
     @Tool("""
             Draws text with stroke paint and includes a maximum width of the string.
-            This tool draw only the stroke of the shape, with no fill
+            This tool draws only the stroke of the shape, with no fill
             """)
     void strokeText(String text, double x, double y, double maxWidth, @P("Color in web format") String color) {
         ctx.setStroke(fixColor(color));

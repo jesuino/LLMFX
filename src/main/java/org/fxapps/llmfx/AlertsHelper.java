@@ -31,12 +31,12 @@ public class AlertsHelper {
     }
 
     public void showError(String title, String header, String message) {
-        var errroDialog = new Alert(Alert.AlertType.ERROR);
-        errroDialog.setTitle("WARNING");
-        errroDialog.setHeaderText(header);
-        errroDialog.setContentText(message);
-        errroDialog.initOwner(ownerWindow);
-        errroDialog.showAndWait();
+        var errorDialog = new Alert(Alert.AlertType.ERROR);
+        errorDialog.setTitle("WARNING");
+        errorDialog.setHeaderText(header);
+        errorDialog.setContentText(message);
+        errorDialog.initOwner(ownerWindow);
+        errorDialog.showAndWait();
     }
 
     public Optional<File> showSaveFileChooser(String title, String fileExtension) {

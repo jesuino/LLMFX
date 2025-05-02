@@ -68,9 +68,7 @@ public class JFXReportingTool {
         tableView.setPrefHeight(height);
 
         ObservableList<String[]> tableData = FXCollections.observableArrayList();
-        for (String[] rowData : data) {
-            tableData.add(rowData);
-        }
+        tableData.addAll(Arrays.asList(data));
 
         var columns = Arrays.stream(columnsNames).map(cl -> {
             var tableColumn = new TableColumn<String[], String>(cl);

@@ -41,7 +41,7 @@ public class MCPClientRepository {
 
                 toolProviderRegister.put(name, mcpClient);
             } catch (Exception e) {
-                logger.error("Not able to load MCP Server configuration for server " + name, e);
+                logger.error("Not able to load MCP server configuration for server " + name, e);
             }
         }
     }
