@@ -5,11 +5,13 @@ import static org.fxapps.llmfx.FXUtils.fixColor;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import jakarta.inject.Singleton;
-
+import jakarta.ws.rs.Path;
 import javafx.geometry.VPos;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.image.Image;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.LinearGradient;
+import javafx.scene.paint.RadialGradient;
 import javafx.scene.paint.Stop;
 import javafx.scene.shape.ArcType;
 import javafx.scene.shape.FillRule;
@@ -54,16 +56,62 @@ public class JFXCanvasTool {
         ctx.setFill(fixColor(color));
     }
 
-    @Tool("""
-            Set a gradient as the color.
-            """)
-    void setGradient(
+    @Tool("Rotate the current transform in degres")
+    public void rotate(double degress) {
+        ctx.rotate(degress);
+    }
 
+    @Tool("Translates the current transform by x, y")
+    public void translate(double x, double y) {
+        ctx.translate(x, y);
+    }
+
+    @Tool("Draws a Image at the specific x and y location")
+    public void drawImage(
+            @P("The image URL. Can be a web URL or a base64 valid URL") String url,
+            double x,
+            double y,
+            double width,
+            double height) {
+        var img = new Image(url);
+        ctx.drawImage(img, x, y, width, height);
+    }
+
+    @Tool("""
+            Sets a radial gradient as the color.
+            """)
+    public void setRadialGradient(
+            @P("the angle in degrees from the center of the gradient to the focus point to which the first color is mapped") double focusAngle,
+            @P("the distance from the center of the gradient to the focus point to which the first color is mapped") double focusDistance,
+            @P("the X coordinate of the center point of the gradient's circle. Values are from 0.0 to 1.0") double centerX,
+            @P("the Y coordinate of the center point of the gradient's circle. Values are from 0.0 to 1.0") double centerY,
+            @P("the radius of the circle defining the extents of the color gradient") double radius,
+            String[] colorStops) {
+        var stops = new Stop[colorStops.length];
+        var offsetStep = 1.0 / colorStops.length;
+        for (int i = 0; i < colorStops.length; i++) {
+            stops[i] = new Stop(i * offsetStep, fixColor(colorStops[i]));
+        }
+        var radialGradient = new RadialGradient(
+                focusAngle,
+                focusDistance,
+                centerX,
+                centerY,
+                radius,
+                true,
+                CycleMethod.REPEAT,
+                stops);
+        ctx.setFill(radialGradient);
+    }
+
+    @Tool("""
+            Sets a linear gradient as the color.
+            """)
+    void setLinearGradient(
             @P("the X coordinate of the gradient axis start point. Values are from 0.0 to 1.0") double startX,
             @P(" the Y coordinate of the gradient axis start point. Values are from 0.0 to 1.0") double startY,
             @P("the X coordinate of the gradient axis end point. Values are from 0.0 to 1.0") double endX,
             @P("the Y coordinate of the gradient axis end point. Values are from 0.0 to 1.0") double endY,
-
             String[] colorStops) {
         var stops = new Stop[colorStops.length];
         var offsetStep = 1.0 / colorStops.length;
@@ -132,13 +180,6 @@ public class JFXCanvasTool {
     }
 
     @Tool("""
-            Set the filling rule attribute for determining the interior of paths in fill or clip operations.
-            """)
-    void setFillRule(FillRule fillRule) {
-        ctx.setFillRule(fillRule);
-    }
-
-    @Tool("""
             Sets the current Font.
             """)
     void setFont(String family, FontWeight weight, FontPosture posture, double size) {
@@ -190,85 +231,120 @@ public class JFXCanvasTool {
     }
 
     @Tool("""
-            Strokes an Arc using the current stroke paint.
-            This tool draws only the stroke of the shape, with no fill
-            """)
-    void strokeArc(double x, double y, double width, double height, double startAngle, double arcExtent,
-            ArcType closure, @P("Color in web format") String color) {
-        ctx.setStroke(fixColor(color));
-        ctx.strokeArc(x, y, width, height, startAngle, arcExtent, closure);
-    }
-
-    @Tool("""
-            Strokes a line using the current stroke paint.
-            This tool draws only the stroke of the shape, with no fill
-            """)
-    void strokeLine(double x1, double y1, double x2, double y2, @P("Color in web format") String color) {
-        ctx.setStroke(fixColor(color));
-        ctx.strokeLine(x1, y1, x2, y2);
-    }
-
-    @Tool("""
-            Strokes an oval using the current stroke paint.
-            This tool draws only the stroke of the shape, with no fill
-            """)
-    void strokeOval(double x, double y, double width, double height, @P("Color in web format") String color) {
-        ctx.setStroke(fixColor(color));
-        ctx.strokeOval(x, y, width, height);
-    }
-
-    @Tool("""
-            Strokes a polygon with the given points using the currently set stroke paint.
-            This tool draws only the stroke of the shape, with no fill
-            """)
-    void strokePolygon(double[] xPoints, double[] yPoints, int nPoints, @P("Color in web format") String color) {
-        ctx.setStroke(fixColor(color));
-        ctx.strokePolygon(xPoints, yPoints, nPoints);
-    }
-
-    @Tool("""
-            Strokes a polyline with the given points using the currently set stroke paint attribute.
-            This tool draws only the stroke of the shape, with no fill
-            """)
-    void strokePolyline(double[] xPoints, double[] yPoints, int nPoints, @P("Color in web format") String color) {
-        ctx.setStroke(fixColor(color));
-        ctx.strokePolyline(xPoints, yPoints, nPoints);
-    }
-
-    @Tool("""
-            Strokes a rectangle using the current stroke paint.
-            This tool draws only the stroke of the shape, with no fill
-            """)
-    void strokeRect(double x, double y, double width, double height, @P("Color in web format") String color) {
-        ctx.setStroke(fixColor(color));
-        ctx.strokeRect(x, y, width, height);
-    }
-
-    @Tool("""
-            Strokes a rounded rectangle using the current stroke paint.
-            This tool draws only the stroke of the shape, with no fill
-            """)
-    void strokeRoundRect(double x, double y, double width, double height, double arcWidth, double arcHeight,
-            @P("Color in web format") String color) {
-        ctx.setStroke(fixColor(color));
-        ctx.strokeRoundRect(x, y, width, height, arcWidth, arcHeight);
-    }
-
-    @Tool("""
-            Draws text with stroke paint and includes a maximum width of the string.
-            This tool draws only the stroke of the shape, with no fill
-            """)
-    void strokeText(String text, double x, double y, double maxWidth, @P("Color in web format") String color) {
-        ctx.setStroke(fixColor(color));
-        ctx.strokeText(text, x, y, maxWidth);
-    }
-
-    @Tool("""
-            Draws a line using the current stroke paint.
-            This tool draw only the stroke of the shape, with no fill
+            Draws a line using the current line paint.
             """)
     void drawLine(double x1, double y1, double x2, double y2) {
         ctx.strokeLine(x1, y1, x2, y2);
+    }
+
+    @Tool("Restore the canvas to its original configuration")
+    public void restore() {
+        ctx.restore();
+    }
+
+    @Tool("""
+            Sets the line dash for strokes forr all shapes and lines.
+            If you want to reset a dash call this with a null or empty array.
+            """)
+    void setLineDashes(
+            @P("the array of finite non-negative dash lengths. Use an empty array or null to clear this configuration") double[] dashes) {
+        ctx.setLineDashes(dashes);
+    }
+
+    // complex path tools
+
+    @Tool("Reset the current Path and starts a new on. Use the path tools to continue this path")
+    public void beginPath() {
+        ctx.beginPath();
+    }
+
+    @Tool("Moves the path to the specified x, y coordinate")
+    public void moveTo(double x, double y) {
+        ctx.moveTo(x, y);
+    }
+
+    @Tool("Adds segments to the current path to make a line to the given x,y coordinate")
+    public void lineTo(double x, double y) {
+        ctx.lineTo(x, y);
+    }
+
+    @Tool("Adds segments to the current path to make a quadratic Bezier curve.")
+    public void quadraticCurveTo(
+            @P("the X coordinate of the control point") double xc,
+            @P("the Y coordinate of the control point") double yc,
+            @P("the X coordinate of the end point") double x1,
+            @P("the Y coordinate of the end point") double y1) {
+        ctx.quadraticCurveTo(xc, yc, x1, y1);
+    }
+
+    @Tool("Add a bezier curve to the current path")
+    public void bezierCurveTo(
+            @P("the X coordinate of first Bezier control point.") int xc1,
+            @P("the Y coordinate of first Bezier control point.") int yc1,
+            @P("the X coordinate of the second Bezier control point.") int xc2,
+            @P("the Y coordinate of the second Bezier control point.") int yc2,
+            @P("the X coordinate of the end point.") int x,
+            @P("the Y coordinate of the end point.") int y) {
+        ctx.bezierCurveTo(xc1, yc1, xc2, yc2, x, y);
+    }
+
+    @Path("Adds path elements to the current path to make an arc that uses Euclidean degrees")
+    public void arc(
+            double centerX,
+            double centerY,
+            double radiusX,
+            double radiusY,
+            double startAngle,
+            double length) {
+        ctx.arc(centerX, centerY, radiusX, radiusY, startAngle, length);
+    }
+
+    @Path("Adds segments to the current path to make an arc. ")
+    public void arcTo(
+            double x1,
+            double y1,
+            double x2,
+            double y2,
+            double radius) {
+        ctx.arcTo(x1, y1, x2, y2, radius);
+    }
+
+    @Path("Closes the path.")
+    public void closePath() {
+        ctx.closePath();
+    }
+
+    @Path("Adds path elements to the current path to make a rectangle.")
+    public void rect(
+            double x,
+            double y,
+            double width,
+            double height) {
+        ctx.rect(x, y, width, height);
+    }
+
+    @Path("Fills the path with the current fill paint.")
+    public void fill() {
+        ctx.fill();
+    }
+
+    @Path("Strokes the path with the current stroke paint.")
+    public void stroke() {
+        ctx.stroke();
+    }
+
+    @Tool("Append a SVG path to the current path")
+    public void appendSVGPath(String svgPath) {
+        ctx.appendSVGPath(svgPath);
+        ctx.stroke();
+        ctx.fill();
+    }
+
+    @Tool("""
+            Set the filling rule attribute for determining the interior of paths in fill or clip operations.
+            """)
+    void setFillRule(FillRule fillRule) {
+        ctx.setFillRule(fillRule);
     }
 
 }
