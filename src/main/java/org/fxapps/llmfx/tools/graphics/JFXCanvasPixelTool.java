@@ -38,7 +38,7 @@ public class JFXCanvasPixelTool {
             @P("""
                     The matrix of colors to be written. Each matrix position matches a pixel x,y position.
                     The color is in web format
-                        """) String[][] colors) {
+                    """) String[][] colors) {
 
         for (int i = 0; i < colors.length; i++) {
             for (int j = 0; j < colors[i].length; j++) {

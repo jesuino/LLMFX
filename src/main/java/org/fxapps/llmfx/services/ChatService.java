@@ -29,12 +29,13 @@ import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.TokenStream;
-import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
 @Singleton
 public class ChatService {
+
+    private static final Logger LOGGER = Logger.getLogger(ChatService.class);
 
     @Inject
     OpenAiService openAi;
@@ -42,14 +43,12 @@ public class ChatService {
     @Inject
     LLMConfig llmConfig;
 
-    Logger logger = Logger.getLogger(ChatService.class);
+    private final Map<String, StreamingChatLanguageModel> modelCache;
 
-    Map<String, StreamingChatLanguageModel> modelCache;
+    private final JdkHttpClientBuilder jdkHttpClientBuilder;
 
-    private JdkHttpClientBuilder jdkHttpClientBuilder;
+    ChatService() {
 
-    @PostConstruct
-    public void init() {
         modelCache = new HashMap<>();
 
         // some LLM servers (e.g. lmstudio) require HTTP/1.1
@@ -59,9 +58,7 @@ public class ChatService {
     }
 
     public interface AsyncChatBot {
-
         TokenStream chat(String userMessage);
-
     }
 
     public void chatAsync(ChatRequest chatRequest) {
@@ -125,7 +122,7 @@ public class ChatService {
             @Override
             public void onCompleteResponse(ChatResponse response) {
                 if (response.aiMessage().hasToolExecutionRequests()) {                    
-                    logger.warn("Function calls with image are not supported at the moment");
+                    LOGGER.warn("Function calls with image are not supported at the moment");
                 }
 
             }
@@ -134,9 +131,9 @@ public class ChatService {
             public void onError(Throwable e) {
                 if (chatRequest.isRunning()) {
                     chatRequest.onError().accept(e);
-                    logger.error("Error during LLM Service call", e);
+                    LOGGER.error("Error during LLM Service call", e);
                 } else {
-                    logger.debug("Error during LLM Service call", e);
+                    LOGGER.debug("Error during LLM Service call", e);
                 }
             }
 
@@ -178,11 +175,11 @@ public class ChatService {
 
         }).onRetrieved(contents -> {
             if (chatRequest.isRunning()) {
-                logger.info("Content retrieved: " + contents);
+                LOGGER.info("Content retrieved: " + contents);
             }
         }).onToolExecuted(execution -> {
             if (chatRequest.isRunning()) {
-                logger.info("Tool Execution: " + execution);
+                LOGGER.info("Tool Execution: " + execution);
             }
         }).onCompleteResponse(response -> {
             if (chatRequest.isRunning()) {
@@ -191,9 +188,9 @@ public class ChatService {
         }).onError(e -> {
             if (chatRequest.isRunning()) {
                 chatRequest.onError().accept(e);
-                logger.error("Error during LLM Service call", e);
+                LOGGER.error("Error during LLM Service call", e);
             } else {
-                logger.debug("Error during LLM Service call", e);
+                LOGGER.debug("Error during LLM Service call", e);
             }
         });
 

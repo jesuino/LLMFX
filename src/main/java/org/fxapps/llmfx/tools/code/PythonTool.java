@@ -21,7 +21,7 @@ public class PythonTool {
         var process = new ProcessBuilder(List.of("python", file.toAbsolutePath().toString())).start();
 
         var reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
-        var result = new StringBuffer();
+        var result = new StringBuilder();
         String line;
         while ((line = reader.readLine()) != null) {
             result.append(line).append(System.lineSeparator());
