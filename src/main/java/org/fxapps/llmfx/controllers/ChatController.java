@@ -3,6 +3,7 @@ package org.fxapps.llmfx.controllers;
 import static org.fxapps.llmfx.tools.ToolsInfo.CANVAS_DRAWING;
 import static org.fxapps.llmfx.tools.ToolsInfo.CANVAS_PIXELS;
 import static org.fxapps.llmfx.tools.ToolsInfo.REPORTING;
+import static org.fxapps.llmfx.tools.ToolsInfo.SHAPES;
 import static org.fxapps.llmfx.tools.ToolsInfo.WEB_RENDER;
 import static org.fxapps.llmfx.tools.ToolsInfo._3D;
 
@@ -41,6 +42,7 @@ import org.fxapps.llmfx.tools.graphics.JFX3dTool;
 import org.fxapps.llmfx.tools.graphics.JFXCanvasPixelTool;
 import org.fxapps.llmfx.tools.graphics.JFXCanvasTool;
 import org.fxapps.llmfx.tools.graphics.JFXReportingTool;
+import org.fxapps.llmfx.tools.graphics.JFXShapesTool;
 import org.fxapps.llmfx.tools.graphics.JFXWebRenderingTool;
 import org.jboss.logging.Logger;
 
@@ -137,6 +139,8 @@ public class ChatController {
     @Inject
     JFX3dTool jfx3dTool;
 
+    @Inject JFXShapesTool jfxShapesTool;
+
     @FXML
     private WebView chatOutput;
 
@@ -190,6 +194,12 @@ public class ChatController {
 
     @FXML
     private Tab tab3d;
+
+    @FXML
+    private Tab shapesTab;
+
+    @FXML
+    private Group grpShapes;
 
     @FXML
     WebView webContentView;
@@ -259,6 +269,7 @@ public class ChatController {
         jfxReportingTool.setGridPane(reportingPane);
         jfxWebRenderingTool.setWebView(webContentView);
         jfx3dTool.setSubScene(_3dSubscene, grp3d);
+        jfxShapesTool.setContainer(grpShapes);
     }
 
     @FXML
@@ -279,7 +290,7 @@ public class ChatController {
     }
 
     @FXML
-    void clearCurrentGraphicsTab() {
+    void clearCurrentGraphicsTab() {        
         var selectedTab = graphicsPane.getSelectionModel().getSelectedItem();
         if (this.reportingTab == selectedTab) {
             reportingPane.getChildren().clear();
@@ -291,6 +302,10 @@ public class ChatController {
 
         if (this.canvasTab == selectedTab) {
             this.canvas.getGraphicsContext2D().clearRect(0, 0, 10000, 10000);
+        }
+
+        if (this.shapesTab == selectedTab) {
+            this.grpShapes.getChildren().clear();
         }
 
     }
@@ -424,7 +439,8 @@ public class ChatController {
                 CANVAS_PIXELS, canvasTab,
                 REPORTING, reportingTab,
                 _3D, tab3d,
-                WEB_RENDER, webViewTab)
+                WEB_RENDER, webViewTab,
+                SHAPES, shapesTab)
                 .entrySet()
                 .stream()
                 .filter(e -> selectedTools().contains(e.getKey()))

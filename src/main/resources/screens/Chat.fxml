@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
+<?import javafx.scene.Group?>
 <?import javafx.scene.SubScene?>
 <?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.Button?>
@@ -94,7 +95,7 @@
       </HBox>
    </bottom>
    <center>
-      <SplitPane fx:id="spBody" dividerPositions="0.2, 1.0" prefHeight="295.0" prefWidth="565.0" BorderPane.alignment="CENTER">
+      <SplitPane fx:id="spBody" dividerPositions="0.2, 0.0" prefHeight="295.0" prefWidth="565.0" BorderPane.alignment="CENTER">
          <items>
             <StackPane minWidth="0.0">
                <children>
@@ -197,6 +198,11 @@
                                     </SubScene>
                                  </children>
                               </Pane>
+                          </content>
+                        </Tab>
+                        <Tab fx:id="shapesTab" text="Shapes">
+                          <content>
+                              <Group fx:id="grpShapes" />
                           </content>
                         </Tab>
                      </tabs></TabPane>
