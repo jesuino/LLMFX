@@ -117,7 +117,7 @@ public class App {
         stage.setAlwaysOnTop(appConfig.alwaysOnTop().orElse(true));
         stage.setMinWidth(700);
         stage.setMinHeight(400);
-        stage.setOnCloseRequest(_ -> {
+        stage.setOnCloseRequest(noop -> {
             logger.info("Closing application...");
             saveHistory();
             System.exit(0);
