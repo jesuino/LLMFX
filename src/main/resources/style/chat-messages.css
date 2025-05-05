@@ -11,9 +11,10 @@
     color: red !important;
 }
 img {
+    max-width: 100%;
     height: auto;
-    width: 100%;
     max-height: 300px;
+    object-fit: contain;
 }
 
 table {
