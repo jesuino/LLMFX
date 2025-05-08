@@ -12,3 +12,4 @@ build/
 /.continue/
 .DS_Store
 /.idea/
+e2e.log

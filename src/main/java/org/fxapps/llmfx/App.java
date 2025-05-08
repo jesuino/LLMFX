@@ -2,16 +2,12 @@ package org.fxapps.llmfx;
 
 import java.io.IOException;
 import java.nio.file.Files;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
-import org.commonmark.ext.gfm.tables.TablesExtension;
-import org.commonmark.parser.Parser;
-import org.commonmark.renderer.html.HtmlRenderer;
 import org.fxapps.llmfx.Events.ChatUpdateEvent;
 import org.fxapps.llmfx.Events.DeleteConversationEvent;
 import org.fxapps.llmfx.Events.HistorySelectedEvent;
@@ -27,6 +23,7 @@ import org.fxapps.llmfx.Model.Role;
 import org.fxapps.llmfx.config.AppConfig;
 import org.fxapps.llmfx.config.LLMConfig;
 import org.fxapps.llmfx.controllers.ChatController;
+import org.fxapps.llmfx.controllers.ChatMessagesView;
 import org.fxapps.llmfx.services.ChatService;
 import org.fxapps.llmfx.services.HistoryStorage;
 import org.fxapps.llmfx.services.MCPClientRepository;
@@ -82,16 +79,17 @@ public class App {
 
     @Inject
     AppConfig appConfig;
+
+    @Inject
+    ChatMessagesView chatMessagesView;
+
     @Inject
     ToolsInfo toolsInfo;
 
     private ChatController chatController;
-    private Parser markDownParser;
-    private HtmlRenderer markdownRenderer;
 
     private FxViewData chatViewData;
 
-    private Map<Message, String> htmlMessageCache;
     private Stage stage;
 
     private String selectedModel;
@@ -106,11 +104,8 @@ public class App {
 
         this.chatViewData = viewRepository.getViewData("Chat");
         this.chatController = chatViewData.getController();
-        this.markdownRenderer = HtmlRenderer.builder().extensions(List.of(TablesExtension.create())).build();
-        this.htmlMessageCache = new HashMap<>();
         this.stage = event.getPrimaryStage();
         this.stopStreamingStack = new Stack<>();
-        this.markDownParser = Parser.builder().extensions(List.of(TablesExtension.create())).build();
         final var chatView = (Parent) chatViewData.getRootNode();
         final var scene = new Scene(chatView);
 
@@ -126,7 +121,6 @@ public class App {
         stage.setScene(scene);
         stage.setTitle("LLM FX: A desktop App for LLM Servers");
         stage.show();
-
 
         Platform.runLater(() -> {
             chatController.init();
@@ -163,7 +157,6 @@ public class App {
 
         chatController.fillModels(modelsList);
 
-       
         var currentModel = modelsList.stream()
                 .filter(m -> m.equals(selectedModel))
                 .findAny()
@@ -231,8 +224,7 @@ public class App {
             });
             updateHistoryList();
         }
-        historyStorage.getConversation().messages().add(userMessage);        
-        showChatMessages();
+        historyStorage.getConversation().messages().add(userMessage);
         saveHistory();
 
         var toolProvider = McpToolProvider.builder()
@@ -240,17 +232,18 @@ public class App {
                         .map(mcpClientRepository::getMcpClient).toList())
                 .build();
 
-        final var tempMessage = Message.assistantMessage("");
-        historyStorage.getConversation().messages().add(tempMessage);
-
-        chatController.holdChatProperty().set(true);
         var stopFlag = new AtomicBoolean(false);
-        this.stopStreamingStack.push(stopFlag);
         var selectedTools = chatController.selectedTools();
         var tools = toolsInfo.getToolsMap().entrySet().stream()
                 .filter(e -> selectedTools.contains(e.getKey()))
                 .map(e -> e.getValue())
                 .collect(Collectors.toSet());
+
+        historyStorage.getConversation().messages().add(Message.assistantMessage(""));
+        chatController.holdChatProperty().set(true);
+        stopStreamingStack.push(stopFlag);
+
+        showChatMessages();
         var request = new Model.ChatRequest(
                 userInput.text(),
                 userInput.content(),
@@ -262,10 +255,11 @@ public class App {
                 token -> {
                     Platform.runLater(() -> {
                         final var previous = historyStorage.getConversation().messages().removeLast();
-                        historyStorage.getConversation().messages()
-                                .add(Message.assistantMessage(previous.text() + token));
+                        var updatedMessage = Message.assistantMessage(previous.text() + token);
+                        historyStorage.getConversation().messages().add(updatedMessage);
+                        chatMessagesView.streamAssistantMessage(updatedMessage);
                     });
-                    showChatMessages();
+
                 },
                 r -> {
                     saveHistory();
@@ -315,17 +309,14 @@ public class App {
     private void showChatMessages() {
         Platform.runLater(() -> {
             chatController.clearChatHistory();
+            chatController.hideWelcomeMessage();
             historyStorage.getConversation().messages().stream().forEach(message -> {
-                final var content = message.text();
-                if (Role.USER == message.role()) {
-                    chatController.appendUserMessage(message);
-                } else if (Role.SYSTEM == message.role()) {
-                    chatController.appendSystemMessage(content);
-                } else {
-                    var htmlMessage = htmlMessageCache.computeIfAbsent(message,
-                            messageToParse -> parseMarkdowToHTML(messageToParse.text()));
-                    chatController.appendAssistantMessage(htmlMessage);
-                }
+                Consumer<Message> messageConsumer = switch (message.role()) {
+                    case Role.USER -> chatMessagesView::appendUserMessage;
+                    case Role.SYSTEM -> chatMessagesView::appendSystemMessage;
+                    case Role.ASSISTANT -> chatMessagesView::appendAssistantMessage;
+                };
+                messageConsumer.accept(message);
             });
         });
     }
@@ -338,8 +329,4 @@ public class App {
         }
     }
 
-    private String parseMarkdowToHTML(String markdown) {
-        var parsedContent = markDownParser.parse(markdown);
-        return markdownRenderer.render(parsedContent);
-    }
 }

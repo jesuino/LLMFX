@@ -36,7 +36,6 @@ import org.fxapps.llmfx.Events.UserInputEvent;
 import org.fxapps.llmfx.FXUtils;
 import org.fxapps.llmfx.Model.Content;
 import org.fxapps.llmfx.Model.ContentType;
-import org.fxapps.llmfx.Model.Message;
 import org.fxapps.llmfx.config.AppConfig;
 import org.fxapps.llmfx.tools.graphics.JFX3dTool;
 import org.fxapps.llmfx.tools.graphics.JFXCanvasPixelTool;
@@ -139,7 +138,8 @@ public class ChatController {
     @Inject
     JFX3dTool jfx3dTool;
 
-    @Inject JFXShapesTool jfxShapesTool;
+    @Inject
+    JFXShapesTool jfxShapesTool;
 
     @FXML
     private WebView chatOutput;
@@ -244,7 +244,7 @@ public class ChatController {
         btnNewChat.disableProperty().bind(holdChatProperty);
         historyList.disableProperty().bind(holdChatProperty);
         btnContent.disableProperty().bind(holdChatProperty);
-        btnStop.disableProperty().bind(holdChatProperty.not());        
+        btnStop.disableProperty().bind(holdChatProperty.not());
 
         this.historyList.setOnMouseClicked(e -> {
             var i = historyList.getSelectionModel().getSelectedIndex();
@@ -290,7 +290,7 @@ public class ChatController {
     }
 
     @FXML
-    void clearCurrentGraphicsTab() {        
+    void clearCurrentGraphicsTab() {
         var selectedTab = graphicsPane.getSelectionModel().getSelectedItem();
         if (this.reportingTab == selectedTab) {
             reportingPane.getChildren().clear();
@@ -307,7 +307,6 @@ public class ChatController {
         if (this.shapesTab == selectedTab) {
             this.grpShapes.getChildren().clear();
         }
-
     }
 
     @FXML
@@ -387,7 +386,7 @@ public class ChatController {
     }
 
     public void setMCPServers(Collection<String> mcpServers) {
-        mcpMenu.setDisable(false);
+        mcpMenu.setDisable(mcpServers.isEmpty());
         mcpServers.stream().map(mcpServer -> {
             var menu = new CheckMenuItem(mcpServer);
             menu.selectedProperty().addListener((obs, old, n) -> mcpMenu
@@ -510,19 +509,7 @@ public class ChatController {
 
     }
 
-    public void appendUserMessage(Message message) {
+    public void hideWelcomeMessage() {
         vbWelcomeMessage.setVisible(false);
-        chatMessagesView.setAutoScroll(true);
-        chatMessagesView.appendUserMessage(message);
-    }
-
-    public void appendSystemMessage(String content) {
-        vbWelcomeMessage.setVisible(false);
-        chatMessagesView.appendSystemMessage(content);
-    }
-
-    public void appendAssistantMessage(String htmlMessage) {
-        vbWelcomeMessage.setVisible(false);
-        chatMessagesView.appendAssistantMessage(htmlMessage);
     }
 }
