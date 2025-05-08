@@ -54,7 +54,7 @@ public class JFXShapesTool {
 
         }
 
-        @Tool("Create an arc and return its ID, use it it for effects and animations")
+        @Tool("Creates an arc")
         public String arc(
                         @P("X coordinate of the center point of the arc.") double centerX,
                         @P("Y coordinate of the center point of the arc.") double centerY,
@@ -71,7 +71,7 @@ public class JFXShapesTool {
                 return setupShape(arc, color, strokeColor, strokeWidth);
         }
 
-        @Tool("Create a circle and return its ID, use it it for effects and animations")
+        @Tool("Creates a circle")
         public String circle(
                         @P("horizontal position of the center of the circle in pixels.") double centerX,
                         @P("vertical position of the center of the circle in pixels.") double centerY,
@@ -97,12 +97,12 @@ public class JFXShapesTool {
                 return setupShape(ellipse, color, strokeColor, strokeWidth);
         }
 
-        @Tool("Create a line and returns its ID, use it it for effects and animations")
+        @Tool("Creates a line")
         public String line(
-                        @P("X coordinate of the start point of the line segment.") double startX,
-                        @P("Y coordinate of the start point of the line segment.") double startY,
-                        @P("X coordinate of the end point of the line segment.") double endX,
-                        @P("Y coordinate of the end point of the line segment.") double endY,
+                        @P("X-coordinate of the starting point") double startX,
+                        @P("Y-coordinate of the starting point") double startY,
+                        @P("X-coordinate of the ending point") double endX,
+                        @P("Y-coordinate of the ending point") double endY,
                         String color,
                         String strokeColor,
                         double strokeWidth) {
@@ -110,9 +110,9 @@ public class JFXShapesTool {
                 return setupShape(line, color, strokeColor, strokeWidth);
         }
 
-        @Tool("Create a polygon and return its ID, use it it for effects and animations")
+        @Tool("Creates a polygon")
         public String polygon(
-                        @P("the coordinates of the polygon vertices") double[] points,
+                        @P("coordinates of the polygon vertices") double[] points,
                         String color,
                         String strokeColor,
                         double strokeWidth) {
@@ -120,9 +120,9 @@ public class JFXShapesTool {
                 return setupShape(polygon, color, strokeColor, strokeWidth);
         }
 
-        @Tool("Create a polyline and return its ID, use it it for effects and animations")
+        @Tool("Creates a polyline")
         public String polyline(
-                        @P("the coordinates of the polyline vertices") double[] points,
+                        @P("coordinates of the polyline vertices") double[] points,
                         String color,
                         String strokeColor,
                         double strokeWidth) {
@@ -130,7 +130,7 @@ public class JFXShapesTool {
                 return setupShape(polyline, color, strokeColor, strokeWidth);
         }
 
-        @Tool("Create a rectangle shape and return its ID, use it it for effects and animations")
+        @Tool("Creates a rectangle")
         public String rectangle(
                         @P("X coordinate of the upper-left corner of the rectangle.") double x,
                         @P("Y coordinate of the upper-left corner of the rectangle.") double y,
@@ -147,9 +147,9 @@ public class JFXShapesTool {
                 return setupShape(rectangle, color, strokeColor, strokeWidth);
         }
 
-        @Tool("Create an arc shape and return its ID, use it it for effects and animations")
+        @Tool("Creates an arc")
         public String svgPath(
-                        @P("SVG Path encoded string as specified at: http://www.w3.org/TR/SVG/paths.html") String content,
+                        @P("SVG Path") String content,
                         @P("filling rule constant for determining the interior of the path.") FillRule fillRule,
                         String color,
                         String strokeColor,
@@ -160,7 +160,7 @@ public class JFXShapesTool {
                 return setupShape(svgPath, color, strokeColor, strokeWidth);
         }
 
-        @Tool("Create a text and return its ID, use it it for effects and animations")
+        @Tool("Creates a text")
         public String text(
                         String text,
                         @P("X coordinate of text origin.") double x,
@@ -184,7 +184,7 @@ public class JFXShapesTool {
                 return setupShape(txt, color, strokeColor, strokeWidth);
         }
 
-        @Tool("Defines a quadratic Bézier parametric curve segment in (x,y) coordinate space  and returns its ID, use it it for effects and animations")
+        @Tool("Defines a quadratic Bézier parametric curve segment in (x,y) coordinate space")
         public String quadCurve(
                         @P("X coordinate of the start point of the quadratic curve segment.") double startX,
                         @P("Y coordinate of the start point of the quadratic curve segment.") double startY,
@@ -199,7 +199,7 @@ public class JFXShapesTool {
                 return setupShape(quadCurve, color, strokeColor, strokeWidth);
         }
 
-        @Tool("Defines a cubic Bézier parametric curve segment in (x,y) coordinate space and returns its ID, use it it for effects and animations")
+        @Tool("Defines a cubic Bézier parametric curve segment in (x,y) coordinate space")
         public String cubicCurve(
                         @P("X coordinate of the start point of the quadratic curve segment.") double startX,
                         @P("Y coordinate of the start point of the quadratic curve segment.") double startY,
@@ -216,7 +216,7 @@ public class JFXShapesTool {
                 return setupShape(cubicCurve, color, strokeColor, strokeWidth);
         }
 
-        @Tool("Group the shapes and return the group ID. The group ID can be used in animations and effects")
+        @Tool("Group the shapes")
         public String groupShapes(@P("The list of shape ids to be grouped") String... shapeIds) {
                 var grp = new Group();
                 var nodes = Arrays.stream(shapeIds)
@@ -232,7 +232,7 @@ public class JFXShapesTool {
                 return grp.getId();
         }
 
-        @Tool("Return all shapes and groups nodes ID")
+        @Tool("Return all shapes and groups IDs")
         public List<String> listAllShapes() {
                 return container.getChildren()
                                 .stream().map(Node::getId).toList();
@@ -249,18 +249,18 @@ public class JFXShapesTool {
         // TRANSITIONS - Could this be a separated tool?
         // ALSO, should we keep track of the transitions to allow the LLM to control it?
 
-        @Tool("Animation of the X and Y position of a given shape or group")
+        @Tool("Animation of the X and Y position of an item")
         public void animateShapePosition(
-                        @P("The node to be animated") String nodeId,
-                        @P("The target X position or null to animate only Y position") Double x,
-                        @P("The target Y position or null to animate only X position") Double y,
-                        @P("The animation duration in milliseconds") double duration,
+                        @P("item to be animated") String itemId,
+                        @P("target X position or null to animate only Y position") Double x,
+                        @P("target Y position or null to animate only X position") Double y,
+                        @P("animation duration in milliseconds") double duration,
                         @P("If true, then the animation will auto reverse") boolean autoReverse,
-                        @P("The number of cycles. Use -1 for infinite cycles. If the user do not provide the number of cycles, then consider it to be infinite") int cycles) {
+                        @P("number of cycles. Use -1 for infinite cycles. If the user do not provide the number of cycles, then consider it to be infinite") int cycles) {
                 if (x == null && y == null) {
                         throw new IllegalArgumentException("You need to provide either X or Y position");
                 }
-                var node = findNodeById(nodeId);
+                var node = findNodeById(itemId);
                 var translateTransition = new TranslateTransition(Duration.millis(duration), node);
                 if (x != null)
                         translateTransition.setByX(x);
@@ -271,7 +271,7 @@ public class JFXShapesTool {
 
         @Tool("Animation of the X and Y scale of a given shape or group")
         public void animateShapeSize(
-                        @P("The node to be animated") String nodeId,
+                        @P("The item to be animated") String itemId,
                         @P("The target X scale. For example, if the value is 1.1, then the X scale will increase by 10%. Use null to animate only Y") Double x,
                         @P("The target Y scape. For example, if the value is 1.1, then the Y scale will increase by 10%. Use null to animate only X") Double y,
                         @P("The animation duration in milliseconds") double duration,
@@ -281,7 +281,7 @@ public class JFXShapesTool {
                 if (x == null && y == null) {
                         throw new IllegalArgumentException("You need to provide either X or Y position");
                 }
-                var node = findNodeById(nodeId);
+                var node = findNodeById(itemId);
                 var scale = new ScaleTransition(Duration.millis(duration), node);
                 if (x != null)
                         scale.setByX(x);
@@ -291,22 +291,22 @@ public class JFXShapesTool {
                 setupTransition(scale, autoReverse, cycles);
         }
 
-        @Tool("Animate the opacity of a given shape or group")
+        @Tool("Animate the opacity of an item")
         public void animateShapeOpacity(
-                        @P("The node to be animated") String nodeId,
-                        @P("The animation starting opacity") double startOpacity,
-                        @P("The animation end opacity") double endOpacity,
-                        @P("The animation duration in milliseconds") double duration,
+                        @P("item to be animated") String itemId,
+                        @P("animation starting opacity") double startOpacity,
+                        @P("animation end opacity") double endOpacity,
+                        @P("animation duration in milliseconds") double duration,
                         @P("If true, then the animation will auto reverse") boolean autoReverse,
-                        @P("The number of cycles. Use -1 for infinite cycles.") int cycles) {
-                var node = findNodeById(nodeId);
+                        @P("number of cycles. Use -1 for infinite cycles.") int cycles) {
+                var node = findNodeById(itemId);
                 var fade = new FadeTransition(Duration.millis(duration), node);
                 fade.setFromValue(startOpacity);
                 fade.setToValue(endOpacity);
                 setupTransition(fade, autoReverse, cycles);
         }
 
-        @Tool("Rotate a given shape or group")
+        @Tool("Rotate an item")
         public void animateShapeRotate(
                         @P("The node to be animated") String nodeId,
                         @P("The target angle") double angle,
@@ -319,15 +319,15 @@ public class JFXShapesTool {
                 setupTransition(rotate, autoReverse, cycles);
         }
 
-        @Tool("Changes the color of a Shape in a given interval. This only works with Shapes, not groups")
+        @Tool("Changes the color of a Shape in a given interval")
         public void animateShapeColor(
-                        @P("The node to be animated") String nodeId,
+                        @P("The shape to be animated") String shapeId,
                         @P("The color to start the transtion. Use null if you want to transition from the shape current color") String fromColor,
                         @P("The target color") String toColor,
                         @P("The animation duration in milliseconds") double duration,
                         @P("If true, then the animation will auto reverse") boolean autoReverse,
                         @P("The number of cycles. Use -1 for infinite cycles.") int cycles) {
-                var node = findNodeById(nodeId);
+                var node = findNodeById(shapeId);
                 if (node instanceof Shape shape) {
                         var fill = new FillTransition(Duration.millis(duration), shape);
                         var _fromColor = fromColor == null ? (Color) shape.getFill() : fixColor(fromColor);
@@ -356,7 +356,7 @@ public class JFXShapesTool {
                 shape.setStrokeWidth(strokeWidth);
                 shape.setId(shape.getClass().getSimpleName().toLowerCase() + SHAPE_ID_CONTROL.incrementAndGet());
                 Platform.runLater(() -> container.getChildren().add(shape));
-                return shape.getId();
+                return "ID: " + shape.getId();
         }
 
 }
