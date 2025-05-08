@@ -129,9 +129,12 @@ public class JFXCanvasTool {
     }
 
     @Tool("""
-            Draw a circle at the specificed position
+            Draws a circle on the canvas.
             """)
-    void drawCircle(double x, double y, double radius) {
+    void drawCircle(
+        @P("X-coordinate of the center") double x, 
+        @P("Y-coordinate of the center") double y, 
+        @P("Circle radius") double radius) {
         ctx.strokeOval(x, y, y, radius);
         ctx.fillOval(x, y, radius, radius);
     }
@@ -153,9 +156,13 @@ public class JFXCanvasTool {
     }
 
     @Tool("""
-            Draws a rectangle using the provided parameters
+            Draws a rectangle on the canvas.
             """)
-    void drawRect(double x, double y, double width, double height) {
+    void drawRect(
+        @P("X-coordinate of the top-left corner") double x, 
+        @P("Y-coordinate of the top-left corner")double y, 
+        @P("Rectangle width") double width, 
+        @P("Rectangle height") double height) {
         ctx.strokeRect(x, y, width, height);
         ctx.fillRect(x, y, width, height);
     }
@@ -230,9 +237,12 @@ public class JFXCanvasTool {
     }
 
     @Tool("""
-            Draws a line using the current line paint.
+            Draws a line between two points on the canvas.
             """)
-    void drawLine(double x1, double y1, double x2, double y2) {
+    void drawLine(@P("X-coordinate of the starting point") double x1, 
+                  @P("Y-coordinate of the starting point") double y1, 
+                  @P("X-coordinate of the ending point") double x2, 
+                  @P("Y-coordinate of the ending point") double y2) {
         ctx.strokeLine(x1, y1, x2, y2);
     }
 

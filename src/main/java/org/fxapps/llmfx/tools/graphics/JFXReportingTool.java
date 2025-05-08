@@ -32,10 +32,17 @@ import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
-
 @Singleton
 public class JFXReportingTool {
 
+    private static final String P_CHART_TITLE = "chart title";
+    private static final String P_SERIES_NAME = "name of the series";
+    private static final String P_HEIGHT = "height in pixels";
+    private static final String P_WIDTH = "width in pixels";
+    private static final String P_ROW = "row to place the item on the report grid.";
+    private static final String P_COLUMN = "column to place the item on the report grid.";
+    private static final String P_COLUMNS_SPAN = "number of columns the item should span";
+    private static final String P_ROWS_SPAN = "number of rows the item should span";
 
     private GridPane gridPane;
 
@@ -48,20 +55,16 @@ public class JFXReportingTool {
 
     }
 
-    @Tool("""
-            Creates a table for a report or dashboard. You can create a table with the specified number of columns and rows.
-            The table will be placed at the specified coordinates.
-            Make sure that the columns length matches the number of columns in the data.
-            """)
+    @Tool("Creates a table for a report or dashboard. You can specify the number of columns and rows, dimensions, position, and data.")
     public void addTable(
-            @P("The column to place the table on the report grid") int column,
-            @P("The row to place the table on the report grid") int row,
-            @P("The number of columns the table should span") int colSpan,
-            @P("the number of rows the table should span") int rowspan,
-            @P("Table width in pixels") int width,
-            @P("Table height in pixels") int height,
-            @P("The list of columns") String[] columnsNames,
-            @P("The data to be displayed.") String[][] data) {
+            @P(P_COLUMN) int column,
+            @P(P_ROW) int row,
+            @P(P_COLUMNS_SPAN) int colSpan,
+            @P(P_ROWS_SPAN) int rowspan,
+            @P(P_WIDTH) int width,
+            @P(P_HEIGHT) int height,
+            @P("list of columns") String[] columnsNames,
+            @P("data to be displayed.") String[][] data) {
         var tableView = new TableView<String[]>();
 
         tableView.setPrefWidth(width);
@@ -84,21 +87,19 @@ public class JFXReportingTool {
         add(tableView, column, row, colSpan, rowspan);
     }
 
-
-
-    @Tool("Creates a XY chart for the report. You can create a chart with the specified title and data. The chart will be placed at the specified coordinates.")
+    @Tool("Creates an XY chart for the report. You can specify the type, title, dimensions, position, series name, and data.")
     public void addXYChart(
-            @P("The XY chart type.") ChartType type,
-            @P("The Chart title") String title,
-            @P("The chart width in pixels") int width,
-            @P("The chart height in pixels") int height,
-            @P("The column to place the chart on the report grid.") int column,
-            @P("The row to place the chart on the report grid.") int row,
-            @P("The number of columns the chart should span") int colSpan,
-            @P("the number of rows the chart should span") int rowspan,
-            @P("The name of the series") String seriesName,
-            @P("The X axis values") String[] categories,
-            @P("The y axis values") Float[] values) {
+            @P("XY chart type.") ChartType type,
+            @P(P_CHART_TITLE) String title,
+            @P(P_WIDTH) int width,
+            @P(P_HEIGHT) int height,
+            @P(P_COLUMN) int column,
+            @P(P_ROW) int row,
+            @P(P_COLUMNS_SPAN) int colSpan,
+            @P(P_ROWS_SPAN) int rowspan,
+            @P(P_SERIES_NAME) String seriesName,
+            @P("X axis values") String[] categories,
+            @P("y axis values") Float[] values) {
 
         final CategoryAxis xAxis = new CategoryAxis();
         final NumberAxis yAxis = new NumberAxis();
@@ -124,19 +125,19 @@ public class JFXReportingTool {
     }
 
 
-    @Tool("Creates a Bubble chart for the report. You can create a chart with the specified title and data. The chart will be placed at the specified coordinates.")
+    @Tool("Creates a Bubble chart for the report. You can specify the title, dimensions, position, series name, and data.")
     public void addBubbleChart(            
-            @P("The Chart title") String title,
-            @P("The chart width in pixels") int width,
-            @P("The chart height in pixels") int height,
-            @P("The column to place the chart on the report grid.") int column,
-            @P("The row to place the chart on the report grid.") int row,
-            @P("The number of columns the chart should span") int colSpan,
-            @P("the number of rows the chart should span") int rowspan,
-            @P("The name of the series") String seriesName,
-            @P("The X axis values") Double[] xValues,
-            @P("The y axis values") Double[] yValues,
-            @P("The bubble size values. It determines the bubble size") Double[] bubbleValues) {
+            @P(P_CHART_TITLE) String title,
+            @P(P_WIDTH) int width,
+            @P(P_HEIGHT) int height,
+            @P(P_COLUMN) int column,
+            @P(P_ROW) int row,
+            @P(P_COLUMNS_SPAN) int colSpan,
+            @P(P_ROWS_SPAN) int rowspan,
+            @P(P_SERIES_NAME) String seriesName,
+            @P("X axis values") Double[] xValues,
+            @P("y axis values") Double[] yValues,
+            @P("bubble size values") Double[] bubbleValues) {
 
         var xAxis = new NumberAxis();
         var yAxis = new NumberAxis();        
@@ -158,14 +159,14 @@ public class JFXReportingTool {
 
     @Tool("Creates a pie chart for the report. You can create a Pie chart with the specified title and data. The chart will be placed at the specified coordinates.")
     public void addPieChart(
-            @P("The Chart title") String title,
-            @P("The chart width in pixels") int width,
-            @P("The chart height in pixels") int height,
-            @P("The column to place the chart on the report grid.") int column,
-            @P("The row to place the chart on the report grid. ") int row,
-            @P("The number of columns the chart should span") int colSpan,
-            @P("the number of rows the chart should span") int rowspan,
-            @P("The Pie Chart data in format of a map where the key is the category and the value is the value to plotted ") Map<String, Float> data) {
+            @P(P_CHART_TITLE) String title,
+            @P(P_WIDTH) int width,
+            @P(P_HEIGHT) int height,
+            @P(P_COLUMN) int column,
+            @P(P_ROW) int row,
+            @P(P_COLUMNS_SPAN) int colSpan,
+            @P(P_ROWS_SPAN) int rowspan,
+            @P("Pie Chart data in format of a map where the key is the category and the value is the value to plotted ") Map<String, Float> data) {
 
         var pieChart = new PieChart();
         pieChart.setPrefWidth(width);
@@ -179,23 +180,23 @@ public class JFXReportingTool {
         add(pieChart, column, row, colSpan, rowspan);
     }
 
-    @Tool("Creates a text chart for the report. The text will be placed at the specified coordinates. Use this for titles, insights or explanation.")
+    @Tool("Adds text to the report. You can specify the position, dimensions, content, style, and alignment.")
     public void addText(
-            @P("The column to place the text on the report grid.") int column,
-            @P("The row to place the text on the report grid. ") int row,
-            @P("The number of columns the text should span") int colSpan,
-            @P("the number of rows the text should span") int rowspan,
-            @P("The text to be drawn") String text,
-            @P("The text wrapping width in pixels") int width,
-            @P("The text font value. Use free and open source fonts") String fontFamily,
+            @P(P_COLUMN) int column,
+            @P(P_ROW) int row,
+            @P(P_COLUMNS_SPAN) int colSpan,
+            @P(P_ROWS_SPAN) int rowspan,
+            @P("text to be drawn") String text,
+            @P("text wrapping width in pixels") int width,
+            @P("text font value. Use free and open source fonts") String fontFamily,
             @P("Font size") int fontSize,
             @P("Font color in web format") String fontColor,
             @P("Background color in web format") String backgroundColor,
-            @P("The font Posture. Possible values are ITALIC or REGULAR ") String fontPosture,
-            @P("The font weight. Values start at 0 and goes to 100. The smaller the value, the thinner the font") int fontWeight,
-            @P("The text alignment. Possible values are LEFT, CENTER, RIGHT and JUSTIFY") String textAligment,
-            @P("Stroke color in web format") String strokeColor,
-            @P("The text stroke width ") int strokeWidth
+            @P("font Posture. Possible values are ITALIC or REGULAR ") String fontPosture,
+            @P("font weight. Values start at 0 and goes to 100. The smaller the value, the thinner the font") int fontWeight,
+            @P("text alignment. Possible values are LEFT, CENTER, RIGHT and JUSTIFY") String textAligment,
+            @P("stroke color in web format") String strokeColor,
+            @P("text stroke width ") int strokeWidth
 
     ) {
         Text textNode = new Text(text);
@@ -224,7 +225,5 @@ public class JFXReportingTool {
     private void add(Node node, int column, int row, int colSpan, int rowspan) {
         Platform.runLater(() -> this.gridPane.add(node, column, row, colSpan, rowspan));
     }
-
-
 
 }
