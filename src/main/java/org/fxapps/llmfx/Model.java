@@ -7,6 +7,7 @@ import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 
+import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.service.tool.ToolProvider;
 
@@ -53,7 +54,7 @@ public class Model {
             List<Message> history,
             String model,
             Set<Object> tools,
-            ToolProvider toolProvider,
+            List<McpClient> mcpClients,
             AtomicBoolean stop,
             Consumer<String> onToken,
             Consumer<ChatResponse> onComplete,

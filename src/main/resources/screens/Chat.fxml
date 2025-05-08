@@ -95,7 +95,7 @@
       </HBox>
    </bottom>
    <center>
-      <SplitPane fx:id="spBody" dividerPositions="0.2, 0.0" prefHeight="295.0" prefWidth="565.0" BorderPane.alignment="CENTER">
+      <SplitPane fx:id="spBody" dividerPositions="0.2, 1.0" prefHeight="295.0" prefWidth="565.0" BorderPane.alignment="CENTER">
          <items>
             <StackPane minWidth="0.0">
                <children>
@@ -134,15 +134,22 @@
                         <Insets bottom="5.0" right="5.0" />
                      </StackPane.margin>
                   </VBox>
-                  <HBox alignment="BOTTOM_RIGHT" maxHeight="20.0" maxWidth="230.0" prefHeight="23.0" prefWidth="529.0" spacing="10.0" StackPane.alignment="BOTTOM_RIGHT">
+                  <HBox alignment="BOTTOM_RIGHT" maxHeight="23.0" maxWidth="150.0" prefHeight="23.0" prefWidth="169.0" spacing="10.0" StackPane.alignment="BOTTOM_RIGHT">
                      <StackPane.margin>
                         <Insets bottom="10.0" right="10.0" />
                      </StackPane.margin>
                      <children>
-                        <MenuButton fx:id="toolsMenu" mnemonicParsing="false" text="Tools" />
-                        <MenuButton fx:id="mcpMenu" disable="true" mnemonicParsing="false" text="MCP" />
                         <Button fx:id="btnNewChat" mnemonicParsing="false" onAction="#newChat" prefHeight="26.0" prefWidth="33.0" text="🗎" textFill="#dd0606" />
                      </children>
+                  </HBox>
+                  <HBox alignment="BOTTOM_LEFT" fillHeight="false" maxHeight="25.0" maxWidth="220.0" prefHeight="100.0" prefWidth="30.0" spacing="10.0" StackPane.alignment="BOTTOM_LEFT">
+                     <children>
+                        <MenuButton fx:id="toolsMenu" mnemonicParsing="false" text="Tools" />
+                        <MenuButton fx:id="mcpMenu" disable="true" mnemonicParsing="false" text="MCP" />
+                     </children>
+                     <StackPane.margin>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </StackPane.margin>
                   </HBox>
                </children>
             </StackPane>

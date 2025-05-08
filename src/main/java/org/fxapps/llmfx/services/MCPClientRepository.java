@@ -38,7 +38,6 @@ public class MCPClientRepository {
                 var mcpClient = new DefaultMcpClient.Builder()
                         .transport(transport)
                         .build();
-
                 toolProviderRegister.put(name, mcpClient);
             } catch (Exception e) {
                 logger.error("Not able to load MCP server configuration for server " + name, e);

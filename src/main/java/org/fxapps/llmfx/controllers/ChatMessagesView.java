@@ -8,7 +8,6 @@ import org.commonmark.ext.gfm.tables.TablesExtension;
 import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.fxapps.llmfx.Model.Message;
-import org.w3c.dom.html.HTMLElement;
 
 import jakarta.inject.Singleton;
 import javafx.scene.web.WebView;
@@ -81,7 +80,10 @@ public class ChatMessagesView {
 
     private void appendAssistantMessage(String assistantMessage, boolean streaming) {
         var assistantHTMLMessage = parseMarkdowToHTML(assistantMessage);
-        var message = assistantHTMLMessage.replaceAll("<think>",
+        var message = assistantHTMLMessage
+            // qwen 3 generates empty think tags when /nothink is used
+            .replaceAll("<think>\\s*</think>", "")
+            .replaceAll("<think>",
                 """
                         <div class="think-box">
                             <h4>Thinking</h4>
@@ -122,7 +124,7 @@ public class ChatMessagesView {
         tmp.setAttribute("hidden", "true");
         chatOutput.getEngine().getDocument().getElementById("chatContent").appendChild(tmp);
         chatOutput.getEngine().executeScript(script);
-        if (autoScroll) {            
+        if (autoScroll) {
             chatOutput.getEngine().executeScript("window.scrollTo(0, document.body.scrollHeight);");
         }
     }

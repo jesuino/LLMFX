@@ -32,7 +32,6 @@ import org.fxapps.llmfx.tools.ToolsInfo;
 import org.jboss.logging.Logger;
 
 import atlantafx.base.theme.PrimerLight;
-import dev.langchain4j.mcp.McpToolProvider;
 import io.quarkiverse.fx.FxPostStartupEvent;
 import io.quarkiverse.fx.RunOnFxThread;
 import io.quarkiverse.fx.views.FxViewData;
@@ -227,17 +226,15 @@ public class App {
         historyStorage.getConversation().messages().add(userMessage);
         saveHistory();
 
-        var toolProvider = McpToolProvider.builder()
-                .mcpClients(chatController.selectedMCPs().stream()
-                        .map(mcpClientRepository::getMcpClient).toList())
-                .build();
-
         var stopFlag = new AtomicBoolean(false);
         var selectedTools = chatController.selectedTools();
         var tools = toolsInfo.getToolsMap().entrySet().stream()
                 .filter(e -> selectedTools.contains(e.getKey()))
                 .map(e -> e.getValue())
                 .collect(Collectors.toSet());
+        var mcpClients = chatController.selectedMCPs().stream()
+                .map(mcpClientRepository::getMcpClient)
+                .toList();
 
         historyStorage.getConversation().messages().add(Message.assistantMessage(""));
         chatController.holdChatProperty().set(true);
@@ -250,7 +247,7 @@ public class App {
                 historyStorage.getConversation().messages(),
                 selectedModel,
                 tools,
-                toolProvider,
+                mcpClients,
                 stopFlag,
                 token -> {
                     Platform.runLater(() -> {

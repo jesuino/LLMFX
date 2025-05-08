@@ -10,6 +10,7 @@ import org.fxapps.llmfx.Model.ChatRequest;
 import org.fxapps.llmfx.config.LLMConfig;
 import org.jboss.logging.Logger;
 
+import dev.langchain4j.agent.tool.ToolSpecification;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.AudioContent;
 import dev.langchain4j.data.message.Content;
@@ -29,6 +30,7 @@ import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.TokenStream;
+import dev.langchain4j.service.tool.ToolExecutor;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -78,12 +80,15 @@ public class ChatService {
                 .streamingChatLanguageModel(model)
                 .chatMemory(memory);
 
-        // Selected tools will ignore tool provider (MCP)
-        if (chatRequest.tools() != null && !chatRequest.tools().isEmpty()) {
-            botBuilder.tools(chatRequest.tools());
-        } else {
-            botBuilder.toolProvider(chatRequest.toolProvider());
-        }
+        var mcpTools = new HashMap<ToolSpecification, ToolExecutor>();
+        chatRequest.mcpClients().forEach(client -> 
+        client.listTools()
+            .stream()
+                .forEach(tool -> mcpTools.put(tool, (req, mem) -> client.executeTool(req))));
+
+        botBuilder.tools(mcpTools);
+        botBuilder.tools(chatRequest.tools());
+
         var tokenStream = botBuilder.build().chat(chatRequest.message());
         applyTokenStreamToRequest(chatRequest, tokenStream).start();
 
@@ -121,7 +126,7 @@ public class ChatService {
 
             @Override
             public void onCompleteResponse(ChatResponse response) {
-                if (response.aiMessage().hasToolExecutionRequests()) {                    
+                if (response.aiMessage().hasToolExecutionRequests()) {
                     LOGGER.warn("Function calls with image are not supported at the moment");
                 }
 

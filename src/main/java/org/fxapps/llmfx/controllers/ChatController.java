@@ -416,9 +416,7 @@ public class ChatController {
                             toolsMenu.setText(TOOLS_LABEL
                                     + (selectedTools().isEmpty()
                                             ? ""
-                                            : " (" + selectedTools().size() + ")"));
-
-                            mcpMenu.setDisable(!selectedTools().isEmpty());
+                                            : " (" + selectedTools().size() + ")"));                            
                             Platform.runLater(this::onSelectTool);
 
                         });
