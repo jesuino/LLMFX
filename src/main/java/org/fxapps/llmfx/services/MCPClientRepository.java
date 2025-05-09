@@ -55,7 +55,7 @@ public class MCPClientRepository {
     }
 
     McpTransport getTransport(MCPServerDefinition def) {
-        if (def.commands().isPresent()&& !def.commands().isEmpty()) {
+        if (def.commands().isPresent() && !def.commands().isEmpty()) {
             return new StdioMcpTransport.Builder()
                     .command(def.commands().get())
                     .logEvents(true)

@@ -28,6 +28,7 @@ import org.fxapps.llmfx.Events.DeleteConversationEvent;
 import org.fxapps.llmfx.Events.HistorySelectedEvent;
 import org.fxapps.llmfx.Events.NewChatEvent;
 import org.fxapps.llmfx.Events.RefreshModelsEvent;
+import org.fxapps.llmfx.Events.ReloadMessageEvent;
 import org.fxapps.llmfx.Events.SaveChatEvent;
 import org.fxapps.llmfx.Events.SaveFormat;
 import org.fxapps.llmfx.Events.SelectedModelEvent;
@@ -105,6 +106,9 @@ public class ChatController {
     Event<NewChatEvent> clearChatEvent;
 
     @Inject
+    Event<ReloadMessageEvent> reloadMessageEvent;
+
+    @Inject
     Event<SaveChatEvent> saveChatEvent;
 
     @Inject
@@ -158,6 +162,9 @@ public class ChatController {
 
     @FXML
     private Button btnNewChat;
+
+    @FXML
+    private Button btnReload;
 
     @FXML
     private Button btnStop;
@@ -242,6 +249,7 @@ public class ChatController {
         holdChatProperty = new SimpleBooleanProperty();
         txtInput.disableProperty().bind(holdChatProperty);
         btnNewChat.disableProperty().bind(holdChatProperty);
+        btnReload.disableProperty().bind(holdChatProperty);
         historyList.disableProperty().bind(holdChatProperty);
         btnContent.disableProperty().bind(holdChatProperty);
         btnStop.disableProperty().bind(holdChatProperty.not());
@@ -416,7 +424,7 @@ public class ChatController {
                             toolsMenu.setText(TOOLS_LABEL
                                     + (selectedTools().isEmpty()
                                             ? ""
-                                            : " (" + selectedTools().size() + ")"));                            
+                                            : " (" + selectedTools().size() + ")"));
                             Platform.runLater(this::onSelectTool);
 
                         });
@@ -465,6 +473,11 @@ public class ChatController {
     void newChat(ActionEvent event) {
         vbWelcomeMessage.setVisible(true);
         clearChatEvent.fire(new NewChatEvent());
+    }
+
+    @FXML
+    void reloadMessage(ActionEvent event) {
+        reloadMessageEvent.fire(new ReloadMessageEvent());
     }
 
     @FXML

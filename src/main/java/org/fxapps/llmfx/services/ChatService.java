@@ -81,9 +81,8 @@ public class ChatService {
                 .chatMemory(memory);
 
         var mcpTools = new HashMap<ToolSpecification, ToolExecutor>();
-        chatRequest.mcpClients().forEach(client -> 
-        client.listTools()
-            .stream()
+        chatRequest.mcpClients().forEach(client -> client.listTools()
+                .stream()
                 .forEach(tool -> mcpTools.put(tool, (req, mem) -> client.executeTool(req))));
 
         botBuilder.tools(mcpTools);

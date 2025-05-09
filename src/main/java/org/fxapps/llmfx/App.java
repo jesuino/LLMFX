@@ -13,6 +13,7 @@ import org.fxapps.llmfx.Events.DeleteConversationEvent;
 import org.fxapps.llmfx.Events.HistorySelectedEvent;
 import org.fxapps.llmfx.Events.NewChatEvent;
 import org.fxapps.llmfx.Events.RefreshModelsEvent;
+import org.fxapps.llmfx.Events.ReloadMessageEvent;
 import org.fxapps.llmfx.Events.SaveChatEvent;
 import org.fxapps.llmfx.Events.SelectedModelEvent;
 import org.fxapps.llmfx.Events.StopStreamingEvent;
@@ -182,6 +183,18 @@ public class App {
     }
 
     @RunOnFxThread
+    void onReloadMessage(@Observes ReloadMessageEvent evt) {
+        var messages = this.historyStorage.getConversation().messages();
+        if (!messages.isEmpty()) {
+            var userMessage = messages.get(0);
+            this.chatController.clearChatHistory();
+            this.historyStorage.clearConversation();
+            this.onUserInput(userMessage);
+        }
+
+    }
+
+    @RunOnFxThread
     void onHistorySelected(@Observes HistorySelectedEvent evt) {
         if (evt.index() == -1) {
             return;
@@ -215,6 +228,10 @@ public class App {
 
     public void onUserInput(@Observes UserInputEvent userInput) {
         final var userMessage = Message.userMessage(userInput.text(), userInput.content());
+        this.onUserInput(userMessage);
+    }
+
+    public void onUserInput(Message userMessage) {
         if (this.historyStorage.getConversation().isEmpty()) {
             this.historyStorage.newConversation(userMessage.text());
             llmConfig.systemMessage().ifPresent(systemMessage -> {
@@ -242,8 +259,8 @@ public class App {
 
         showChatMessages();
         var request = new Model.ChatRequest(
-                userInput.text(),
-                userInput.content(),
+                userMessage.text(),
+                userMessage.content(),
                 historyStorage.getConversation().messages(),
                 selectedModel,
                 tools,

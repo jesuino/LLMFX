@@ -19,6 +19,9 @@ public class Events {
     public record NewChatEvent() {
     }
 
+    public record ReloadMessageEvent() {
+    }
+
     public record SaveChatEvent(SaveFormat saveFormat) {
     }
 

@@ -139,6 +139,7 @@
                         <Insets bottom="10.0" right="10.0" />
                      </StackPane.margin>
                      <children>
+                        <Button fx:id="btnReload" mnemonicParsing="false" onAction="#reloadMessage" text="↻" />
                         <Button fx:id="btnNewChat" mnemonicParsing="false" onAction="#newChat" prefHeight="26.0" prefWidth="33.0" text="🗎" textFill="#dd0606" />
                      </children>
                   </HBox>
