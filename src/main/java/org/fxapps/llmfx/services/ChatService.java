@@ -11,6 +11,7 @@ import org.fxapps.llmfx.config.LLMConfig;
 import org.jboss.logging.Logger;
 
 import dev.langchain4j.agent.tool.ToolSpecification;
+import dev.langchain4j.agent.tool.ToolSpecifications;
 import dev.langchain4j.data.message.AiMessage;
 import dev.langchain4j.data.message.AudioContent;
 import dev.langchain4j.data.message.Content;
@@ -18,18 +19,19 @@ import dev.langchain4j.data.message.ImageContent;
 import dev.langchain4j.data.message.PdfFileContent;
 import dev.langchain4j.data.message.SystemMessage;
 import dev.langchain4j.data.message.TextContent;
+import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.data.message.VideoContent;
 import dev.langchain4j.http.client.jdk.JdkHttpClient;
 import dev.langchain4j.http.client.jdk.JdkHttpClientBuilder;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.StreamingChatLanguageModel;
-import dev.langchain4j.model.chat.request.ChatRequestBuilder;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import dev.langchain4j.service.AiServices;
 import dev.langchain4j.service.TokenStream;
+import dev.langchain4j.service.tool.DefaultToolExecutor;
 import dev.langchain4j.service.tool.ToolExecutor;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
@@ -50,9 +52,7 @@ public class ChatService {
     private final JdkHttpClientBuilder jdkHttpClientBuilder;
 
     ChatService() {
-
         this.modelCache = new HashMap<>();
-
         // some LLM servers (e.g. lmstudio) require HTTP/1.1
         this.jdkHttpClientBuilder = JdkHttpClient.builder()
                 .httpClientBuilder(HttpClient.newBuilder()
@@ -72,7 +72,7 @@ public class ChatService {
 
     }
 
-    void chat(ChatRequest chatRequest) {
+    private void chat(ChatRequest chatRequest) {
         var memory = buildChatMemory(chatRequest);
         var model = getModel(chatRequest);
 
@@ -80,24 +80,27 @@ public class ChatService {
                 .streamingChatLanguageModel(model)
                 .chatMemory(memory);
 
-        var mcpTools = new HashMap<ToolSpecification, ToolExecutor>();
-        chatRequest.mcpClients().forEach(client -> client.listTools()
-                .stream()
-                .forEach(tool -> mcpTools.put(tool, (req, mem) -> client.executeTool(req))));
-
-        botBuilder.tools(mcpTools);
-        botBuilder.tools(chatRequest.tools());
-
+        var tools = getRequestTools(chatRequest);
+        botBuilder.tools(tools);
         var tokenStream = botBuilder.build().chat(chatRequest.message());
         applyTokenStreamToRequest(chatRequest, tokenStream).start();
 
     }
 
-    public void multimodalChat(ChatRequest chatRequest) {
+    private void multimodalChat(ChatRequest chatRequest) {
         var memory = buildChatMemory(chatRequest);
         var model = getModel(chatRequest);
-        var contentList = new ArrayList<Content>();
+        memory.add(messageWithContent(chatRequest));
 
+        var request = dev.langchain4j.model.chat.request.ChatRequest.builder()
+                .messages(memory.messages())
+                .toolSpecifications(new ArrayList<>(getRequestTools(chatRequest).keySet()))
+                .build();
+        _multimodalChat(chatRequest, model, request);
+    }
+
+    private UserMessage messageWithContent(ChatRequest chatRequest) {
+        var contentList = new ArrayList<Content>();
         contentList.add(TextContent.from(chatRequest.message()));
         chatRequest.content()
                 .stream()
@@ -107,12 +110,13 @@ public class ChatService {
                     case PDF -> PdfFileContent.from(c.content());
                     case VIDEO -> VideoContent.from(c.content());
                 }).forEach(contentList::add);
+        return new UserMessage(contentList);
+    }
 
-        var request = new ChatRequestBuilder()
-                .messages(memory.messages())
-                .message(new UserMessage(contentList))
-                .build();
-
+    private void _multimodalChat(ChatRequest chatRequest,
+            StreamingChatLanguageModel model,
+            dev.langchain4j.model.chat.request.ChatRequest request) {
+        var requesTools = getRequestTools(chatRequest);
         model.chat(request, new StreamingChatResponseHandler() {
 
             @Override
@@ -120,15 +124,46 @@ public class ChatService {
                 if (chatRequest.isRunning()) {
                     chatRequest.onToken().accept(token);
                 }
-
             }
 
             @Override
             public void onCompleteResponse(ChatResponse response) {
-                if (response.aiMessage().hasToolExecutionRequests()) {
-                    LOGGER.warn("Function calls with image are not supported at the moment");
+                if (!chatRequest.isRunning()) {
+                    return;
                 }
+                var aiMessage = response.aiMessage();
+                if (aiMessage.hasToolExecutionRequests()) {
+                    LOGGER.warn("LLM asked for tools execution");
+                    var toolExecutionMessages = new ArrayList<ToolExecutionResultMessage>();
 
+                    aiMessage.toolExecutionRequests().forEach(req -> {
+                        LOGGER.warn(req);
+                        var spec = requesTools.keySet()
+                                .stream()
+                                .filter(s -> req.name().equals(s.name()))
+                                .findFirst();
+                        if (spec.isEmpty()) {
+                            toolExecutionMessages.add(ToolExecutionResultMessage.from(req,
+                                    "No Tool executor found for this tool request"));
+                            return;
+                        }
+                        var executor = requesTools.get(spec.get());
+                        try {
+                            final var result = executor.execute(req, null);
+                            LOGGER.warn(result);
+                            toolExecutionMessages.add(ToolExecutionResultMessage.from(req, result));
+                        } catch (Exception e) {
+                            LOGGER.debug("Error executing tool " + req, e);
+                            toolExecutionMessages.add(ToolExecutionResultMessage.from(req, e.getMessage()));
+                        }
+
+                    });
+                    request.messages().addAll(toolExecutionMessages);
+                    // recursive call now with tool calling results
+                    _multimodalChat(chatRequest, model, request);
+                } else {
+                    chatRequest.onComplete().accept(response);
+                }
             }
 
             @Override
@@ -137,12 +172,11 @@ public class ChatService {
                     chatRequest.onError().accept(e);
                     LOGGER.error("Error during LLM Service call", e);
                 } else {
-                    LOGGER.debug("Error during LLM Service call", e);
+                    LOGGER.trace("Error during LLM Service call", e);
                 }
             }
 
         });
-
     }
 
     private StreamingChatLanguageModel getModel(ChatRequest chatRequest) {
@@ -156,18 +190,6 @@ public class ChatService {
                         .logRequests(true)
                         .logResponses(true)
                         .build());
-    }
-
-    private MessageWindowChatMemory buildChatMemory(ChatRequest chatRequest) {
-        var memory = MessageWindowChatMemory.withMaxMessages(100);
-
-        chatRequest.history().stream().map(m -> switch (m.role()) {
-            case USER -> new UserMessage(m.text());
-            case ASSISTANT -> new AiMessage(m.text());
-            case SYSTEM -> new SystemMessage(m.text());
-
-        }).forEach(memory::add);
-        return memory;
     }
 
     private TokenStream applyTokenStreamToRequest(ChatRequest chatRequest, TokenStream tokenStream) {
@@ -198,5 +220,35 @@ public class ChatService {
             }
         });
 
+    }
+
+    private MessageWindowChatMemory buildChatMemory(ChatRequest chatRequest) {
+        var memory = MessageWindowChatMemory.withMaxMessages(100);
+
+        chatRequest.history()
+                .stream()
+                .filter(m -> !m.text().equals(chatRequest.message()))
+                .map(m -> switch (m.role()) {
+                    case USER -> new UserMessage(m.text());
+                    case ASSISTANT -> new AiMessage(m.text());
+                    case SYSTEM -> new SystemMessage(m.text());
+
+                }).forEach(memory::add);
+        return memory;
+    }
+
+    private HashMap<ToolSpecification, ToolExecutor> getRequestTools(ChatRequest chatRequest) {
+        var tools = new HashMap<ToolSpecification, ToolExecutor>();
+        // MCP Tools
+        chatRequest.mcpClients().forEach(client -> client.listTools()
+                .stream()
+                .forEach(tool -> tools.put(tool, (req, mem) -> client.executeTool(req))));
+        // native tools
+        chatRequest.tools().forEach(tool -> {
+            ToolSpecifications.toolSpecificationsFrom(tool)
+                    .forEach(spec -> tools.put(spec,
+                            (req, mem) -> new DefaultToolExecutor(tool, req).execute(req, mem)));
+        });
+        return tools;
     }
 }

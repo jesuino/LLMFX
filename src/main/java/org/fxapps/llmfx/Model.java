@@ -9,7 +9,7 @@ import java.util.function.Consumer;
 
 import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.model.chat.response.ChatResponse;
-import dev.langchain4j.service.tool.ToolProvider;
+
 
 public class Model {
 
