@@ -243,7 +243,7 @@ public class JFXShapesTool {
                                 .stream()
                                 .filter(n -> id.equals(n.getId()))
                                 .findFirst()
-                                .orElseThrow(() -> new IllegalArgumentException("Shape with ID " + id + " not found"));
+                                .orElseThrow(() -> new IllegalArgumentException("Item with ID " + id + " not found"));
         }
 
         // TRANSITIONS - Could this be a separated tool?
@@ -256,7 +256,7 @@ public class JFXShapesTool {
                         @P("target Y position or null to animate only X position") Double y,
                         @P("animation duration in milliseconds") double duration,
                         @P("If true, then the animation will auto reverse") boolean autoReverse,
-                        @P("number of cycles. Use -1 for infinite cycles. If the user do not provide the number of cycles, then consider it to be infinite") int cycles) {
+                        @P("Number of cycles or -1 for infinite cycles") int cycles) {
                 if (x == null && y == null) {
                         throw new IllegalArgumentException("You need to provide either X or Y position");
                 }
@@ -269,14 +269,14 @@ public class JFXShapesTool {
                 setupTransition(translateTransition, autoReverse, cycles);
         }
 
-        @Tool("Animation of the X and Y scale of a given shape or group")
+        @Tool("Animation of the X and Y scale of a given item")
         public void animateShapeSize(
                         @P("The item to be animated") String itemId,
-                        @P("The target X scale. For example, if the value is 1.1, then the X scale will increase by 10%. Use null to animate only Y") Double x,
-                        @P("The target Y scape. For example, if the value is 1.1, then the Y scale will increase by 10%. Use null to animate only X") Double y,
-                        @P("The animation duration in milliseconds") double duration,
+                        @P("target X scale. If the value is 1.1, then the X scale will increase by 10%. Use null to animate only Y") Double x,
+                        @P("target Y scale. If the value is 1.1, then the Y scale will increase by 10%. Use null to animate only X") Double y,
+                        @P("Duration in milliseconds") double duration,
                         @P("If true, then the animation will auto reverse") boolean autoReverse,
-                        @P("The number of cycles. Use -1 for infinite cycles.") int cycles) {
+                        @P("Number of cycles or -1 for infinite cycles") int cycles) {
 
                 if (x == null && y == null) {
                         throw new IllegalArgumentException("You need to provide either X or Y position");
@@ -298,7 +298,7 @@ public class JFXShapesTool {
                         @P("animation end opacity") double endOpacity,
                         @P("animation duration in milliseconds") double duration,
                         @P("If true, then the animation will auto reverse") boolean autoReverse,
-                        @P("number of cycles. Use -1 for infinite cycles.") int cycles) {
+                        @P("Number of cycles or -1 for infinite cycles") int cycles) {
                 var node = findNodeById(itemId);
                 var fade = new FadeTransition(Duration.millis(duration), node);
                 fade.setFromValue(startOpacity);
@@ -308,11 +308,11 @@ public class JFXShapesTool {
 
         @Tool("Rotate an item")
         public void animateShapeRotate(
-                        @P("The node to be animated") String nodeId,
-                        @P("The target angle") double angle,
-                        @P("The animation duration in milliseconds") double duration,
+                        @P("Item to be animated") String nodeId,
+                        @P("Target angle") double angle,
+                        @P("Duration in milliseconds") double duration,
                         @P("If true, then the animation will auto reverse") boolean autoReverse,
-                        @P("The number of cycles. Use -1 for infinite cycles.") int cycles) {
+                        @P("Number of cycles or -1 for infinite cycles") int cycles) {
                 var node = findNodeById(nodeId);
                 var rotate = new RotateTransition(Duration.millis(duration), node);
                 rotate.setByAngle(angle);
@@ -321,12 +321,12 @@ public class JFXShapesTool {
 
         @Tool("Changes the color of a Shape in a given interval")
         public void animateShapeColor(
-                        @P("The shape to be animated") String shapeId,
-                        @P("The color to start the transtion. Use null if you want to transition from the shape current color") String fromColor,
-                        @P("The target color") String toColor,
-                        @P("The animation duration in milliseconds") double duration,
+                        @P("shape to be animated") String shapeId,
+                        @P("color to start the transtion. Use null if you want to transition from the shape current color") String fromColor,
+                        @P("target color") String toColor,
+                        @P("animation duration in milliseconds") double duration,
                         @P("If true, then the animation will auto reverse") boolean autoReverse,
-                        @P("The number of cycles. Use -1 for infinite cycles.") int cycles) {
+                        @P("Number of cycles or -1 for infinite cycles") int cycles) {
                 var node = findNodeById(shapeId);
                 if (node instanceof Shape shape) {
                         var fill = new FillTransition(Duration.millis(duration), shape);

@@ -30,9 +30,7 @@ public class JFXCanvasTool {
         this.ctx = ctx;
     }
 
-    @Tool("""
-            Clears the rect area, deleting all the drawn objects on that area
-            """)
+    @Tool("Clears the rect area, deleting all the drawn objects on that area")
     void clearRect(double x, double y, double width, double height) {
         ctx.clearRect(x, y, width, height);
     }
@@ -53,17 +51,7 @@ public class JFXCanvasTool {
             """)
     void setColor(@P("Color in web format") String color) {
         ctx.setFill(fixColor(color));
-    }
-
-    @Tool("Rotate the current transform in degres")
-    public void rotate(double degress) {
-        ctx.rotate(degress);
-    }
-
-    @Tool("Translates the current transform by x, y")
-    public void translate(double x, double y) {
-        ctx.translate(x, y);
-    }
+    }   
 
     @Tool("Draws a Image at the specific x and y location")
     public void drawImage(
@@ -82,8 +70,8 @@ public class JFXCanvasTool {
     public void setRadialGradient(
             @P("the angle in degrees from the center of the gradient to the focus point to which the first color is mapped") double focusAngle,
             @P("the distance from the center of the gradient to the focus point to which the first color is mapped") double focusDistance,
-            @P("the X coordinate of the center point of the gradient's circle. Values are from 0.0 to 1.0") double centerX,
-            @P("the Y coordinate of the center point of the gradient's circle. Values are from 0.0 to 1.0") double centerY,
+            @P("X coordinate of the center point of the gradient's circle. Values are from 0.0 to 1.0") double centerX,
+            @P("Y coordinate of the center point of the gradient's circle. Values are from 0.0 to 1.0") double centerY,
             @P("the radius of the circle defining the extents of the color gradient") double radius,
             String[] colorStops) {
         var stops = new Stop[colorStops.length];
@@ -107,10 +95,10 @@ public class JFXCanvasTool {
             Sets a linear gradient as the color.
             """)
     void setLinearGradient(
-            @P("the X coordinate of the gradient axis start point. Values are from 0.0 to 1.0") double startX,
-            @P(" the Y coordinate of the gradient axis start point. Values are from 0.0 to 1.0") double startY,
-            @P("the X coordinate of the gradient axis end point. Values are from 0.0 to 1.0") double endX,
-            @P("the Y coordinate of the gradient axis end point. Values are from 0.0 to 1.0") double endY,
+            @P("X coordinate of the gradient axis start point. Values are from 0.0 to 1.0") double startX,
+            @P(" Y coordinate of the gradient axis start point. Values are from 0.0 to 1.0") double startY,
+            @P("X coordinate of the gradient axis end point. Values are from 0.0 to 1.0") double endX,
+            @P("Y coordinate of the gradient axis end point. Values are from 0.0 to 1.0") double endY,
             String[] colorStops) {
         var stops = new Stop[colorStops.length];
         var offsetStep = 1.0 / colorStops.length;
@@ -128,39 +116,31 @@ public class JFXCanvasTool {
         ctx.setFill(fill);
     }
 
-    @Tool("""
-            Draws a circle on the canvas.
-            """)
+    @Tool("Draws a circle")
     void drawCircle(
-        @P("X-coordinate of the center") double x, 
-        @P("Y-coordinate of the center") double y, 
-        @P("Circle radius") double radius) {
+        double x, 
+        double y, 
+        double radius) {
         ctx.strokeOval(x, y, y, radius);
         ctx.fillOval(x, y, radius, radius);
     }
 
-    @Tool("""
-            Draw an oval with the provided parameters
-            """)
+    @Tool("Draw an oval")
     void drawOval(double x, double y, double width, double height) {
         ctx.strokeOval(x, y, width, height);
         ctx.fillOval(x, y, width, height);
     }
 
-    @Tool("""
-            Draws a polygon with the given points using the provided parameters
-            """)
+    @Tool("Draws a polygon with the given points using the provided parameters")
     void drawPolygon(double[] xPoints, double[] yPoints, int nPoints) {
         ctx.strokePolygon(xPoints, yPoints, nPoints);
         ctx.fillPolygon(xPoints, yPoints, nPoints);
     }
 
-    @Tool("""
-            Draws a rectangle on the canvas.
-            """)
+    @Tool("Draws a rectangle")
     void drawRect(
-        @P("X-coordinate of the top-left corner") double x, 
-        @P("Y-coordinate of the top-left corner")double y, 
+        @P("top-left corner X") double x, 
+        @P("top-left corner Y")double y, 
         @P("Rectangle width") double width, 
         @P("Rectangle height") double height) {
         ctx.strokeRect(x, y, width, height);
@@ -176,7 +156,7 @@ public class JFXCanvasTool {
     }
 
     @Tool("""
-            Draws the the given string of text at position x, y.
+            Draws the the given text at position x, y.
             To change the font settings you must call setFont before.
 
             """)
@@ -186,21 +166,21 @@ public class JFXCanvasTool {
     }
 
     @Tool("""
-            Sets the current Font.
+            Sets the Font.
             """)
     void setFont(String family, FontWeight weight, FontPosture posture, double size) {
         ctx.setFont(Font.font(family, weight, posture, size));
     }
 
     @Tool("""
-            Sets the current Font Smoothing Type.
+            Sets the Font Smoothing Type.
             """)
     void setFontSmoothingType(FontSmoothingType fontsmoothing) {
         ctx.setFontSmoothingType(fontsmoothing);
     }
 
     @Tool("""
-            Sets the current stroke line cap.
+            Sets the stroke line cap.
             """)
     void setLineCap(StrokeLineCap cap) {
         ctx.setLineCap(cap);
@@ -208,14 +188,14 @@ public class JFXCanvasTool {
     }
 
     @Tool("""
-            Sets the current line width.
+            Sets the line width.
             """)
     void setLineWidth(double lineWidth) {
         ctx.setLineWidth(lineWidth);
     }
 
     @Tool("""
-            Sets the current miter limit.
+            Sets the miter limit.
             """)
     void setMiterLimit(double ml) {
         ctx.setMiterLimit(ml);
@@ -239,16 +219,11 @@ public class JFXCanvasTool {
     @Tool("""
             Draws a line between two points on the canvas.
             """)
-    void drawLine(@P("X-coordinate of the starting point") double x1, 
-                  @P("Y-coordinate of the starting point") double y1, 
-                  @P("X-coordinate of the ending point") double x2, 
-                  @P("Y-coordinate of the ending point") double y2) {
+    void drawLine(@P("starting point X") double x1, 
+                  @P("starting point Y") double y1, 
+                  @P("ending point X") double x2, 
+                  @P("ending point Y") double y2) {
         ctx.strokeLine(x1, y1, x2, y2);
-    }
-
-    @Tool("Restore the canvas to its original configuration")
-    public void restore() {
-        ctx.restore();
     }
 
     @Tool("""
@@ -279,21 +254,21 @@ public class JFXCanvasTool {
 
     @Tool("Adds segments to the current path to make a quadratic Bezier curve.")
     public void quadraticCurveTo(
-            @P("the X coordinate of the control point") double xc,
-            @P("the Y coordinate of the control point") double yc,
-            @P("the X coordinate of the end point") double x1,
-            @P("the Y coordinate of the end point") double y1) {
+            @P("X coordinate of the control point") double xc,
+            @P("Y coordinate of the control point") double yc,
+            @P("X coordinate of the end point") double x1,
+            @P("Y coordinate of the end point") double y1) {
         ctx.quadraticCurveTo(xc, yc, x1, y1);
     }
 
     @Tool("Add a bezier curve to the current path")
     public void bezierCurveTo(
-            @P("the X coordinate of first Bezier control point.") int xc1,
-            @P("the Y coordinate of first Bezier control point.") int yc1,
-            @P("the X coordinate of the second Bezier control point.") int xc2,
-            @P("the Y coordinate of the second Bezier control point.") int yc2,
-            @P("the X coordinate of the end point.") int x,
-            @P("the Y coordinate of the end point.") int y) {
+            @P("X coordinate of first Bezier control point.") int xc1,
+            @P("Y coordinate of first Bezier control point.") int yc1,
+            @P("X coordinate of the second Bezier control point.") int xc2,
+            @P("Y coordinate of the second Bezier control point.") int yc2,
+            @P("X coordinate of the end point.") int x,
+            @P("Y coordinate of the end point.") int y) {
         ctx.bezierCurveTo(xc1, yc1, xc2, yc2, x, y);
     }
 
@@ -348,12 +323,4 @@ public class JFXCanvasTool {
         ctx.stroke();
         ctx.fill();
     }
-
-    @Tool("""
-            Set the filling rule attribute for determining the interior of paths in fill or clip operations.
-            """)
-    void setFillRule(FillRule fillRule) {
-        ctx.setFillRule(fillRule);
-    }
-
 }

@@ -48,10 +48,4 @@ public class WebSearchTool {
             throw e;
         }
     }
-
-    @Tool("Fetch the content of a given web page")
-    public String getWebPageContent(@P("The URL of the web page to be fetched") String url) throws IOException {
-        return Jsoup.connect(url).get().body().text();
-    }
-
 }
