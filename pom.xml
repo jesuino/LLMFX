@@ -18,7 +18,8 @@
         <quarkus.platform.version>3.19.4</quarkus.platform.version>
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.5.2</surefire-plugin.version>
-        <langchain4j.version>1.0.0-beta3</langchain4j.version>
+        <langchain4j.version>1.0.1</langchain4j.version>
+        <langchain4j.mcp.version>1.0.1-beta6</langchain4j.mcp.version>
         <!--Matches the version used by JFX quarkus ext-->
         <openjfx.version>22.0.2</openjfx.version>
         <mcpsdk.version>0.8.0</mcpsdk.version>
@@ -47,7 +48,7 @@
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-mcp</artifactId>
-            <version>${langchain4j.version}</version>
+            <version>${langchain4j.mcp.version}</version>
         </dependency>
         <dependency>
             <groupId>dev.langchain4j</groupId>

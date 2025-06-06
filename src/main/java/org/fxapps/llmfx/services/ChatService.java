@@ -25,7 +25,7 @@ import dev.langchain4j.data.message.VideoContent;
 import dev.langchain4j.http.client.jdk.JdkHttpClient;
 import dev.langchain4j.http.client.jdk.JdkHttpClientBuilder;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
-import dev.langchain4j.model.chat.StreamingChatLanguageModel;
+import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
@@ -47,7 +47,7 @@ public class ChatService {
     @Inject
     LLMConfig llmConfig;
 
-    private final Map<String, StreamingChatLanguageModel> modelCache;
+    private final Map<String, StreamingChatModel> modelCache;
 
     private final JdkHttpClientBuilder jdkHttpClientBuilder;
 
@@ -77,7 +77,7 @@ public class ChatService {
         var model = getModel(chatRequest);
 
         var botBuilder = AiServices.builder(AsyncChatBot.class)
-                .streamingChatLanguageModel(model)
+                .streamingChatModel(model)
                 .chatMemory(memory);
 
         var tools = getRequestTools(chatRequest);
@@ -114,7 +114,7 @@ public class ChatService {
     }
 
     private void _multimodalChat(ChatRequest chatRequest,
-            StreamingChatLanguageModel model,
+            StreamingChatModel model,
             dev.langchain4j.model.chat.request.ChatRequest request) {
         var requesTools = getRequestTools(chatRequest);
         model.chat(request, new StreamingChatResponseHandler() {
@@ -179,7 +179,7 @@ public class ChatService {
         });
     }
 
-    private StreamingChatLanguageModel getModel(ChatRequest chatRequest) {
+    private StreamingChatModel getModel(ChatRequest chatRequest) {
         return modelCache.computeIfAbsent(chatRequest.model(),
                 m -> OpenAiStreamingChatModel.builder()
                         .httpClientBuilder(jdkHttpClientBuilder)
