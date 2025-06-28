@@ -12,9 +12,9 @@ public class DateTimeTool {
     }
 
 
-    @Tool("Returns the ISO Date Time Format")
-    public String currentDateTime() {
-        return java.time.LocalDateTime.now().toString();
+    @Tool("Returns the current time. Use it to know the current time")
+    public String currentTime() {
+        return java.time.LocalTime.now().toString();
     }
  
 }

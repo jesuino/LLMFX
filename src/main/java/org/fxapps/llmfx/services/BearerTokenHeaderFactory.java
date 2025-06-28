@@ -17,7 +17,7 @@ public class BearerTokenHeaderFactory implements ClientHeadersFactory {
     
     @Override
     public MultivaluedMap<String, String> update(MultivaluedMap<String, String> incomingHeaders, MultivaluedMap<String, String> clientOutgoingHeaders) {
-        MultivaluedMap<String, String> result = new MultivaluedHashMap<>();
+        var result = new MultivaluedHashMap<String, String>();
         llmConfig.key().ifPresent(key -> result.add("Authorization", "Bearer " + key));
         return result;
     }

@@ -17,8 +17,7 @@ public class JFXWebRenderingTool {
     }
 
     @Tool("""
-            Render and allow users to visualize HTML content. You can use this tool to render HTML content for the user.
-            Make sure the HTML contains all the CSS and javascript used by it inside the HTML content, external files will not work.
+            Render and allow users to visualize HTML content. You can use this tool to render HTML content for the user.            
             """)
     public void renderHTML(@P("The HTML content to be rendered") String html) {
         Platform.runLater(() -> this.webView.getEngine().loadContent(html));

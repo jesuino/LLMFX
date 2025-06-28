@@ -188,9 +188,6 @@ public class ChatController {
     TabPane graphicsPane;
 
     @FXML
-    Button btnClearCanvas;
-
-    @FXML
     private Tab canvasTab;
 
     @FXML

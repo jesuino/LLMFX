@@ -187,8 +187,8 @@ public class ChatService {
                         .modelName(m)
                         .apiKey(llmConfig.key().orElse(""))
                         .timeout(Duration.ofSeconds(llmConfig.timeout()))
-                        .logRequests(true)
-                        .logResponses(true)
+                        .logRequests(llmConfig.logRequests().orElse(false))
+                        .logResponses(llmConfig.logResponses().orElse(false))
                         .build());
     }
 

@@ -51,7 +51,6 @@ public class JFXShapesTool {
 
         public void setContainer(Group container) {
                 this.container = container;
-
         }
 
         @Tool("Creates an arc")
@@ -321,7 +320,7 @@ public class JFXShapesTool {
 
         @Tool("Changes the color of a Shape in a given interval")
         public void animateShapeColor(
-                        @P("shape to be animated") String shapeId,
+                        @P("Shape to be animated") String shapeId,
                         @P("color to start the transtion. Use null if you want to transition from the shape current color") String fromColor,
                         @P("target color") String toColor,
                         @P("animation duration in milliseconds") double duration,
@@ -351,12 +350,16 @@ public class JFXShapesTool {
                         String color,
                         String strokeColor,
                         double strokeWidth) {
+                if (container.getChildren().isEmpty()) {
+                        SHAPE_ID_CONTROL.set(0);
+                        GROUP_ID_CONTROL.set(0);
+                }
                 shape.setFill(fixColor(color));
                 shape.setStroke(fixColor(color));
                 shape.setStrokeWidth(strokeWidth);
                 shape.setId(shape.getClass().getSimpleName().toLowerCase() + SHAPE_ID_CONTROL.incrementAndGet());
                 Platform.runLater(() -> container.getChildren().add(shape));
-                return "ID: " + shape.getId();
+                return "{ \"id\": { \"" + shape.getId() + "\" }";
         }
 
 }
