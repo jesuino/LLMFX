@@ -10,6 +10,8 @@ import org.commonmark.renderer.html.HtmlRenderer;
 import org.fxapps.llmfx.Model.Message;
 
 import jakarta.inject.Singleton;
+import javafx.beans.property.SimpleDoubleProperty;
+import javafx.beans.property.SimpleIntegerProperty;
 import javafx.scene.web.WebView;
 
 /*
@@ -17,6 +19,9 @@ import javafx.scene.web.WebView;
  */
 @Singleton
 public class ChatMessagesView {
+
+    private static final double MIN_ZOOM = 0d;
+    private static final double MAX_ZOOM = 3.0d;
 
     private static final String CHAT_PAGE = """
             <html>
@@ -28,6 +33,8 @@ public class ChatMessagesView {
             """;
 
     public static final String STYLE = "/style/chat-messages.css";
+
+    private static final double ZOOM_STEP = 0.1d;
 
     private WebView chatOutput;
     private boolean autoScroll;
@@ -43,10 +50,15 @@ public class ChatMessagesView {
         webView.getEngine().setUserStyleSheetLocation(styleUrl.toExternalForm());
         webView.getEngine().loadContent(CHAT_PAGE, "text/html");
 
-        chatOutput.setOnScroll(e -> {
-            // scrolling up
-            if (e.getDeltaY() > 0) {
-                autoScroll = false;
+        chatOutput.setOnScroll(e -> {            
+            if (e.isControlDown()) {
+                var zoomStep = Math.clamp(e.getDeltaY(), -ZOOM_STEP, ZOOM_STEP);
+                var zoom = Math.clamp(zoomStep + chatOutput.getFontScale(), MIN_ZOOM, MAX_ZOOM);
+                this.chatOutput.setFontScale(zoom);
+                e.consume();
+            } else {
+                // scrolling up so need to turn off auto scroll
+                autoScroll = e.getDeltaY() <= 0;
             }
         });
     }
@@ -81,13 +93,13 @@ public class ChatMessagesView {
     private void appendAssistantMessage(String assistantMessage, boolean streaming) {
         var assistantHTMLMessage = parseMarkdowToHTML(assistantMessage);
         var message = assistantHTMLMessage
-            // qwen 3 generates empty think tags when /nothink is used
-            .replaceAll("<think>\\s*</think>", "")
-            .replaceAll("<think>",
-                """
-                        <div class="think-box">
-                            <h4>Thinking</h4>
-                        """)
+                // qwen 3 generates empty think tags when /nothink is used
+                .replaceAll("<think>\\s*</think>", "")
+                .replaceAll("<think>",
+                        """
+                                <div class="think-box">
+                                    <h4>Thinking</h4>
+                                """)
                 .replaceAll("</think>",
                         "><h4>end thinking</h4></div>");
         // TODO: find someway to copy code to the clipboard
