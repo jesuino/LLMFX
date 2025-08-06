@@ -5,6 +5,7 @@ import static org.fxapps.llmfx.FXUtils.fixColor;
 import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Stream;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -19,6 +20,7 @@ import javafx.application.Platform;
 import javafx.geometry.VPos;
 import javafx.scene.Group;
 import javafx.scene.Node;
+import javafx.scene.Parent;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Arc;
 import javafx.scene.shape.ArcType;
@@ -240,6 +242,13 @@ public class JFXShapesTool {
         private Node findNodeById(String id) {
                 return container.getChildren()
                                 .stream()
+                                .flatMap(n -> {
+                                        if (n instanceof Parent p) {
+                                                return p.getChildrenUnmodifiable().stream();
+                                        } else {
+                                                return Stream.of(n);
+                                        }
+                                })
                                 .filter(n -> id.equals(n.getId()))
                                 .findFirst()
                                 .orElseThrow(() -> new IllegalArgumentException("Item with ID " + id + " not found"));

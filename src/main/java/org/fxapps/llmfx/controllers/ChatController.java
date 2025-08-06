@@ -249,6 +249,7 @@ public class ChatController {
         btnReload.disableProperty().bind(holdChatProperty);
         historyList.disableProperty().bind(holdChatProperty);
         btnContent.disableProperty().bind(holdChatProperty);
+        cmbModels.disableProperty().bind(holdChatProperty);
         btnStop.disableProperty().bind(holdChatProperty.not());
 
         this.historyList.setOnMouseClicked(e -> {
