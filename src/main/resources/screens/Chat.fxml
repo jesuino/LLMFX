@@ -16,6 +16,7 @@
 <?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.effect.Glow?>
 <?import javafx.scene.effect.Shadow?>
 <?import javafx.scene.layout.BorderPane?>
@@ -66,6 +67,7 @@
                <children>
                   <ComboBox fx:id="cmbModels" onAction="#modelSelected" prefHeight="26.0" prefWidth="181.0" promptText="Model" />
                   <Button mnemonicParsing="false" onAction="#onRefreshModels" text="↻" />
+                  <ToggleButton fx:id="btnViewLogs" mnemonicParsing="false" text="🔍" />
                   <SplitMenuButton mnemonicParsing="false" prefHeight="26.0" prefWidth="47.0" text="↓">
                     <items>
                       <MenuItem mnemonicParsing="false" onAction="#saveAsText" text="Text" />

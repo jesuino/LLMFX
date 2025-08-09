@@ -4,8 +4,10 @@ import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
+import org.fxapps.llmfx.EventChatModelListener;
 import org.fxapps.llmfx.Model.ChatRequest;
 import org.fxapps.llmfx.config.LLMConfig;
 import org.jboss.logging.Logger;
@@ -26,6 +28,7 @@ import dev.langchain4j.http.client.jdk.JdkHttpClient;
 import dev.langchain4j.http.client.jdk.JdkHttpClientBuilder;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.StreamingChatModel;
+import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
@@ -46,6 +49,9 @@ public class ChatService {
 
     @Inject
     LLMConfig llmConfig;
+
+    @Inject
+    EventChatModelListener eventChatModelListener;
 
     private final Map<String, StreamingChatModel> modelCache;
 
@@ -189,6 +195,7 @@ public class ChatService {
                         .timeout(Duration.ofSeconds(llmConfig.timeout()))
                         .logRequests(llmConfig.logRequests().orElse(false))
                         .logResponses(llmConfig.logResponses().orElse(false))
+                        .listeners(List.of(eventChatModelListener))
                         .build());
     }
 

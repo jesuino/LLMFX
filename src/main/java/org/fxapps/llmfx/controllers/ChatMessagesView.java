@@ -10,8 +10,6 @@ import org.commonmark.renderer.html.HtmlRenderer;
 import org.fxapps.llmfx.Model.Message;
 
 import jakarta.inject.Singleton;
-import javafx.beans.property.SimpleDoubleProperty;
-import javafx.beans.property.SimpleIntegerProperty;
 import javafx.scene.web.WebView;
 
 /*

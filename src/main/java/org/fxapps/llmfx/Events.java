@@ -4,6 +4,10 @@ import java.util.Optional;
 
 import org.fxapps.llmfx.Model.Content;
 
+import dev.langchain4j.model.chat.listener.ChatModelErrorContext;
+import dev.langchain4j.model.chat.listener.ChatModelRequestContext;
+import dev.langchain4j.model.chat.listener.ChatModelResponseContext;
+
 public class Events {
 
     private Events() {
@@ -41,6 +45,15 @@ public class Events {
     }
 
     public record DeleteConversationEvent(int index) {
+    }
+
+    public record ChatModelRequestEvent(ChatModelRequestContext requestContext) {
+    }
+
+    public record ChatModelResponseEvent(ChatModelResponseContext responseContext) {
+    }
+
+    public record ChatModelErrorEvent(ChatModelErrorContext chatModelError) {
     }
 
 }

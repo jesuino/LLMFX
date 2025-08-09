@@ -35,6 +35,7 @@ import org.fxapps.llmfx.Events.SelectedModelEvent;
 import org.fxapps.llmfx.Events.StopStreamingEvent;
 import org.fxapps.llmfx.Events.UserInputEvent;
 import org.fxapps.llmfx.FXUtils;
+import org.fxapps.llmfx.ViewLogsDialog;
 import org.fxapps.llmfx.Model.Content;
 import org.fxapps.llmfx.Model.ContentType;
 import org.fxapps.llmfx.config.AppConfig;
@@ -72,6 +73,7 @@ import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
@@ -145,6 +147,9 @@ public class ChatController {
     @Inject
     JFXShapesTool jfxShapesTool;
 
+    @Inject
+    ViewLogsDialog viewLogsDialog;
+
     @FXML
     private WebView chatOutput;
 
@@ -171,6 +176,9 @@ public class ChatController {
 
     @FXML
     private Button btnContent;
+
+    @FXML
+    private ToggleButton btnViewLogs;
 
     @FXML
     private Button btnTrashConversation;
@@ -251,6 +259,18 @@ public class ChatController {
         btnContent.disableProperty().bind(holdChatProperty);
         cmbModels.disableProperty().bind(holdChatProperty);
         btnStop.disableProperty().bind(holdChatProperty.not());
+
+        btnViewLogs.setOnAction(e -> {
+            if (btnViewLogs.isSelected()) {
+                viewLogsDialog.show();
+            } else {
+                viewLogsDialog.hide();
+            }
+        });
+
+        viewLogsDialog.setOnCloseRequest(e -> {
+            btnViewLogs.setSelected(false);
+        });
 
         this.historyList.setOnMouseClicked(e -> {
             var i = historyList.getSelectionModel().getSelectedIndex();
