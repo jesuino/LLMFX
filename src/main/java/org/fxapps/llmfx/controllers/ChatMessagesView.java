@@ -9,8 +9,11 @@ import org.commonmark.parser.Parser;
 import org.commonmark.renderer.html.HtmlRenderer;
 import org.fxapps.llmfx.Model.Message;
 
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import javafx.concurrent.Worker.State;
 import javafx.scene.web.WebView;
+import netscape.javascript.JSObject;
 
 /*
  * This class will be responsible for rendering and displaying the chat messages in the WebView
@@ -34,6 +37,9 @@ public class ChatMessagesView {
 
     private static final double ZOOM_STEP = 0.1d;
 
+    @Inject
+    MessagesViewJSBridge jsBridge;
+
     private WebView chatOutput;
     private boolean autoScroll;
 
@@ -48,7 +54,7 @@ public class ChatMessagesView {
         webView.getEngine().setUserStyleSheetLocation(styleUrl.toExternalForm());
         webView.getEngine().loadContent(CHAT_PAGE, "text/html");
 
-        chatOutput.setOnScroll(e -> {            
+        chatOutput.setOnScroll(e -> {
             if (e.isControlDown()) {
                 var zoomStep = Math.clamp(e.getDeltaY(), -ZOOM_STEP, ZOOM_STEP);
                 var zoom = Math.clamp(zoomStep + chatOutput.getFontScale(), MIN_ZOOM, MAX_ZOOM);
@@ -57,6 +63,12 @@ public class ChatMessagesView {
             } else {
                 // scrolling up so need to turn off auto scroll
                 autoScroll = e.getDeltaY() <= 0;
+            }
+        });
+        webView.getEngine().getLoadWorker().stateProperty().addListener((_obs, _old, newState) -> {
+            if (newState == State.SUCCEEDED) {
+                var window = (JSObject) webView.getEngine().executeScript("window");
+                window.setMember("bridge", jsBridge);
             }
         });
     }
@@ -92,7 +104,7 @@ public class ChatMessagesView {
         var assistantHTMLMessage = parseMarkdowToHTML(assistantMessage);
         var message = assistantHTMLMessage
                 // qwen 3 generates empty think tags when /nothink is used
-                .replaceAll("<think>\\s*</think>", "")
+                .replaceAll("<think>\s*</think>", "")
                 .replaceAll("<think>",
                         """
                                 <div class="think-box">
@@ -137,6 +149,19 @@ public class ChatMessagesView {
         if (autoScroll) {
             chatOutput.getEngine().executeScript("window.scrollTo(0, document.body.scrollHeight);");
         }
+        chatOutput.getEngine().executeScript("""
+                    document.querySelectorAll('a').forEach(a => {
+                        a.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            console.log('Clicked!');
+                            if (bridge) {
+                                bridge.openUrl(a.href);
+                            }
+                            return false;
+
+                        });
+                    });
+                """);
     }
 
     public String getChatHistoryHTML() {
