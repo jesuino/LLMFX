@@ -57,10 +57,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.Group;
 import javafx.scene.SnapshotParameters;
-import javafx.scene.SubScene;
-import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ComboBox;
@@ -74,7 +71,6 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
-import javafx.scene.layout.GridPane;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 
@@ -199,6 +195,9 @@ public class ChatController {
     private Tab canvasTab;
 
     @FXML
+    private Tab pixelsTab;
+
+    @FXML
     private Tab reportingTab;
 
     @FXML
@@ -210,30 +209,12 @@ public class ChatController {
     @FXML
     private Tab shapesTab;
 
-    @FXML
-    private Group grpShapes;
-
-    @FXML
-    WebView webContentView;
-
-    @FXML
-    private Canvas canvas;
-
-    @FXML
-    private GridPane reportingPane;
-    @FXML
-    private SubScene _3dSubscene;
-
-    private Group grp3d;
-
     private SimpleBooleanProperty holdChatProperty;
 
     private MenuItem clearToolsMenuItem;
 
     public void init() {
         this.clearToolsMenuItem = new MenuItem("Clear all tools");
-        this.grp3d = new Group();
-        _3dSubscene.setRoot(grp3d);
         this.chatMessagesView.init(chatOutput);
 
         clearToolsMenuItem.setOnAction(e -> {
@@ -289,13 +270,15 @@ public class ChatController {
             spBody.setDividerPositions(new double[] { 0, 1d });
         }
 
-        // init tooling
-        jfxCanvasTool.setContext(canvas.getGraphicsContext2D());
-        jfxCanvasPixelTool.setCanvas(canvas);
-        jfxReportingTool.setGridPane(reportingPane);
-        jfxWebRenderingTool.setWebView(webContentView);
-        jfx3dTool.setSubScene(_3dSubscene, grp3d);
-        jfxShapesTool.setContainer(grpShapes);
+        // init tooling - figure out a way to dynamic create tabs with the tool root -
+        // remember that a Tool can't implement an interface (for some reason.)
+        this.reportingTab.setContent(jfxReportingTool.getRoot());
+        this.tab3d.setContent(jfx3dTool.getRoot());
+        this.canvasTab.setContent(jfxCanvasTool.getRoot());
+        this.pixelsTab.setContent(jfxCanvasPixelTool.getRoot());
+        this.shapesTab.setContent(jfxShapesTool.getRoot());
+        this.webViewTab.setContent(jfxWebRenderingTool.getRoot());
+
     }
 
     @FXML
@@ -319,19 +302,27 @@ public class ChatController {
     void clearCurrentGraphicsTab() {
         var selectedTab = graphicsPane.getSelectionModel().getSelectedItem();
         if (this.reportingTab == selectedTab) {
-            reportingPane.getChildren().clear();
+            jfxReportingTool.clear();
         }
 
         if (this.tab3d == selectedTab) {
-            grp3d.getChildren().clear();
+            this.jfx3dTool.clear();
         }
 
         if (this.canvasTab == selectedTab) {
-            this.canvas.getGraphicsContext2D().clearRect(0, 0, 10000, 10000);
+            this.jfxCanvasTool.clear();
+        }
+
+        if (this.pixelsTab == selectedTab) {
+            this.jfxCanvasPixelTool.clear();
         }
 
         if (this.shapesTab == selectedTab) {
-            this.grpShapes.getChildren().clear();
+            this.jfxShapesTool.clear();
+        }
+
+        if (this.webViewTab == selectedTab) {
+            this.jfxWebRenderingTool.clear();
         }
     }
 

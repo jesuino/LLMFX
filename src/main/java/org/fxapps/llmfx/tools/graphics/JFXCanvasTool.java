@@ -4,16 +4,19 @@ import static org.fxapps.llmfx.FXUtils.fixColor;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import jakarta.ws.rs.Path;
 import javafx.geometry.VPos;
+import javafx.scene.Node;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.image.Image;
 import javafx.scene.paint.CycleMethod;
 import javafx.scene.paint.LinearGradient;
 import javafx.scene.paint.RadialGradient;
 import javafx.scene.paint.Stop;
-import javafx.scene.shape.FillRule;
 import javafx.scene.shape.StrokeLineCap;
 import javafx.scene.text.Font;
 import javafx.scene.text.FontPosture;
@@ -22,12 +25,27 @@ import javafx.scene.text.FontWeight;
 import javafx.scene.text.TextAlignment;
 
 @Singleton
-public class JFXCanvasTool {
+public class JFXCanvasTool implements JFXTool {
+
+    private static final int CANVAS_WIDTH = 10000;
+    private static final int CANVAS_HEIGHT = 10000;
 
     private GraphicsContext ctx;
+    private ScrollPane root;
 
-    public void setContext(GraphicsContext ctx) {
-        this.ctx = ctx;
+    @PostConstruct
+    public void init() {
+        var canvas = new Canvas(CANVAS_WIDTH, CANVAS_HEIGHT);
+        this.ctx = canvas.getGraphicsContext2D();
+        this.root = new ScrollPane(canvas);
+    }
+
+    public void clear() {
+        ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    }
+
+    public Node getRoot() {
+        return root;
     }
 
     @Tool("Clears the rect area, deleting all the drawn objects on that area")
@@ -51,7 +69,7 @@ public class JFXCanvasTool {
             """)
     void setColor(@P("Color in web format") String color) {
         ctx.setFill(fixColor(color));
-    }   
+    }
 
     @Tool("Draws a Image at the specific x and y location")
     public void drawImage(
@@ -118,9 +136,9 @@ public class JFXCanvasTool {
 
     @Tool("Draws a circle")
     void drawCircle(
-        double x, 
-        double y, 
-        double radius) {
+            double x,
+            double y,
+            double radius) {
         ctx.strokeOval(x, y, y, radius);
         ctx.fillOval(x, y, radius, radius);
     }
@@ -139,10 +157,10 @@ public class JFXCanvasTool {
 
     @Tool("Draws a rectangle")
     void drawRect(
-        @P("top-left corner X") double x, 
-        @P("top-left corner Y")double y, 
-        @P("Rectangle width") double width, 
-        @P("Rectangle height") double height) {
+            @P("top-left corner X") double x,
+            @P("top-left corner Y") double y,
+            @P("Rectangle width") double width,
+            @P("Rectangle height") double height) {
         ctx.strokeRect(x, y, width, height);
         ctx.fillRect(x, y, width, height);
     }
@@ -219,10 +237,10 @@ public class JFXCanvasTool {
     @Tool("""
             Draws a line between two points on the canvas.
             """)
-    void drawLine(@P("starting point X") double x1, 
-                  @P("starting point Y") double y1, 
-                  @P("ending point X") double x2, 
-                  @P("ending point Y") double y2) {
+    void drawLine(@P("starting point X") double x1,
+            @P("starting point Y") double y1,
+            @P("ending point X") double x2,
+            @P("ending point Y") double y2) {
         ctx.strokeLine(x1, y1, x2, y2);
     }
 

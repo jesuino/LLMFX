@@ -9,6 +9,7 @@ import java.util.stream.Stream;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import javafx.animation.FadeTransition;
 import javafx.animation.FillTransition;
@@ -44,15 +45,27 @@ import javafx.util.Duration;
 
 // TODO: Pehraps let the LLM give an ID is a good idea, it keeps making the wrong ids for the shapes
 @Singleton
-public class JFXShapesTool {
+public class JFXShapesTool implements JFXTool {
 
         private Group container;
 
         private final AtomicInteger SHAPE_ID_CONTROL = new AtomicInteger();
         private final AtomicInteger GROUP_ID_CONTROL = new AtomicInteger();
 
-        public void setContainer(Group container) {
-                this.container = container;
+        @PostConstruct
+        public void init() {
+                this.container = new Group();
+        }
+
+        public void clear() {
+                container.getChildren().clear();
+                SHAPE_ID_CONTROL.set(0);
+                GROUP_ID_CONTROL.set(0);
+        }
+
+        public Node getRoot() {
+
+                return container;
         }
 
         @Tool("Creates an arc")

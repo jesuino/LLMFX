@@ -7,12 +7,14 @@ import java.util.Map;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import javafx.application.Platform;
 import javafx.beans.property.SimpleStringProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.scene.Node;
+import javafx.scene.canvas.Canvas;
 import javafx.scene.chart.AreaChart;
 import javafx.scene.chart.BarChart;
 import javafx.scene.chart.BubbleChart;
@@ -22,6 +24,7 @@ import javafx.scene.chart.NumberAxis;
 import javafx.scene.chart.PieChart;
 import javafx.scene.chart.ScatterChart;
 import javafx.scene.chart.XYChart;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.layout.Background;
@@ -32,8 +35,9 @@ import javafx.scene.text.FontPosture;
 import javafx.scene.text.FontWeight;
 import javafx.scene.text.Text;
 import javafx.scene.text.TextAlignment;
+
 @Singleton
-public class JFXReportingTool {
+public class JFXReportingTool implements JFXTool {
 
     private static final String P_CHART_TITLE = "chart title";
     private static final String P_SERIES_NAME = "name of the series";
@@ -45,14 +49,24 @@ public class JFXReportingTool {
     private static final String P_ROWS_SPAN = "number of rows the item should span";
 
     private GridPane gridPane;
+    private ScrollPane root;
 
     enum ChartType {
         AREA, LINE, BAR, SCATTER;
     }
 
-    public void setGridPane(GridPane gridPane) {
-        this.gridPane = gridPane;
+    @PostConstruct
+    public void init() {
+        gridPane = new GridPane();
+        this.root = new ScrollPane(gridPane);
+    }
 
+    public void clear() {
+        gridPane.getChildren().clear();
+    }
+
+    public Node getRoot() {
+        return root;
     }
 
     @Tool("Creates a table for a report or dashboard. You can specify the number of columns and rows, dimensions, position, and data.")
@@ -121,12 +135,11 @@ public class JFXReportingTool {
         }
 
         chart.getData().add(seriesData);
-        add(chart, column, row, colSpan, rowspan);        
+        add(chart, column, row, colSpan, rowspan);
     }
 
-
     @Tool("Creates a Bubble chart for the report. You can specify the title, dimensions, position, series name, and data.")
-    public void addBubbleChart(            
+    public void addBubbleChart(
             @P(P_CHART_TITLE) String title,
             @P(P_WIDTH) int width,
             @P(P_HEIGHT) int height,
@@ -140,7 +153,7 @@ public class JFXReportingTool {
             @P("bubble size values") Double[] bubbleValues) {
 
         var xAxis = new NumberAxis();
-        var yAxis = new NumberAxis();        
+        var yAxis = new NumberAxis();
         var chart = new BubbleChart<>(xAxis, yAxis);
         chart.setPrefWidth(width);
         chart.setPrefHeight(height);
@@ -154,7 +167,7 @@ public class JFXReportingTool {
         }
 
         chart.getData().add(seriesData);
-        add(chart, column, row, colSpan, rowspan);        
+        add(chart, column, row, colSpan, rowspan);
     }
 
     @Tool("Creates a pie chart for the report. You can create a Pie chart with the specified title and data. The chart will be placed at the specified coordinates.")
@@ -217,9 +230,8 @@ public class JFXReportingTool {
     }
 
     @Tool("Clear the current report or dashboard by removing all elements previously added.")
-    public void clear() {
-        Platform.runLater(() -> gridPane.getChildren().clear());
-        
+    public void _clear() {
+        Platform.runLater(this::clear);
     }
 
     private void add(Node node, int column, int row, int colSpan, int rowspan) {

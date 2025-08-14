@@ -4,23 +4,40 @@ import static org.fxapps.llmfx.FXUtils.fixColor;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
+import javafx.scene.Node;
 import javafx.scene.canvas.Canvas;
 import javafx.scene.canvas.GraphicsContext;
+import javafx.scene.control.ScrollPane;
 
 @Singleton
-public class JFXCanvasPixelTool {
+public class JFXCanvasPixelTool implements JFXTool {
+
+    private static final int CANVAS_WIDTH = 1200;
+    private static final int CANVAS_HEIGHT = 900;
 
     private Canvas canvas;
 
     private GraphicsContext ctx;
+    private ScrollPane root;
 
     // later we can let the LLM set a resolution
     private static final int RESOLUTION = 15;
 
-    public void setCanvas(Canvas canvas) {
-        this.canvas = canvas;
+    @PostConstruct
+    public void init() {
+        this.canvas = new Canvas(CANVAS_WIDTH, CANVAS_HEIGHT);
         this.ctx = canvas.getGraphicsContext2D();
+        this.root = new ScrollPane(canvas);
+    }
+
+    public void clear() {
+        ctx.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    }
+
+    public Node getRoot() {
+        return root;
     }
 
     @Tool("""
@@ -33,7 +50,7 @@ public class JFXCanvasPixelTool {
         return new double[] { canvas.getWidth() / RESOLUTION, canvas.getHeight() / RESOLUTION };
     }
 
-   // @Tool("Writes pixels at he canvas. It receives all pixels values at once")
+    // @Tool("Writes pixels at he canvas. It receives all pixels values at once")
     public void writePixelsColors(
             @P("""
                     The matrix of colors to be written. Each matrix position matches a pixel x,y position.

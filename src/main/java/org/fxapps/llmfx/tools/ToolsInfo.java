@@ -68,8 +68,6 @@ public class ToolsInfo {
 
     Map<String, Object> toolsMap;
 
-    // TODO: Create a 3d tool to draw 3d stuff
-
     Map<String, List<String>> toolsCategoryMap = Map.of(
             "Files", List.of(FILES_READ, FILE_WRITE),
             "Web", List.of(WEB_SEARCH, WEB_OPEN),
