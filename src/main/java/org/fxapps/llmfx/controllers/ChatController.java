@@ -1,12 +1,5 @@
 package org.fxapps.llmfx.controllers;
 
-import static org.fxapps.llmfx.tools.ToolsInfo.CANVAS_DRAWING;
-import static org.fxapps.llmfx.tools.ToolsInfo.CANVAS_PIXELS;
-import static org.fxapps.llmfx.tools.ToolsInfo.REPORTING;
-import static org.fxapps.llmfx.tools.ToolsInfo.SHAPES;
-import static org.fxapps.llmfx.tools.ToolsInfo.WEB_RENDER;
-import static org.fxapps.llmfx.tools.ToolsInfo._3D;
-
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -15,7 +8,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -39,12 +31,8 @@ import org.fxapps.llmfx.ViewLogsDialog;
 import org.fxapps.llmfx.Model.Content;
 import org.fxapps.llmfx.Model.ContentType;
 import org.fxapps.llmfx.config.AppConfig;
-import org.fxapps.llmfx.tools.graphics.JFX3dTool;
-import org.fxapps.llmfx.tools.graphics.JFXCanvasPixelTool;
-import org.fxapps.llmfx.tools.graphics.JFXCanvasTool;
-import org.fxapps.llmfx.tools.graphics.JFXReportingTool;
-import org.fxapps.llmfx.tools.graphics.JFXShapesTool;
-import org.fxapps.llmfx.tools.graphics.JFXWebRenderingTool;
+import org.fxapps.llmfx.tools.ToolsInfo;
+import org.fxapps.llmfx.tools.graphics.JFXTool;
 import org.jboss.logging.Logger;
 
 import io.quarkiverse.fx.views.FxView;
@@ -124,24 +112,8 @@ public class ChatController {
     @Inject
     AlertsHelper alertsHelper;
 
-    // Tools to be initiated
     @Inject
-    JFXCanvasTool jfxCanvasTool;
-
-    @Inject
-    JFXCanvasPixelTool jfxCanvasPixelTool;
-
-    @Inject
-    JFXReportingTool jfxReportingTool;
-
-    @Inject
-    JFXWebRenderingTool jfxWebRenderingTool;
-
-    @Inject
-    JFX3dTool jfx3dTool;
-
-    @Inject
-    JFXShapesTool jfxShapesTool;
+    ToolsInfo toolsInfo;
 
     @Inject
     ViewLogsDialog viewLogsDialog;
@@ -191,27 +163,11 @@ public class ChatController {
     @FXML
     TabPane graphicsPane;
 
-    @FXML
-    private Tab canvasTab;
-
-    @FXML
-    private Tab pixelsTab;
-
-    @FXML
-    private Tab reportingTab;
-
-    @FXML
-    private Tab webViewTab;
-
-    @FXML
-    private Tab tab3d;
-
-    @FXML
-    private Tab shapesTab;
-
     private SimpleBooleanProperty holdChatProperty;
 
     private MenuItem clearToolsMenuItem;
+
+    private List<Tab> toolsTabs;
 
     public void init() {
         this.clearToolsMenuItem = new MenuItem("Clear all tools");
@@ -270,15 +226,15 @@ public class ChatController {
             spBody.setDividerPositions(new double[] { 0, 1d });
         }
 
-        // init tooling - figure out a way to dynamic create tabs with the tool root -
-        // remember that a Tool can't implement an interface (for some reason.)
-        this.reportingTab.setContent(jfxReportingTool.getRoot());
-        this.tab3d.setContent(jfx3dTool.getRoot());
-        this.canvasTab.setContent(jfxCanvasTool.getRoot());
-        this.pixelsTab.setContent(jfxCanvasPixelTool.getRoot());
-        this.shapesTab.setContent(jfxShapesTool.getRoot());
-        this.webViewTab.setContent(jfxWebRenderingTool.getRoot());
-
+        this.toolsTabs = new ArrayList<>();
+        toolsInfo.getToolsMap()
+                .entrySet()
+                .stream()
+                .forEach(e -> {
+                    if (e.getValue() instanceof JFXTool jfxTool) {
+                        toolsTabs.add(new Tab(e.getKey(), jfxTool.getRoot()));
+                    }
+                });
     }
 
     @FXML
@@ -300,30 +256,12 @@ public class ChatController {
 
     @FXML
     void clearCurrentGraphicsTab() {
-        var selectedTab = graphicsPane.getSelectionModel().getSelectedItem();
-        if (this.reportingTab == selectedTab) {
-            jfxReportingTool.clear();
+        var selectedLabel = graphicsPane.getSelectionModel().getSelectedItem().getText();
+        if (toolsInfo.getToolsMap().containsKey(selectedLabel)
+                && toolsInfo.getToolsMap().get(selectedLabel) instanceof JFXTool jfxTool) {
+            jfxTool.clear();
         }
 
-        if (this.tab3d == selectedTab) {
-            this.jfx3dTool.clear();
-        }
-
-        if (this.canvasTab == selectedTab) {
-            this.jfxCanvasTool.clear();
-        }
-
-        if (this.pixelsTab == selectedTab) {
-            this.jfxCanvasPixelTool.clear();
-        }
-
-        if (this.shapesTab == selectedTab) {
-            this.jfxShapesTool.clear();
-        }
-
-        if (this.webViewTab == selectedTab) {
-            this.jfxWebRenderingTool.clear();
-        }
     }
 
     @FXML
@@ -449,16 +387,8 @@ public class ChatController {
     public void onSelectTool() {
         graphicsPane.getTabs().clear();
         spBody.setDividerPosition(1, 1);
-        var tabs = Map.of(CANVAS_DRAWING, canvasTab,
-                CANVAS_PIXELS, canvasTab,
-                REPORTING, reportingTab,
-                _3D, tab3d,
-                WEB_RENDER, webViewTab,
-                SHAPES, shapesTab)
-                .entrySet()
-                .stream()
-                .filter(e -> selectedTools().contains(e.getKey()))
-                .map(Entry::getValue)
+        var tabs = toolsTabs.stream()
+                .filter(tab -> selectedTools().contains(tab.getText()))
                 .toList();
         graphicsPane.getTabs().addAll(tabs);
 

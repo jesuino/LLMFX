@@ -10,7 +10,7 @@ import javafx.scene.web.WebView;
 
 @Singleton
 public class JFXWebRenderingTool implements JFXTool {
-
+ 
     private WebView webView;
 
     @PostConstruct
