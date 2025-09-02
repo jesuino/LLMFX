@@ -9,7 +9,7 @@
   "jdeploy": {
     "jdk": false,
     "generateLegacyBundles": false,
-    "javaVersion": "21",
+    "javaVersion": "24",
     "jar": "target/llm-fx-1.0.0-SNAPSHOT-runner.jar",
     "javafx": true,
     "title": "LLM FX"
