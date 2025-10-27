@@ -28,8 +28,9 @@ import dev.langchain4j.http.client.jdk.JdkHttpClient;
 import dev.langchain4j.http.client.jdk.JdkHttpClientBuilder;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.StreamingChatModel;
-import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.chat.response.PartialResponse;
+import dev.langchain4j.model.chat.response.PartialResponseContext;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import dev.langchain4j.service.AiServices;
@@ -126,10 +127,12 @@ public class ChatService {
         model.chat(request, new StreamingChatResponseHandler() {
 
             @Override
-            public void onPartialResponse(String token) {
-                if (chatRequest.isRunning()) {
-                    chatRequest.onToken().accept(token);
+            public void onPartialResponse(PartialResponse partialResponse,
+                    PartialResponseContext context) {
+                if (!chatRequest.isRunning()) {
+                    context.streamingHandle().cancel();
                 }
+                chatRequest.onToken().accept(partialResponse.text());
             }
 
             @Override
