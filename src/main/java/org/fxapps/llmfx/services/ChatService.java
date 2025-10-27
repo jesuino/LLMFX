@@ -249,7 +249,7 @@ public class ChatService {
         // MCP Tools
         chatRequest.mcpClients().forEach(client -> client.listTools()
                 .stream()
-                .forEach(tool -> tools.put(tool, (req, mem) -> client.executeTool(req))));
+                .forEach(tool -> tools.put(tool, (req, mem) -> client.executeTool(req).resultText())));
         // native tools
         chatRequest.tools().forEach(tool -> {
             ToolSpecifications.toolSpecificationsFrom(tool)
