@@ -158,7 +158,6 @@ public class ChatMessagesView {
                                 bridge.openUrl(a.href);
                             }
                             return false;
-
                         });
                     });
                 """);

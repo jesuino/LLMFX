@@ -31,6 +31,8 @@ import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.response.ChatResponse;
 import dev.langchain4j.model.chat.response.PartialResponse;
 import dev.langchain4j.model.chat.response.PartialResponseContext;
+import dev.langchain4j.model.chat.response.PartialThinking;
+import dev.langchain4j.model.chat.response.PartialThinkingContext;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import dev.langchain4j.service.AiServices;
@@ -127,6 +129,15 @@ public class ChatService {
         model.chat(request, new StreamingChatResponseHandler() {
 
             @Override
+            public void onPartialThinking(PartialThinking partialThinking,
+                    PartialThinkingContext context) {
+                if (!chatRequest.isRunning()) {
+                    context.streamingHandle().cancel();
+                }
+                chatRequest.onToken().accept(partialThinking.text());
+            }
+
+            @Override
             public void onPartialResponse(PartialResponse partialResponse,
                     PartialResponseContext context) {
                 if (!chatRequest.isRunning()) {
@@ -199,6 +210,7 @@ public class ChatService {
                         .logRequests(llmConfig.logRequests().orElse(false))
                         .logResponses(llmConfig.logResponses().orElse(false))
                         .listeners(List.of(eventChatModelListener))
+                        .returnThinking(true)                        
                         .build());
     }
 

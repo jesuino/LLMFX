@@ -1,7 +1,6 @@
-package org.fxapps.llmfx;
+package org.fxapps.llmfx.windows;
 
 import java.time.LocalDateTime;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 import org.fxapps.llmfx.Events.ChatModelErrorEvent;
