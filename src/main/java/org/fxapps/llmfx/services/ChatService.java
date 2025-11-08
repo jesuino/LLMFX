@@ -24,8 +24,6 @@ import dev.langchain4j.data.message.TextContent;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.data.message.VideoContent;
-import dev.langchain4j.http.client.jdk.JdkHttpClient;
-import dev.langchain4j.http.client.jdk.JdkHttpClientBuilder;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.response.ChatResponse;
@@ -58,14 +56,8 @@ public class ChatService {
 
     private final Map<String, StreamingChatModel> modelCache;
 
-    private final JdkHttpClientBuilder jdkHttpClientBuilder;
-
     ChatService() {
         this.modelCache = new HashMap<>();
-        // some LLM servers (e.g. lmstudio) require HTTP/1.1
-        this.jdkHttpClientBuilder = JdkHttpClient.builder()
-                .httpClientBuilder(HttpClient.newBuilder()
-                        .version(HttpClient.Version.HTTP_1_1));
     }
 
     public interface AsyncChatBot {
@@ -202,7 +194,6 @@ public class ChatService {
     private StreamingChatModel getModel(ChatRequest chatRequest) {
         return modelCache.computeIfAbsent(chatRequest.model(),
                 m -> OpenAiStreamingChatModel.builder()
-                        .httpClientBuilder(jdkHttpClientBuilder)
                         .baseUrl(openAi.getBaseUrl())
                         .modelName(m)
                         .apiKey(llmConfig.key().orElse(""))
@@ -210,7 +201,7 @@ public class ChatService {
                         .logRequests(llmConfig.logRequests().orElse(false))
                         .logResponses(llmConfig.logResponses().orElse(false))
                         .listeners(List.of(eventChatModelListener))
-                        .returnThinking(true)                        
+                        .returnThinking(true)
                         .build());
     }
 
@@ -249,7 +240,7 @@ public class ChatService {
 
         chatRequest.history()
                 .stream()
-                .filter(m -> !m.text().equals(chatRequest.message()))
+                .filter(m -> !m.text().isBlank() && !m.text().equals(chatRequest.message()))
                 .map(m -> switch (m.role()) {
                     case USER -> new UserMessage(m.text());
                     case ASSISTANT -> new AiMessage(m.text());
