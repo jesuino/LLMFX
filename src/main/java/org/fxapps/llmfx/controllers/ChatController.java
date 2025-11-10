@@ -1,5 +1,7 @@
 package org.fxapps.llmfx.controllers;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -32,6 +34,7 @@ import org.fxapps.llmfx.Model.ContentType;
 import org.fxapps.llmfx.config.AppConfig;
 import org.fxapps.llmfx.tools.ToolsInfo;
 import org.fxapps.llmfx.tools.graphics.JFXTool;
+import org.fxapps.llmfx.windows.ScreenshotWindow;
 import org.fxapps.llmfx.windows.ViewLogsDialog;
 import org.jboss.logging.Logger;
 
@@ -59,6 +62,8 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 
@@ -118,6 +123,9 @@ public class ChatController {
     @Inject
     ViewLogsDialog viewLogsDialog;
 
+    @Inject
+    ScreenshotWindow screenshotWindow;
+
     @FXML
     private WebView chatOutput;
 
@@ -143,7 +151,7 @@ public class ChatController {
     private Button btnStop;
 
     @FXML
-    private Button btnContent;
+    private MenuButton btnContent;
 
     @FXML
     private ToggleButton btnViewLogs;
@@ -261,7 +269,6 @@ public class ChatController {
                 && toolsInfo.getToolsMap().get(selectedLabel) instanceof JFXTool jfxTool) {
             jfxTool.clear();
         }
-
     }
 
     @FXML
@@ -272,7 +279,7 @@ public class ChatController {
             Content content = null;
             if (btnContent.getUserData() != null) {
                 content = (Content) btnContent.getUserData();
-                btnContent.setUserData(null);
+                clearContent();
             }
             onUserInputEvent.fire(new UserInputEvent(input, Optional.ofNullable(content)));
         }
@@ -439,14 +446,40 @@ public class ChatController {
         stopStreamingEvent.fire(new StopStreamingEvent());
     }
 
+    @FXML 
+    void clearContent() {
+        btnContent.setUserData(null);
+        btnContent.setGraphic(null);
+    }
+
+    @FXML
+    void getScreenshot() {
+        screenshotWindow.capture(img -> {            
+            var bufferedImage = FXUtils.fromFXImage(img);
+
+            var os = new ByteArrayOutputStream();
+            try {
+                ImageIO.write(bufferedImage, "png", os);
+                byte[] imageBytes = os.toByteArray();
+                var imageBase64 = Base64.getEncoder().encodeToString(imageBytes);
+                var content = new Content(imageBase64, ContentType.IMAGE, "png");
+                setContentPreview(img);
+                btnContent.setUserData(content);
+            } catch (IOException e) {
+                logger.error(e);
+            }
+
+        });
+    }
+
     @FXML
     void choseContent() {
-
         alertsHelper.showFileChooser("Select file")
                 .ifPresent(file -> {
                     var path = file.toPath();
                     try {
                         var imageBase64 = Base64.getEncoder().encodeToString(Files.readAllBytes(path));
+                        setContentPreview(new Image(new FileInputStream(file)));
                         var content = new Content(imageBase64, ContentType.IMAGE, Files.probeContentType(path));
                         btnContent.setUserData(content);
                     } catch (Exception e) {
@@ -457,6 +490,18 @@ public class ChatController {
                     }
                 });
 
+    }
+
+    private void setContentPreview(Image image) {        
+        if(btnContent.getGraphic() instanceof ImageView imgView) {
+            imgView.setImage(image);
+            return;            
+        }
+        
+        var imgView = new ImageView(image);
+        imgView.setFitWidth(40);
+        imgView.setFitHeight(30);
+        btnContent.setGraphic(imgView);
     }
 
     public void hideWelcomeMessage() {

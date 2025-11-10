@@ -11,6 +11,7 @@ import org.fxapps.llmfx.tools.files.FilesWriterTool;
 import org.fxapps.llmfx.tools.graphics.JFX3dTool;
 import org.fxapps.llmfx.tools.graphics.JFXCanvasPixelTool;
 import org.fxapps.llmfx.tools.graphics.JFXCanvasTool;
+import org.fxapps.llmfx.tools.graphics.JFXDrawerTool;
 import org.fxapps.llmfx.tools.graphics.JFXReportingTool;
 import org.fxapps.llmfx.tools.graphics.JFXShapesTool;
 import org.fxapps.llmfx.tools.graphics.JFXWebRenderingTool;
@@ -38,6 +39,7 @@ public class ToolsInfo {
     public static final String PYTHON = "Python";
     public static final String _3D = "3D";
     public static final String SHAPES = "Shapes";
+    public static final String DRAWER = "Drawer";
 
     @Inject
     private FilesReaderTool filesReaderTool;
@@ -65,6 +67,8 @@ public class ToolsInfo {
     private JFXCanvasPixelTool canvasPixelTool;
     @Inject
     private JFXShapesTool shapesTool;
+    @Inject
+    private JFXDrawerTool drawerTool;
 
     Map<String, Object> toolsMap;
 
@@ -73,7 +77,7 @@ public class ToolsInfo {
             "Web", List.of(WEB_SEARCH, WEB_OPEN),
             "Date and Time", List.of(DATE_TIME),
             "Execute", List.of(COMMANDS, PYTHON),
-            "Graphics", List.of(CANVAS_DRAWING, REPORTING, WEB_RENDER, _3D, CANVAS_PIXELS, SHAPES));
+            "Graphics", List.of(DRAWER, REPORTING, WEB_RENDER, _3D, SHAPES));
 
     @PostConstruct
     void init() {
@@ -82,12 +86,10 @@ public class ToolsInfo {
 
         // graphics
         toolsMap.putAll(Map.of(
-                CANVAS_DRAWING, drawingTool,
+                DRAWER, drawerTool,                
                 REPORTING, reportingTool,
                 _3D, _3dTools,
-                WEB_RENDER, webRenderingTool,
-                CANVAS_PIXELS, canvasPixelTool,
-                SHAPES, shapesTool));
+                WEB_RENDER, webRenderingTool));
         // Web
         toolsMap.putAll(Map.of(
                 WEB_SEARCH, webSearchTool,

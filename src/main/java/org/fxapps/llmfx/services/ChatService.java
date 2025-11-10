@@ -1,6 +1,5 @@
 package org.fxapps.llmfx.services;
 
-import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;

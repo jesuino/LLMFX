@@ -7,6 +7,7 @@
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.MenuButton?>
 <?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.SeparatorMenuItem?>
 <?import javafx.scene.control.SplitMenuButton?>
 <?import javafx.scene.control.SplitPane?>
 <?import javafx.scene.control.TabPane?>
@@ -57,7 +58,7 @@
                <children>
                   <ComboBox fx:id="cmbModels" onAction="#modelSelected" prefHeight="26.0" prefWidth="181.0" promptText="Model" />
                   <Button mnemonicParsing="false" onAction="#onRefreshModels" text="↻" />
-                  <ToggleButton fx:id="btnViewLogs" mnemonicParsing="false" text="🔍" />
+                  <ToggleButton fx:id="btnViewLogs" mnemonicParsing="false" text="༗" />
                   <SplitMenuButton mnemonicParsing="false" prefHeight="26.0" prefWidth="47.0" text="↓">
                     <items>
                       <MenuItem mnemonicParsing="false" onAction="#saveAsText" text="Text" />
@@ -78,7 +79,14 @@
                   <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
                </padding>
             </TextField>
-            <Button fx:id="btnContent" alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false" onAction="#choseContent" prefHeight="39.0" prefWidth="38.0" text="📁" textAlignment="CENTER" textFill="#e40a0a" />
+            <MenuButton fx:id="btnContent" mnemonicParsing="false" prefHeight="36.0" prefWidth="39.0" text="↑">
+              <items>
+                <MenuItem mnemonicParsing="false" onAction="#choseContent" text="Upload" />
+                <MenuItem mnemonicParsing="false" onAction="#getScreenshot" text="Screenshot" />
+                  <SeparatorMenuItem mnemonicParsing="false" />
+                  <MenuItem mnemonicParsing="false" onAction="#clearContent" text="Clear" />
+              </items>
+            </MenuButton>
             <Button fx:id="btnStop" alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false" onAction="#stopStreaming" prefHeight="39.0" prefWidth="38.0" text="■" textAlignment="CENTER" textFill="#e40a0a" />
          </children>
          <BorderPane.margin>
@@ -92,7 +100,7 @@
             <StackPane minWidth="0.0">
                <children>
                   <ListView fx:id="historyList" minWidth="0.0" prefHeight="295.0" prefWidth="199.0" />
-                  <Button fx:id="btnTrashConversation" alignment="CENTER" minWidth="0.0" mnemonicParsing="false" onAction="#trashConversation" text="🗑" textFill="#bc1111" StackPane.alignment="BOTTOM_RIGHT">
+                  <Button fx:id="btnTrashConversation" alignment="CENTER" minWidth="0.0" mnemonicParsing="false" onAction="#trashConversation" text="X" textFill="#bc1111" StackPane.alignment="BOTTOM_RIGHT">
                      <StackPane.margin>
                         <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
                      </StackPane.margin>
@@ -104,7 +112,7 @@
                   <WebView fx:id="chatOutput" prefHeight="-1.0" prefWidth="-1.0" />
                   <VBox fx:id="vbWelcomeMessage" alignment="CENTER">
                      <children>
-                        <Label alignment="CENTER" prefHeight="54.0" prefWidth="317.0" text="Welcome to LLM FX 🌟! " textAlignment="CENTER" wrapText="true">
+                        <Label alignment="CENTER" prefHeight="54.0" prefWidth="317.0" text="Welcome to LLM FX! " textAlignment="CENTER" wrapText="true">
                            <font>
                               <Font name="System Bold" size="20.0" />
                            </font>
