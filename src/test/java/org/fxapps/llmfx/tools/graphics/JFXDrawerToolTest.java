@@ -32,6 +32,9 @@ class JFXDrawerToolTest {
                 width 1
                 line 1 2 3 4
                 text 1 2 "abc"
+                polyline 1 2 3 4 5 6
+                polygon 1 2 3 4 5 6
+                fillPolygon 1 2 3 4 5 6
                 """);
         var color = Color.rgb(255, 200, 10);
         var bg = Color.rgb(0, 10, 20);
@@ -51,6 +54,9 @@ class JFXDrawerToolTest {
         verify(tool.gc).setLineWidth(eq(1.0d));
         verify(tool.gc).strokeLine(eq(1.0d), eq(2.0d), eq(3.0d), eq(4.0d));
         verify(tool.gc).fillText(eq("abc"), eq(1.0d), eq(2.0d));
+        verify(tool.gc).strokePolyline(any(double[].class), any(double[].class), eq(3));
+        verify(tool.gc).strokePolygon(any(double[].class), any(double[].class), eq(3));
+        verify(tool.gc).fillPolygon(any(double[].class), any(double[].class), eq(3));
     }
 
 }

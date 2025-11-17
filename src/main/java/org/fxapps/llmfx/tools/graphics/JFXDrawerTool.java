@@ -44,7 +44,12 @@ public class JFXDrawerTool implements JFXTool {
             fillRect x y w h
             circle cx cy r
             fillCircle cx cy r
+            ellipse cx cy rw rh
+            fillEllipse cx cy rw rh
             line x1 y1 x2 y2
+            polyline x1 y1 x2 y2 … xn yn
+            polygon x1 y1 x2 y2 … xn yn
+            fillPolygon x1 y1 x2 y2 … xn yn
             text x y text
             color r g b
             width w
@@ -66,13 +71,27 @@ public class JFXDrawerTool implements JFXTool {
                     .mapToObj(i -> tokens[i])
                     .filter(v -> v != null && !v.isBlank())
                     .mapToDouble(Double::parseDouble)
-                    .toArray();
+                    .toArray();                    
             switch (command) {
                 case "rect" -> gc.strokeRect(params[0], params[1], params[2], params[3]);
                 case "circle" -> gc.strokeOval(params[0], params[1], params[2], params[2]);
                 case "fillRect" -> gc.fillRect(params[0], params[1], params[2], params[3]);
                 case "fillCircle" -> gc.fillOval(params[0], params[1], params[2], params[2]);
+                case "ellipse" -> gc.strokeOval(params[0], params[1], params[2], params[3]);
+                case "fillEllipse" -> gc.fillOval(params[0], params[1], params[2], params[3]);
                 case "line" -> gc.strokeLine(params[0], params[1], params[2], params[3]);
+                case "polyline" -> {
+                    var points = extractPoints(params);
+                    gc.strokePolyline(points[0], points[1], points[0].length);
+                }
+                case "polygon" -> {
+                    var points = extractPoints(params);
+                    gc.strokePolygon(points[0], points[1], points[0].length);                    
+                }
+                case "fillPolygon" -> {
+                    var points = extractPoints(params);
+                    gc.fillPolygon(points[0], points[1], points[0].length);                    
+                }   
                 case "width" -> gc.setLineWidth(params[0]);
                 case "text" -> gc.fillText(text, params[0], params[1]);
                 case "background" -> {
@@ -89,6 +108,16 @@ public class JFXDrawerTool implements JFXTool {
                 
             }
         }
+    }
+
+   double [][] extractPoints(double[] params) {
+        double[] xPoints = new double[params.length / 2];
+        double[] yPoints = new double[params.length / 2];
+        for (int i = 0; i < params.length; i += 2) {
+            xPoints[i / 2] = params[i];
+            yPoints[i / 2] = params[i + 1];
+        }
+        return new double[][] { xPoints, yPoints };
     }
 
 }
