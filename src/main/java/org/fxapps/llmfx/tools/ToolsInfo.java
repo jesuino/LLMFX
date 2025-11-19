@@ -15,6 +15,7 @@ import org.fxapps.llmfx.tools.graphics.JFXDrawerTool;
 import org.fxapps.llmfx.tools.graphics.JFXReportingTool;
 import org.fxapps.llmfx.tools.graphics.JFXShapesTool;
 import org.fxapps.llmfx.tools.graphics.JFXWebRenderingTool;
+import org.fxapps.llmfx.tools.system.ClipboardTool;
 import org.fxapps.llmfx.tools.time.DateTimeTool;
 import org.fxapps.llmfx.tools.web.WebOpenTool;
 import org.fxapps.llmfx.tools.web.WebSearchTool;
@@ -40,6 +41,7 @@ public class ToolsInfo {
     public static final String _3D = "3D";
     public static final String SHAPES = "Shapes";
     public static final String DRAWER = "Drawer";
+    public static final String CLIPBOARD = "Clipboard";
 
     @Inject
     private FilesReaderTool filesReaderTool;
@@ -69,6 +71,8 @@ public class ToolsInfo {
     private JFXShapesTool shapesTool;
     @Inject
     private JFXDrawerTool drawerTool;
+    @Inject
+    private ClipboardTool clipboardTool;
 
     Map<String, Object> toolsMap;
 
@@ -77,6 +81,7 @@ public class ToolsInfo {
             "Web", List.of(WEB_SEARCH, WEB_OPEN),
             "Date and Time", List.of(DATE_TIME),
             "Execute", List.of(COMMANDS, PYTHON),
+            "System", List.of(CLIPBOARD),
             "Graphics", List.of(DRAWER, REPORTING, WEB_RENDER, _3D, SHAPES));
 
     @PostConstruct
@@ -100,7 +105,8 @@ public class ToolsInfo {
                 FILE_WRITE, filesWriterTool,
                 DATE_TIME, dateTimeTool,
                 COMMANDS, commandsTool,
-                PYTHON, pythonTool));
+                PYTHON, pythonTool,
+                CLIPBOARD, clipboardTool));
 
     }
 
