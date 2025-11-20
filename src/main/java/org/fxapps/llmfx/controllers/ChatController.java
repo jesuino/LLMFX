@@ -446,7 +446,7 @@ public class ChatController {
         stopStreamingEvent.fire(new StopStreamingEvent());
     }
 
-    @FXML 
+    @FXML
     void clearContent() {
         btnContent.setUserData(null);
         btnContent.setGraphic(null);
@@ -454,7 +454,7 @@ public class ChatController {
 
     @FXML
     void getScreenshot() {
-        screenshotWindow.capture(img -> {            
+        screenshotWindow.capture(img -> {
             var bufferedImage = FXUtils.fromFXImage(img);
 
             var os = new ByteArrayOutputStream();
@@ -492,12 +492,12 @@ public class ChatController {
 
     }
 
-    private void setContentPreview(Image image) {        
-        if(btnContent.getGraphic() instanceof ImageView imgView) {
+    private void setContentPreview(Image image) {
+        if (btnContent.getGraphic() instanceof ImageView imgView) {
             imgView.setImage(image);
-            return;            
+            return;
         }
-        
+
         var imgView = new ImageView(image);
         imgView.setFitWidth(40);
         imgView.setFitHeight(30);

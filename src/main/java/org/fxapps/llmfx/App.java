@@ -2,6 +2,7 @@ package org.fxapps.llmfx;
 
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.Collections;
 import java.util.List;
 import java.util.Stack;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -23,6 +24,7 @@ import org.fxapps.llmfx.Model.Message;
 import org.fxapps.llmfx.Model.Role;
 import org.fxapps.llmfx.config.AppConfig;
 import org.fxapps.llmfx.config.LLMConfig;
+import org.fxapps.llmfx.config.RuntimeLLMConfig;
 import org.fxapps.llmfx.controllers.ChatController;
 import org.fxapps.llmfx.controllers.ChatMessagesView;
 import org.fxapps.llmfx.services.ChatService;
@@ -30,6 +32,7 @@ import org.fxapps.llmfx.services.HistoryStorage;
 import org.fxapps.llmfx.services.MCPClientRepository;
 import org.fxapps.llmfx.services.OpenAiService;
 import org.fxapps.llmfx.tools.ToolsInfo;
+import org.fxapps.llmfx.windows.ConnectionConfigDialog;
 import org.jboss.logging.Logger;
 
 import atlantafx.base.theme.PrimerLight;
@@ -66,6 +69,9 @@ public class App {
     ChatService chatService;
 
     @Inject
+    RuntimeLLMConfig runtimeLLMConfig;
+
+    @Inject
     LLMConfig llmConfig;
 
     @Inject
@@ -85,6 +91,9 @@ public class App {
 
     @Inject
     ToolsInfo toolsInfo;
+
+    @Inject
+    ConnectionConfigDialog connectionConfigDialog;
 
     private ChatController chatController;
 
@@ -133,41 +142,48 @@ public class App {
                 showChatMessages();
             }
         });
+
+        connectionConfigDialog.initOwner(stage);
     }
 
     private void refreshModels() {
-        List<String> tryList = null;
-        try {
-            tryList = openApiService.listModels();
-        } catch (RuntimeException e) {
-            logger.error("Error listing models", e);
-            alertsHelper.showError("Problem with the LLM Server",
-                    "Could not list models from the LLM Server",
-                    "Error when trying to list models from the LLM Server. Exiting...");
-            System.exit(0);
+        List<String> modelList = Collections.emptyList();
+        while (modelList.isEmpty()) {
+            try {
+                modelList = openApiService.listModels();
+            } catch (RuntimeException e) {
+                logger.info("Error listing models", e);
+                alertsHelper.showError("Error",
+                        "Error listing models from the server",
+                        e.getMessage());
+                var result = connectionConfigDialog.showAndWait();
+                if (result.isPresent()) {
+                    runtimeLLMConfig.fromConnectionConfig(result.get());
+                } else {
+                    System.exit(0);
+                }
+            }
         }
 
-        final var modelsList = tryList;
-        if (modelsList.isEmpty()) {
+        if (modelList.isEmpty()) {
             alertsHelper.showError("No model",
                     "No Model is available on the server",
                     "No Model found, Check if the server has at least one model available for use. Exiting...");
             System.exit(0);
         }
 
-        chatController.fillModels(modelsList);
+        chatController.fillModels(modelList);
 
-        var currentModel = modelsList.stream()
-                .filter(m -> m.equals(selectedModel))
-                .findAny()
-                .or(() -> modelsList.stream()
-                        .filter(m -> m.equals(llmConfig.model().orElse("")))
-                        .findAny());
+        var currentModel = modelList.stream()
+                .filter(m -> m.equals(selectedModel) ||
+                        (runtimeLLMConfig.model().isPresent() && m.equals(runtimeLLMConfig.model().get())))
+                .findAny();
+
         if (currentModel.isPresent()) {
             chatController.setSelectedModel(currentModel.get());
         } else {
             logger.info("No model is set as default, using a random model");
-            chatController.setSelectedModel(modelsList.get(0));
+            chatController.setSelectedModel(modelList.get(0));
         }
     }
 
@@ -218,7 +234,11 @@ public class App {
     }
 
     void onRefreshModels(@Observes RefreshModelsEvent evt) {
-        refreshModels();
+        connectionConfigDialog.showAndWait().ifPresent(result -> {
+            runtimeLLMConfig.fromConnectionConfig(result);
+            refreshModels();
+        });
+
     }
 
     void onStopStreaming(@Observes StopStreamingEvent stopStreamingEvent) {

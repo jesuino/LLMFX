@@ -57,15 +57,8 @@
             <HBox alignment="CENTER_RIGHT" prefHeight="28.0" prefWidth="617.0" spacing="5.0" HBox.hgrow="ALWAYS">
                <children>
                   <ComboBox fx:id="cmbModels" onAction="#modelSelected" prefHeight="26.0" prefWidth="181.0" promptText="Model" />
-                  <Button mnemonicParsing="false" onAction="#onRefreshModels" text="↻" />
-                  <ToggleButton fx:id="btnViewLogs" mnemonicParsing="false" text="༗" />
-                  <SplitMenuButton mnemonicParsing="false" prefHeight="26.0" prefWidth="47.0" text="↓">
-                    <items>
-                      <MenuItem mnemonicParsing="false" onAction="#saveAsText" text="Text" />
-                      <MenuItem mnemonicParsing="false" onAction="#saveAsJSON" text="JSON" />
-                        <MenuItem mnemonicParsing="false" onAction="#saveAsHTML" text="HTML" />
-                    </items>
-                  </SplitMenuButton>
+                  <Button mnemonicParsing="false" onAction="#onRefreshModels" text="⚙" />
+                  <ToggleButton fx:id="btnViewLogs" mnemonicParsing="false" text="Logs" />
                </children>
             </HBox>
          </children>
@@ -141,6 +134,13 @@
                      <children>
                         <Button fx:id="btnReload" mnemonicParsing="false" onAction="#reloadMessage" text="↻" />
                         <Button fx:id="btnNewChat" mnemonicParsing="false" onAction="#newChat" prefHeight="26.0" prefWidth="33.0" text="🗎" textFill="#dd0606" />
+                        <SplitMenuButton mnemonicParsing="false" prefHeight="26.0" prefWidth="47.0" text="↓">
+                          <items>
+                            <MenuItem mnemonicParsing="false" onAction="#saveAsText" text="Text" />
+                            <MenuItem mnemonicParsing="false" onAction="#saveAsJSON" text="JSON" />
+                              <MenuItem mnemonicParsing="false" onAction="#saveAsHTML" text="HTML" />
+                          </items>
+                        </SplitMenuButton>
                      </children>
                   </HBox>
                   <HBox alignment="BOTTOM_LEFT" fillHeight="false" maxHeight="25.0" maxWidth="220.0" prefHeight="100.0" prefWidth="30.0" spacing="10.0" StackPane.alignment="BOTTOM_LEFT">

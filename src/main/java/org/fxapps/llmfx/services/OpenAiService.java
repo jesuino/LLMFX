@@ -5,7 +5,8 @@ import java.util.List;
 import org.eclipse.microprofile.rest.client.annotation.RegisterClientHeaders;
 import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
-import org.fxapps.llmfx.config.LLMConfig;
+
+import org.fxapps.llmfx.config.RuntimeLLMConfig;
 
 import io.quarkus.rest.client.reactive.Url;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -17,7 +18,7 @@ import jakarta.ws.rs.Path;
 public class OpenAiService {
 
     @Inject
-    LLMConfig llmConfig;
+    RuntimeLLMConfig llmConfig;
 
     @RegisterRestClient(baseUri = "notused")
     @RegisterClientHeaders(BearerTokenHeaderFactory.class)
@@ -27,9 +28,12 @@ public class OpenAiService {
         ModelListResponse listModels(@Url String url);
     }
 
-    public record ModelListResponse(String object, List<ModelInfo> data) {}
-    public record ModelInfo(String id, String object, long created, String owned_by) {}
-    
+    public record ModelListResponse(String object, List<ModelInfo> data) {
+    }
+
+    public record ModelInfo(String id, String object, long created, String owned_by) {
+    }
+
     @Inject
     @RestClient
     OpenAiServiceRest openAiServiceRest;
@@ -44,5 +48,4 @@ public class OpenAiService {
         return baseUrl.endsWith("/") ? baseUrl.substring(0, baseUrl.length() - 1) : baseUrl;
     }
 
-    
 }
