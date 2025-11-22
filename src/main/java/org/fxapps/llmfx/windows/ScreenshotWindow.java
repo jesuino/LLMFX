@@ -1,5 +1,6 @@
 package org.fxapps.llmfx.windows;
 
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
@@ -9,6 +10,8 @@ import javafx.animation.PauseTransition;
 import javafx.scene.Cursor;
 import javafx.scene.Scene;
 import javafx.scene.image.WritableImage;
+import javafx.scene.input.KeyCode;
+import javafx.scene.input.MouseButton;
 import javafx.scene.layout.AnchorPane;
 import javafx.scene.paint.Color;
 import javafx.scene.robot.Robot;
@@ -23,17 +26,19 @@ import java.awt.Toolkit;
 public class ScreenshotWindow {
 
     private Robot robot;
-    private Consumer<WritableImage> callback;
+    private Consumer<Optional<WritableImage>> callback;
     private Stage captureWindow;
 
     @PostConstruct
     void setup() {
         this.robot = new Robot();
+        this.callback = img -> {
+        };
         var dimensions = Toolkit.getDefaultToolkit().getScreenSize();
 
         var dragRect = new Rectangle();
         var captureRoot = new AnchorPane(dragRect);
-        
+
         captureWindow = new Stage();
         captureWindow.initStyle(StageStyle.TRANSPARENT);
         dragRect.setVisible(false);
@@ -78,20 +83,35 @@ public class ScreenshotWindow {
             pause.setOnFinished(_e -> {
                 var img = robot.getScreenCapture(null, dragRect.getX(), dragRect.getY(), dragRect.getWidth(),
                         dragRect.getHeight());
-                if (callback != null) {
-                    callback.accept(img);
-                }
+                callback.accept(Optional.of(img));
                 captureWindow.hide();
             });
             pause.play();
         });
 
+        captureRoot.setOnKeyPressed(e -> {
+            if (e.getCode() == KeyCode.ESCAPE) {
+                leave();
+            }
+        });
+
+        captureRoot.setOnMouseClicked(e -> {
+            if (e.getButton() == MouseButton.SECONDARY) {
+                leave();
+            }
+        });
+
     }
 
+    private void leave() {
+        callback.accept(Optional.empty());
+        captureWindow.hide();
+    }
 
-    public void capture(Consumer<WritableImage> callback) {
+    public void capture(Consumer<Optional<WritableImage>> callback) {
         this.callback = callback;
         captureWindow.show();
-    }   
+        captureWindow.requestFocus();
+    }
 
 }

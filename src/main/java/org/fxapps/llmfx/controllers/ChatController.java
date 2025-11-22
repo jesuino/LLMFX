@@ -454,7 +454,11 @@ public class ChatController {
 
     @FXML
     void getScreenshot() {
-        screenshotWindow.capture(img -> {
+        screenshotWindow.capture(imgOp -> {
+            if (imgOp.isEmpty()) {
+                return;
+            }
+            var img = imgOp.get();
             var bufferedImage = FXUtils.fromFXImage(img);
 
             var os = new ByteArrayOutputStream();
