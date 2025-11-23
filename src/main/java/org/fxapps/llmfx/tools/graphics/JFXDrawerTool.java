@@ -12,7 +12,7 @@ import javafx.scene.control.ScrollPane;
 import javafx.scene.paint.Color;
 
 @Singleton
-public class JFXDrawerTool implements JFXTool {
+public class JFXDrawerTool extends EditorJFXTool {
 
     static final int CANVAS_WIDTH = 1200;
     static final int CANVAS_HEIGHT = 900;
@@ -27,14 +27,22 @@ public class JFXDrawerTool implements JFXTool {
         this.canvas = new Canvas(CANVAS_WIDTH, CANVAS_HEIGHT);
         this.gc = canvas.getGraphicsContext2D();
         this.root = new ScrollPane(canvas);
+        super.init();
     }
 
-    public void clear() {
-        gc.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
+    @Override
+    void onEditorChange(String newContent) {
+        this.draw(newContent);
     }
 
-    public Node getRoot() {
+    @Override
+    Node getRenderNode() {
         return root;
+    }
+
+    @Override
+    void clearRenderNode() {
+        gc.clearRect(0, 0, CANVAS_WIDTH, CANVAS_HEIGHT);
     }
 
     @Tool("""
@@ -56,6 +64,7 @@ public class JFXDrawerTool implements JFXTool {
             text x y "string"
             """)
     public void draw(String dsl) {
+        clearRenderNode();        
         String[] lines = dsl.split("\\R");
         for (String line : lines) {
             var tokens = line.trim().split("\\s+");
@@ -63,7 +72,7 @@ public class JFXDrawerTool implements JFXTool {
                 continue;
             var command = tokens[0];
             var text = "";
-            if(command.equals("text")) {
+            if (command.equals("text")) {
                 text = tokens[tokens.length - 1].replaceAll("^\"|\"$", "");
                 tokens[tokens.length - 1] = null;
             }
@@ -71,7 +80,7 @@ public class JFXDrawerTool implements JFXTool {
                     .mapToObj(i -> tokens[i])
                     .filter(v -> v != null && !v.isBlank())
                     .mapToDouble(Double::parseDouble)
-                    .toArray();                    
+                    .toArray();
             switch (command) {
                 case "rect" -> gc.strokeRect(params[0], params[1], params[2], params[3]);
                 case "circle" -> gc.strokeOval(params[0], params[1], params[2], params[2]);
@@ -86,12 +95,12 @@ public class JFXDrawerTool implements JFXTool {
                 }
                 case "polygon" -> {
                     var points = extractPoints(params);
-                    gc.strokePolygon(points[0], points[1], points[0].length);                    
+                    gc.strokePolygon(points[0], points[1], points[0].length);
                 }
                 case "fillPolygon" -> {
                     var points = extractPoints(params);
-                    gc.fillPolygon(points[0], points[1], points[0].length);                    
-                }   
+                    gc.fillPolygon(points[0], points[1], points[0].length);
+                }
                 case "width" -> gc.setLineWidth(params[0]);
                 case "text" -> gc.fillText(text, params[0], params[1]);
                 case "background" -> {
@@ -105,12 +114,13 @@ public class JFXDrawerTool implements JFXTool {
                     gc.setStroke(color);
                     gc.setFill(color);
                 }
-                
+
             }
         }
+        setEditorContent(dsl);
     }
 
-   double [][] extractPoints(double[] params) {
+    private double[][] extractPoints(double[] params) {
         double[] xPoints = new double[params.length / 2];
         double[] yPoints = new double[params.length / 2];
         for (int i = 0; i < params.length; i += 2) {
