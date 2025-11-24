@@ -17,12 +17,13 @@ class JFXDrawerToolTest {
     @BeforeEach
     public void setup() {
         tool = new JFXDrawerTool();
-        tool.gc = mock();
+        tool.gc = mock();        
+        
     }
 
     @Test
     public void testDSL() {
-        tool.draw("""
+        tool.applyDSL("""
                 background 0 10 20
                 color 255 200 10
                 rect 1 2 3 4

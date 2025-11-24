@@ -64,7 +64,12 @@ public class JFXDrawerTool extends EditorJFXTool {
             text x y "string"
             """)
     public void draw(String dsl) {
-        clearRenderNode();        
+        applyDSL(dsl);
+        setEditorContent(dsl);
+    }
+
+    void applyDSL(String dsl) {
+        clearRenderNode();
         String[] lines = dsl.split("\\R");
         for (String line : lines) {
             var tokens = line.trim().split("\\s+");
@@ -117,7 +122,6 @@ public class JFXDrawerTool extends EditorJFXTool {
 
             }
         }
-        setEditorContent(dsl);
     }
 
     private double[][] extractPoints(double[] params) {
