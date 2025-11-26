@@ -2,8 +2,6 @@ package org.fxapps.llmfx.tools.graphics;
 
 import static org.fxapps.llmfx.FXUtils.fixColor;
 
-import java.util.stream.IntStream;
-
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import jakarta.annotation.PostConstruct;
@@ -32,7 +30,7 @@ import javafx.scene.transform.Translate;
 public class JFX3dTool extends EditorJFXTool {
 
     private static final int WIDTH = 1200;
-    private static final int HEIGHT = 900;
+    private static final int HEIGHT = 800;
     private static final int ANGLE_STEP = 1;
     private SubScene subScene;
     private Group container;
@@ -53,6 +51,13 @@ public class JFX3dTool extends EditorJFXTool {
 
         this.subScene.setCamera(camera);
 
+        final var rotateX = new Rotate(0, Rotate.X_AXIS);
+        final var rotateY = new Rotate(0, Rotate.Y_AXIS);
+        final var rotateZ = new Rotate(0, Rotate.Z_AXIS);
+        final var translate = new Translate(0, 0, 0);
+        container.getTransforms().addAll(rotateX, rotateY, rotateZ);
+        camera.getTransforms().add(translate);
+
         subScene.setFill(Color.LIGHTGRAY);
 
         addStuff();
@@ -67,45 +72,6 @@ public class JFX3dTool extends EditorJFXTool {
         this.subScene.setOnMouseDragged(e -> {
             final var x = e.getSceneX();
             final var y = e.getSceneY();
-
-            var rotateY = container.getTransforms().stream()
-                    .filter(t -> t instanceof Rotate r && r.getAxis().equals(Rotate.Y_AXIS))
-                    .map(t -> (Rotate) t)
-                    .findAny()
-                    .orElseGet(() -> {
-                        var r = new Rotate(0, Rotate.Y_AXIS);
-                        container.getTransforms().add(r);
-                        return r;
-                    });
-            var rotateX = container.getTransforms().stream()
-                    .filter(t -> t instanceof Rotate r && r.getAxis().equals(Rotate.X_AXIS))
-                    .map(t -> (Rotate) t)
-                    .findAny()
-                    .orElseGet(() -> {
-                        var r = new Rotate(0, Rotate.X_AXIS);
-                        container.getTransforms().add(r);
-                        return r;
-                    });
-
-            var rotateZ = container.getTransforms().stream()
-                    .filter(t -> t instanceof Rotate r && r.getAxis().equals(Rotate.Z_AXIS))
-                    .map(t -> (Rotate) t)
-                    .findAny()
-                    .orElseGet(() -> {
-                        var r = new Rotate(0, Rotate.Z_AXIS);
-                        container.getTransforms().add(r);
-                        return r;
-                    });
-
-            var translate = camera.getTransforms().stream()
-                    .filter(t -> t instanceof Translate)
-                    .map(t -> (Translate) t)
-                    .findAny()
-                    .orElseGet(() -> {
-                        var tr = new Translate();
-                        camera.getTransforms().add(tr);
-                        return tr;
-                    });
 
             if (e.isPrimaryButtonDown()) {
                 var xChange = 0d;
@@ -153,21 +119,16 @@ public class JFX3dTool extends EditorJFXTool {
         this.subScene.setOnMousePressed(e -> {
             subScene.requestFocus();
             if (e.isMiddleButtonDown()) {
-                container.getTransforms().clear();
-                camera.getTransforms().clear();
+                rotateX.setAngle(0);
+                rotateY.setAngle(0);
+                rotateZ.setAngle(0);
+                translate.setX(0);
+                translate.setY(0);
+                translate.setZ(0);
             }
         });
         this.subScene.setOnScroll(e -> {
             subScene.requestFocus();
-            var translate = camera.getTransforms().stream()
-                    .filter(t -> t instanceof Translate)
-                    .map(t -> (Translate) t)
-                    .findAny()
-                    .orElseGet(() -> {
-                        var tr = new Translate();
-                        camera.getTransforms().add(tr);
-                        return tr;
-                    });
             if (e.getDeltaY() > 0d) {
                 translate.setZ(translate.getZ() + 1);
             } else if (e.getDeltaY() < 0d) {
