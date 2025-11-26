@@ -21,7 +21,10 @@ public abstract class EditorJFXTool implements JFXTool {
         splitPane.setOrientation(Orientation.VERTICAL);
         splitPane.setDividerPositions(0.8);
 
-        txtCode.textProperty().addListener((obs, o, n) -> onEditorChange(n));
+
+        txtCode.setOnKeyReleased(event -> {
+            onEditorChange(txtCode.getText());
+        });
     }
 
     @Override
@@ -31,12 +34,16 @@ public abstract class EditorJFXTool implements JFXTool {
     }
 
     @Override
-    public Node getRoot() {
+    public Node getRoot() {        
         return splitPane;
     }
 
     void setEditorContent(String content) {
-        txtCode.setText(content);
+        txtCode.setText(content);        
+    }
+
+    String getEditorContent() {
+        return txtCode.getText();
     }
 
     abstract Node getRenderNode();

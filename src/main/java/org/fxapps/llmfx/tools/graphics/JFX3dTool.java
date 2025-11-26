@@ -189,11 +189,14 @@ public class JFX3dTool extends EditorJFXTool {
 
     @Override
     void onEditorChange(String newContent) {
-        this.add3dObjects(newContent);
+        this.container.getChildren().clear();
+        this.add3dObjects(newContent, true);
     }
 
     @Tool("""
-            You can add 3D objects to the scene using the following DSL
+
+            You can add 3D objects to the scene using the following DSL commands (please use one command per line):
+            clear
             color r g b   # use this color for subsequent objects. Use RGB values 0-255
             box x y z width height depth
             sphere x y z radius
@@ -202,21 +205,35 @@ public class JFX3dTool extends EditorJFXTool {
             ambientLight r g b # Use RGB values 0-255 for the color
             """)
     public void add3dObjects(@P("The dsl to add 3d objects") String dsl) {
-        Platform.runLater(() -> container.getChildren().clear());
+        add3dObjects(dsl, false);
+    }
+
+    public void add3dObjects(String dsl, boolean userInput) {
         var material = new PhongMaterial(Color.WHITE);
+        var clear = false;
         String[] lines = dsl.split("\\R");
         for (String line : lines) {
             var tokens = line.trim().split("\\s+");
-            if (tokens.length == 0)
+            if (tokens.length == 0 || line.startsWith("#"))
                 continue;
             var command = tokens[0];
-            double[] params = IntStream.range(1, tokens.length)
-                    .mapToObj(i -> tokens[i])
-                    .filter(v -> v != null && !v.isBlank())
-                    .mapToDouble(Double::parseDouble)
-                    .toArray();
+
+            var params = new double[tokens.length - 1];
+            for (int j = 1; j < tokens.length; j++) {
+                var v = tokens[j];
+
+                if ("#".equals(v)) {
+                    break;
+                }
+                if (v == null || v.isBlank() || !canParseToDouble(v)) {
+                    continue;
+                }
+                params[j - 1] = Double.parseDouble(v);
+            }
+
             Node element = switch (command) {
                 case "color" -> {
+                    checkParams(command, params, 3);
                     var r = (int) params[0];
                     var g = (int) params[1];
                     var b = (int) params[2];
@@ -224,6 +241,7 @@ public class JFX3dTool extends EditorJFXTool {
                     yield null;
                 }
                 case "box" -> {
+                    checkParams(command, params, 6);
                     Box box = new Box(params[3], params[4], params[5]);
                     box.setMaterial(material);
                     box.setTranslateX(params[0]);
@@ -232,6 +250,7 @@ public class JFX3dTool extends EditorJFXTool {
                     yield box;
                 }
                 case "sphere" -> {
+                    checkParams(command, params, 4);
                     Sphere sphere = new Sphere(params[3]);
                     sphere.setMaterial(material);
                     sphere.setTranslateX(params[0]);
@@ -240,6 +259,7 @@ public class JFX3dTool extends EditorJFXTool {
                     yield sphere;
                 }
                 case "cylinder" -> {
+                    checkParams(command, params, 5);
                     Cylinder cylinder = new Cylinder(params[3], params[4]);
                     cylinder.setMaterial(material);
                     cylinder.setTranslateX(params[0]);
@@ -248,17 +268,24 @@ public class JFX3dTool extends EditorJFXTool {
                     yield cylinder;
                 }
                 case "pointLight" -> {
+                    checkParams(command, params, 3);
                     var light = new PointLight(Color.WHITE);
                     light.getTransforms().addAll(
                             new Translate(params[0], params[1], params[2]));
                     yield light;
                 }
                 case "ambientLight" -> {
+                    checkParams(command, params, 3);
                     var r = (int) params[0];
                     var g = (int) params[1];
                     var b = (int) params[2];
                     yield new AmbientLight(Color.rgb(r, g, b));
 
+                }
+                case "clear" -> {
+                    Platform.runLater(() -> container.getChildren().clear());
+                    clear = true;
+                    yield null;
                 }
                 default -> null;
             };
@@ -267,7 +294,19 @@ public class JFX3dTool extends EditorJFXTool {
                 Platform.runLater(() -> container.getChildren().add(element));
             }
         }
-        setEditorContent(dsl);
+        if (!userInput) {
+            var newContent = clear ? dsl : getEditorContent() + "\n" + dsl;
+            setEditorContent(newContent);
+        }
+    }
+
+    private boolean canParseToDouble(String v) {
+        try {
+            Double.parseDouble(v);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
     }
 
     void addStuff() {
@@ -289,6 +328,13 @@ public class JFX3dTool extends EditorJFXTool {
 
             container.getChildren().addAll(box, sphere, cylinder, light);
         });
+    }
+
+    private void checkParams(String command, double[] params, int expected) {
+        if (params.length < expected) {
+            throw new IllegalArgumentException(
+                    "Command " + command + " expects " + expected + " parameters, but got " + params.length);
+        }
     }
 
 }
