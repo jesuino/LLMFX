@@ -49,7 +49,7 @@ public class JFX3dTool extends EditorJFXTool {
         camera = new PerspectiveCamera(true);
         camera.setTranslateZ(-50);
         camera.setNearClip(0.1);
-        camera.setFarClip(100);
+        camera.setFarClip(10000.0);
 
         this.subScene.setCamera(camera);
 
