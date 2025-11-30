@@ -2,6 +2,10 @@ package org.fxapps.llmfx.tools.graphics;
 
 import static org.fxapps.llmfx.FXUtils.fixColor;
 
+import org.fxyz3d.shapes.Cone;
+import org.fxyz3d.shapes.Spheroid;
+import org.fxyz3d.shapes.Torus;
+
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
 import jakarta.annotation.PostConstruct;
@@ -162,6 +166,8 @@ public class JFX3dTool extends EditorJFXTool {
             box x y z width height depth
             sphere x y z radius
             cylinder x y z radius height
+            cone x y z divs r h
+            spheroid x y z divs minorRadius majorRadius            
             pointLight x y z
             ambientLight r g b # Use RGB values 0-255 for the color
             """)
@@ -227,6 +233,24 @@ public class JFX3dTool extends EditorJFXTool {
                     cylinder.setTranslateY(params[1]);
                     cylinder.setTranslateZ(params[2]);
                     yield cylinder;
+                }
+                case "cone" -> {
+                    checkParams(command, params, 6);
+                    var cone = new Cone((int) params[3], params[4], params[5]);
+                    cone.setTranslateX(params[0]);
+                    cone.setTranslateY(params[1]);
+                    cone.setTranslateZ(params[2]);
+                    cone.setMaterial(material);
+                    yield cone;
+                }
+                case "spheroid" -> {
+                    checkParams(command, params, 6);
+                    var spheroid = new Spheroid((int) params[3], params[4], params[5]);
+                    spheroid.setTranslateX(params[0]);
+                    spheroid.setTranslateY(params[1]);
+                    spheroid.setTranslateZ(params[2]);
+                    spheroid.getShape().setMaterial(material);
+                    yield spheroid;
                 }
                 case "pointLight" -> {
                     checkParams(command, params, 3);
