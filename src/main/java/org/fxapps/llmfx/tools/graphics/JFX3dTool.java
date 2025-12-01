@@ -2,9 +2,22 @@ package org.fxapps.llmfx.tools.graphics;
 
 import static org.fxapps.llmfx.FXUtils.fixColor;
 
+import java.util.ArrayList;
+
+import org.fxyz3d.geometry.Point3D;
+
+import org.fxyz3d.shapes.Capsule;
 import org.fxyz3d.shapes.Cone;
 import org.fxyz3d.shapes.Spheroid;
-import org.fxyz3d.shapes.Torus;
+
+import org.fxyz3d.shapes.primitives.FrustumMesh;
+import org.fxyz3d.shapes.primitives.IcosahedronMesh;
+import org.fxyz3d.shapes.primitives.OctahedronMesh;
+import org.fxyz3d.shapes.primitives.PrismMesh;
+import org.fxyz3d.shapes.primitives.PyramidMesh;
+import org.fxyz3d.shapes.primitives.TetrahedraMesh;
+import org.fxyz3d.shapes.primitives.Text3DMesh;
+import org.fxyz3d.shapes.primitives.TrapezoidMesh;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -23,6 +36,7 @@ import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
 import javafx.scene.shape.Cylinder;
 import javafx.scene.shape.Sphere;
+import javafx.scene.text.Font;
 import javafx.scene.transform.Rotate;
 import javafx.scene.transform.Translate;
 
@@ -43,8 +57,11 @@ public class JFX3dTool extends EditorJFXTool {
     @PostConstruct
     public void init() {
         this.container = new Group();
-        this.subScene = new SubScene(container, WIDTH, HEIGHT);
+        var actualContainer = new Group();
+        this.subScene = new SubScene(actualContainer, WIDTH, HEIGHT);
         super.init();
+
+        actualContainer.getChildren().add(container);
 
         subScene.setPickOnBounds(true);
 
@@ -155,24 +172,41 @@ public class JFX3dTool extends EditorJFXTool {
     @Override
     void onEditorChange(String newContent) {
         this.container.getChildren().clear();
-        this.add3dObjects(newContent, true);
+        try {
+            this.add3dObjects(newContent, true);
+        } catch (Exception e) {
+            setMessage(e.getMessage());
+        }
     }
 
     @Tool("""
-
             You can add 3D objects to the scene using the following DSL commands (please use one command per line):
             clear
-            color r g b   # use this color for subsequent objects. Use RGB values 0-255
+            color c
             box x y z width height depth
             sphere x y z radius
             cylinder x y z radius height
             cone x y z divs r h
-            spheroid x y z divs minorRadius majorRadius            
+            spheroid x y z divs minorRadius majorRadius
+            capsule x y z r h
             pointLight x y z
-            ambientLight r g b # Use RGB values 0-255 for the color
+            tetrahedra x y z h
+            octahedron x y z h hypotenuse
+            pyramid x y z h hypotenuse
+            icosahedron x y z diameter
+            trapezoid x y z smallSize bigSize h depth
+            frustum x y z majorRadius minorRadius height
+            ambientLight c
             """)
     public void add3dObjects(@P("The dsl to add 3d objects") String dsl) {
-        add3dObjects(dsl, false);
+        try {
+            setMessage("");
+            add3dObjects(dsl, false);
+        } catch (Exception e) {
+            setMessage(e.getMessage());
+            setEditorContent(dsl);
+            e.printStackTrace();
+        }
     }
 
     public void add3dObjects(String dsl, boolean userInput) {
@@ -185,8 +219,9 @@ public class JFX3dTool extends EditorJFXTool {
                 continue;
             var command = tokens[0];
 
-            var params = new double[tokens.length - 1];
-            for (int j = 1; j < tokens.length; j++) {
+            var paramsList = new ArrayList<Double>();
+            var paramsIdx = "text".equals(command) ? 2 : 1;
+            for (int j = paramsIdx; j < tokens.length; j++) {
                 var v = tokens[j];
 
                 if ("#".equals(v)) {
@@ -195,16 +230,13 @@ public class JFX3dTool extends EditorJFXTool {
                 if (v == null || v.isBlank() || !canParseToDouble(v)) {
                     continue;
                 }
-                params[j - 1] = Double.parseDouble(v);
+                paramsList.add(Double.parseDouble(v));
             }
+            Double[] params = paramsList.toArray(Double[]::new);
 
             Node element = switch (command) {
                 case "color" -> {
-                    checkParams(command, params, 3);
-                    var r = (int) params[0];
-                    var g = (int) params[1];
-                    var b = (int) params[2];
-                    material = new PhongMaterial(Color.rgb(r, g, b));
+                    material = new PhongMaterial(fixColor(tokens[1]));
                     yield null;
                 }
                 case "box" -> {
@@ -236,21 +268,105 @@ public class JFX3dTool extends EditorJFXTool {
                 }
                 case "cone" -> {
                     checkParams(command, params, 6);
-                    var cone = new Cone((int) params[3], params[4], params[5]);
+                    var cone = new Cone(params[3].intValue(), params[4], params[5]);
                     cone.setTranslateX(params[0]);
                     cone.setTranslateY(params[1]);
                     cone.setTranslateZ(params[2]);
-                    cone.setMaterial(material);
                     yield cone;
                 }
                 case "spheroid" -> {
                     checkParams(command, params, 6);
-                    var spheroid = new Spheroid((int) params[3], params[4], params[5]);
+                    var spheroid = new Spheroid(params[3].intValue(), params[4], params[5]);
                     spheroid.setTranslateX(params[0]);
                     spheroid.setTranslateY(params[1]);
                     spheroid.setTranslateZ(params[2]);
                     spheroid.getShape().setMaterial(material);
+                    spheroid.setDiffuseColor(material.getDiffuseColor());
+                    spheroid.setSpecularColor(material.getSpecularColor());
                     yield spheroid;
+                }
+                case "tetrahedra" -> {
+                    checkParams(command, params, 4);
+                    var pos = new Point3D(params[0], params[1], params[2]);
+                    var tMesh = new TetrahedraMesh(params[3], 1, pos);
+                    tMesh.setMaterial(material);
+                    yield tMesh;
+                }
+                case "capsule" -> {
+                    checkParams(command, params, 5);
+                    var capsule = new Capsule(params[3], params[4]);
+                    capsule.setTranslateX(params[0]);
+                    capsule.setTranslateY(params[1]);
+                    capsule.setTranslateZ(params[2]);
+                    capsule.getShape().setMaterial(material);
+                    capsule.setDiffuseColor(material.getDiffuseColor());
+                    capsule.setSpecularColor(material.getSpecularColor());
+                    yield capsule;
+                }
+                case "prism" -> {
+                    checkParams(command, params, 5);
+                    var prism = new PrismMesh(params[3], params[4], 1, null, null);
+                    prism.setTranslateX(params[0]);
+                    prism.setTranslateY(params[1]);
+                    prism.setTranslateZ(params[2]);
+                    prism.setMaterial(material);
+                    yield prism;
+                }
+                case "trapezoid" -> {
+                    checkParams(command, params, 7);
+                    var trapezoid = new TrapezoidMesh(params[3], params[4], params[5], params[6]);
+                    trapezoid.setTranslateX(params[0]);
+                    trapezoid.setTranslateY(params[1]);
+                    trapezoid.setTranslateZ(params[2]);
+                    trapezoid.setMaterial(material);
+                    yield trapezoid;
+                }
+                case "octahedron" -> {
+                    checkParams(command, params, 5);
+                    var octa = new OctahedronMesh(params[3], params[4]);
+                    octa.setTranslateX(params[0]);
+                    octa.setTranslateY(params[1]);
+                    octa.setTranslateZ(params[2]);
+                    octa.setMaterial(material);
+                    yield octa;
+                }
+                case "frustum" -> {
+                    checkParams(command, params, 6);
+                    var frustum = new FrustumMesh(params[3], params[4], params[5]);
+                    frustum.setTranslateX(params[0]);
+                    frustum.setTranslateY(params[1]);
+                    frustum.setTranslateZ(params[2]);
+                    frustum.setMaterial(material);
+                    yield frustum;
+                }
+                case "pyramid" -> {
+                    checkParams(command, params, 5);
+                    var pyramid = new PyramidMesh(params[3], params[4]);
+                    pyramid.setTranslateX(params[0]);
+                    pyramid.setTranslateY(params[1]);
+                    pyramid.setTranslateZ(params[2]);
+                    pyramid.setMaterial(material);
+                    yield pyramid;
+                }
+                case "icosahedron" -> {
+                    checkParams(command, params, 4);
+                    var icosahedron = new IcosahedronMesh(params[3].floatValue());
+                    icosahedron.setTranslateX(params[0]);
+                    icosahedron.setTranslateY(params[1]);
+                    icosahedron.setTranslateZ(params[2]);
+                    icosahedron.setMaterial(material);
+                    yield icosahedron;
+                }
+                case "text" -> {
+                    // text value x y z fontSize || not working
+                    var txt = tokens[1];
+                    var text3d = new Text3DMesh(txt, Font.getDefault().getFamily(), params[3].intValue());
+                    text3d.setTranslateX(params[0]);
+                    text3d.setTranslateY(params[1]);
+                    text3d.setTranslateZ(params[2]);
+                    text3d.setTextureModeNone(material.getDiffuseColor());
+                    yield text3d;
+
                 }
                 case "pointLight" -> {
                     checkParams(command, params, 3);
@@ -260,11 +376,7 @@ public class JFX3dTool extends EditorJFXTool {
                     yield light;
                 }
                 case "ambientLight" -> {
-                    checkParams(command, params, 3);
-                    var r = (int) params[0];
-                    var g = (int) params[1];
-                    var b = (int) params[2];
-                    yield new AmbientLight(Color.rgb(r, g, b));
+                    yield new AmbientLight(fixColor(tokens[1]));
 
                 }
                 case "clear" -> {
@@ -315,10 +427,10 @@ public class JFX3dTool extends EditorJFXTool {
         });
     }
 
-    private void checkParams(String command, double[] params, int expected) {
+    private void checkParams(String command, Double[] params, int expected) {
         if (params.length < expected) {
             throw new IllegalArgumentException(
-                    "Command " + command + " expects " + expected + " parameters, but got " + params.length);
+                    "Command '" + command + "' expects " + expected + " parameters, but got " + params.length);
         }
     }
 
