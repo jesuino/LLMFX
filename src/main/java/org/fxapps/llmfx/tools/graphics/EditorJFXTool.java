@@ -1,5 +1,7 @@
 package org.fxapps.llmfx.tools.graphics;
 
+import java.awt.RenderingHints.Key;
+
 import javafx.geometry.Insets;
 import javafx.geometry.Orientation;
 import javafx.geometry.Pos;
@@ -9,8 +11,7 @@ import javafx.scene.control.Label;
 import javafx.scene.control.ScrollPane;
 import javafx.scene.control.SplitPane;
 import javafx.scene.control.TextArea;
-import javafx.scene.layout.Background;
-import javafx.scene.layout.BackgroundFill;
+import javafx.scene.input.KeyCode;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.text.Font;
@@ -51,13 +52,20 @@ public abstract class EditorJFXTool implements JFXTool {
                 txtCode.setStyle("-fx-control-inner-background: #757575ff;");
                 setMessage("changes not saved");
             }
+
+            if (event.getCode() == KeyCode.ENTER && event.isControlDown()) {
+                submitCode();
+            }
         });
 
-        btnRun.setOnAction(e -> {
-            setMessage("");
-            onEditorChange(txtCode.getText());
+        btnRun.setOnAction(e -> submitCode()
 
-        });
+        );
+    }
+
+    private void submitCode() {
+        setMessage("");
+        onEditorChange(txtCode.getText());
     }
 
     public void setMessage(String message) {
