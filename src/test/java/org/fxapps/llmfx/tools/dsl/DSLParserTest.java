@@ -31,13 +31,35 @@ public class DSLParserTest {
     }
 
     @Test
-
     public void testBadParamType() {
         var commands = DSLParser.parse("""
                 z x
                 """);
         var z = commands.get(0);
         Assertions.assertThrows(IllegalArgumentException.class, () -> z.params().get(0).asDouble());
+
+    }
+
+    @Test
+    public void testSingleLineDSL() {
+        var commands = DSLParser.parse("clear\\nbox 0 0 0 1 1 1");
+        var clear = commands.get(0);
+        var box = commands.get(1);
+        assertEquals(2, commands.size());
+        assertEquals(clear.name(), "clear");
+        assertEquals(box.name(), "box");
+        assertEquals(box.params().size(), 6);
+    }
+
+    @Test
+    public void testSingleLineDSL2() {
+        var commands = DSLParser.parse("clear\\ncolor #FF5733\\ncone 0 0 0 32 1 2");
+        var clear = commands.get(0);
+        var color = commands.get(1);
+        var cone = commands.get(2);
+        assertEquals(clear.name(), "clear");
+        assertEquals(color.name(), "color");
+        assertEquals(cone.name(), "cone");
 
     }
 

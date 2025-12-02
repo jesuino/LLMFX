@@ -32,8 +32,8 @@ import javafx.scene.Node;
 import javafx.scene.PerspectiveCamera;
 import javafx.scene.PointLight;
 import javafx.scene.SubScene;
-import javafx.scene.paint.Color;
 import javafx.scene.paint.Material;
+import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
 import javafx.scene.shape.Cylinder;
@@ -183,9 +183,15 @@ public class JFX3dTool extends EditorJFXTool {
                 params -> new Cylinder(params.get(3).asDouble(),
                         params.get(4).asDouble()));
         cmdFnRegistry.register("cone",
-                params -> new ConeMesh(params.get(3).asDouble().intValue(),
-                        params.get(4).asDouble(),
-                        params.get(5).asDouble()));
+                params -> {
+                    var sides = params.get(3).asDouble().intValue();
+                    if (sides < 2) {
+                        throw new IllegalArgumentException("A cone must have at least 2 sides");
+                    }
+                    return new ConeMesh(sides,
+                            params.get(4).asDouble(),
+                            params.get(5).asDouble());
+                });
         cmdFnRegistry.register("spheroid",
                 params -> new SpheroidMesh(params.get(3).asDouble().intValue(),
                         params.get(4).asDouble(),
@@ -271,9 +277,14 @@ public class JFX3dTool extends EditorJFXTool {
     }
 
     @Tool("""
-            You can add 3D objects to the scene using the following DSL commands (please use one command per line):
+            You can add 3D objects to the scene using the following DSL commands.
+            You don't need to specify the parameter name you should use one command per line.
+            You can add comments using #
+
+            DSL commands:
+
             clear
-            color c
+            color c # web color
             box x y z width height depth
             sphere x y z radius
             cylinder x y z radius height
@@ -286,16 +297,16 @@ public class JFX3dTool extends EditorJFXTool {
             icosahedron x y z diameter
             trapezoid x y z smallSize bigSize h depth
             frustum x y z majorRadius minorRadius height
-            pointLight color x y z
-            ambientLight color
+            pointLight color x y z # web color
+            ambientLight color # web color
             """)
     public void add3dObjects(@P("The dsl to add 3d objects") String dsl) {
         try {
             setMessage("");
+            setEditorContent(dsl);
             add3dObjects(dsl, false);
         } catch (Exception e) {
             setMessage(e.getMessage());
-            setEditorContent(dsl);
             e.printStackTrace();
         }
     }

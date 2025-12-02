@@ -7,10 +7,10 @@ public final class DSLParser {
 
     private static final String COMMENT = "#";
 
-    public static List<Command> parse(String dsl) {
+    public static List<Command> parse(String dsl) {        
         List<Command> commands = new ArrayList<>();
 
-        String[] lines = dsl.split("\\R");
+        String[] lines = dsl.replaceAll("\\\\n", System.lineSeparator()).split("\\R");
         for (String line : lines) {
             var tokens = line.trim().split("\\s+");
             if (tokens.length == 0 || line.startsWith(COMMENT))

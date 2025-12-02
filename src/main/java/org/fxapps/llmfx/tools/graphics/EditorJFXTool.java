@@ -66,6 +66,7 @@ public abstract class EditorJFXTool implements JFXTool {
     private void submitCode() {
         setMessage("");
         onEditorChange(txtCode.getText());
+        lastContent = txtCode.getText();
     }
 
     public void setMessage(String message) {
