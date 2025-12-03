@@ -27,10 +27,12 @@ import jakarta.inject.Singleton;
 import javafx.application.Platform;
 import javafx.scene.AmbientLight;
 import javafx.scene.Camera;
+import javafx.scene.DirectionalLight;
 import javafx.scene.Group;
 import javafx.scene.Node;
 import javafx.scene.PerspectiveCamera;
 import javafx.scene.PointLight;
+import javafx.scene.SpotLight;
 import javafx.scene.SubScene;
 import javafx.scene.paint.Material;
 import javafx.scene.paint.Color;
@@ -174,75 +176,99 @@ public class JFX3dTool extends EditorJFXTool {
     private void initCommandsRegistry() {
         cmdFnRegistry = new CommandFunctionRegistry<>();
         cmdFnRegistry.register("box",
-                params -> new Box(params.get(3).asDouble(),
-                        params.get(4).asDouble(),
-                        params.get(5).asDouble()));
+                params -> new Box(params.getDouble(3),
+                        params.getDouble(4),
+                        params.getDouble(5)));
         cmdFnRegistry.register("sphere",
-                params -> new Sphere(params.get(3).asDouble()));
+                params -> new Sphere(params.getDouble(3)));
         cmdFnRegistry.register("cylinder",
-                params -> new Cylinder(params.get(3).asDouble(),
-                        params.get(4).asDouble()));
+                params -> new Cylinder(params.getDouble(3),
+                        params.getDouble(4)));
         cmdFnRegistry.register("cone",
                 params -> {
-                    var sides = params.get(3).asDouble().intValue();
+                    var sides = params.getInt(3);
                     if (sides < 2) {
                         throw new IllegalArgumentException("A cone must have at least 2 sides");
                     }
                     return new ConeMesh(sides,
-                            params.get(4).asDouble(),
-                            params.get(5).asDouble());
+                            params.getDouble(4),
+                            params.getDouble(5));
                 });
         cmdFnRegistry.register("spheroid",
-                params -> new SpheroidMesh(params.get(3).asDouble().intValue(),
-                        params.get(4).asDouble(),
-                        params.get(5).asDouble()));
+                params -> new SpheroidMesh(params.getInt(3),
+                        params.getDouble(4),
+                        params.getDouble(5)));
         cmdFnRegistry.register("tetrahedra",
                 params -> {
                     var pos = new Point3D(params.get(0).asDouble(),
-                            params.get(1).asDouble(),
-                            params.get(2).asDouble());
-                    return new TetrahedraMesh(params.get(3).asDouble(), 1, pos);
+                            params.getDouble(1),
+                            params.getDouble(2));
+                    return new TetrahedraMesh(params.getDouble(3), 1, pos);
                 });
         cmdFnRegistry.register("capsule",
-                params -> new CapsuleMesh(params.get(3).asDouble(),
-                        params.get(4).asDouble()));
+                params -> new CapsuleMesh(params.getDouble(3),
+                        params.getDouble(4)));
         cmdFnRegistry.register("prism",
-                params -> new PrismMesh(params.get(3).asDouble(),
-                        params.get(4).asDouble(),
+                params -> new PrismMesh(params.getDouble(3),
+                        params.getDouble(4),
                         1,
                         null,
                         null));
         cmdFnRegistry.register("trapezoid",
-                params -> new TrapezoidMesh(params.get(3).asDouble(),
-                        params.get(4).asDouble(),
-                        params.get(5).asDouble(),
+                params -> new TrapezoidMesh(params.getDouble(3),
+                        params.getDouble(4),
+                        params.getDouble(5),
                         params.get(6).asDouble()));
         cmdFnRegistry.register("octahedron",
-                params -> new OctahedronMesh(params.get(3).asDouble(),
-                        params.get(4).asDouble()));
+                params -> new OctahedronMesh(params.getDouble(3),
+                        params.getDouble(4)));
         cmdFnRegistry.register("frustum",
-                params -> new FrustumMesh(params.get(3).asDouble(),
-                        params.get(4).asDouble(),
-                        params.get(5).asDouble()));
+                params -> new FrustumMesh(params.getDouble(3),
+                        params.getDouble(4),
+                        params.getDouble(5)));
         cmdFnRegistry.register("pyramid",
-                params -> new PyramidMesh(params.get(3).asDouble(),
-                        params.get(4).asDouble()));
+                params -> new PyramidMesh(params.getDouble(3),
+                        params.getDouble(4)));
         cmdFnRegistry.register("icosahedron",
-                params -> new IcosahedronMesh(params.get(3).asDouble().floatValue()));
+                params -> new IcosahedronMesh(params.getDouble(3).floatValue()));
         cmdFnRegistry.register("pointLight",
                 params -> {
                     var light = new PointLight(fixColor(params.get(0)));
                     light.getTransforms().addAll(
-                            new Translate(params.get(1).asDouble(),
-                                    params.get(2).asDouble(),
-                                    params.get(3).asDouble()));
+                            new Translate(params.getDouble(1),
+                                    params.getDouble(2),
+                                    params.getDouble(3)));
+                    this.container.getChildren().add(light);
+                    return null;
+                });
+        cmdFnRegistry.register("directionalLight",
+                params -> {
+                    var light = new DirectionalLight(fixColor(params.get(0)));
+                    light.setDirection(new javafx.geometry.Point3D(params.getDouble(1),
+                            params.getDouble(2),
+                            params.getDouble(3)));
+                    this.container.getChildren().add(light);
+                    return null;
+                });
+        cmdFnRegistry.register("spotLight",
+                params -> {
+                    var light = new SpotLight(fixColor(params.get(0)));
+                    light.setTranslateX(params.getDouble(1));
+                    light.setTranslateY(params.getDouble(2));
+                    light.setTranslateZ(params.getDouble(3));
+                    light.setDirection(new javafx.geometry.Point3D(params.getDouble(4),
+                            params.getDouble(5),
+                            params.getDouble(6)));
+                    light.setInnerAngle(params.getDouble(7));
+                    light.setOuterAngle(params.getDouble(8));
+                    light.setFalloff(2);
                     this.container.getChildren().add(light);
                     return null;
                 });
         cmdFnRegistry.register("ambientLight",
                 params -> {
                     this.container.getChildren()
-                            .add(new AmbientLight(fixColor(params.get(0).value())));
+                            .add(new AmbientLight(fixColor(params.getStr(0))));
                     return null;
                 });
 
@@ -267,7 +293,7 @@ public class JFX3dTool extends EditorJFXTool {
 
     @Override
     void onEditorChange(String newContent) {
-        this.container.getChildren().clear();
+        clearRenderNode();
         try {
             this.add3dObjects(newContent, true);
         } catch (Exception e) {
@@ -298,12 +324,13 @@ public class JFX3dTool extends EditorJFXTool {
             trapezoid x y z smallSize bigSize h depth
             frustum x y z majorRadius minorRadius height
             pointLight color x y z # web color
+            directionalLight color dx dy dz # web color
+            spotLight color x y z dx dy dz innerAngle outerAngle # web color
             ambientLight color # web color
             """)
     public void add3dObjects(@P("The dsl to add 3d objects") String dsl) {
         try {
             setMessage("");
-            setEditorContent(dsl);
             add3dObjects(dsl, false);
         } catch (Exception e) {
             setMessage(e.getMessage());
@@ -318,7 +345,7 @@ public class JFX3dTool extends EditorJFXTool {
             var params = command.params();
             Optional<Shape3D> shape3dOp = switch (command.name()) {
                 case "clear" -> {
-                    Platform.runLater(() -> container.getChildren().clear());
+                    Platform.runLater(() -> clearRenderNode());
                     clear = true;
                     yield Optional.empty();
                 }
@@ -327,8 +354,8 @@ public class JFX3dTool extends EditorJFXTool {
 
             shape3dOp.ifPresent(shape3d -> {
                 shape3d.setTranslateX(params.get(0).asDouble());
-                shape3d.setTranslateY(params.get(1).asDouble());
-                shape3d.setTranslateZ(params.get(2).asDouble());
+                shape3d.setTranslateY(params.getDouble(1));
+                shape3d.setTranslateZ(params.getDouble(2));
                 shape3d.setMaterial(materialRef.get());
                 Platform.runLater(() -> container.getChildren().add(shape3d));
             });

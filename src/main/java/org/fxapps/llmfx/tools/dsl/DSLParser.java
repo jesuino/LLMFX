@@ -7,7 +7,7 @@ public final class DSLParser {
 
     private static final String COMMENT = "#";
 
-    public static List<Command> parse(String dsl) {        
+    public static List<Command> parse(String dsl) {
         List<Command> commands = new ArrayList<>();
 
         String[] lines = dsl.replaceAll("\\\\n", System.lineSeparator()).split("\\R");
@@ -16,7 +16,7 @@ public final class DSLParser {
             if (tokens.length == 0 || line.startsWith(COMMENT))
                 continue;
             var commandName = tokens[0];
-            var params = new ArrayList<Param>();
+            var params = new Params();
             var command = new Command(commandName, params);
 
             for (int j = 1; j < tokens.length; j++) {
