@@ -176,9 +176,12 @@ public class JFX3dTool extends EditorJFXTool {
     private void initCommandsRegistry() {
         cmdFnRegistry = new CommandFunctionRegistry<>();
         cmdFnRegistry.register("box",
-                params -> new Box(params.getDouble(3),
-                        params.getDouble(4),
-                        params.getDouble(5)));
+                params -> {
+                    var x = params.getDouble(3);
+                    var y = params.size() > 4 ? params.getDouble(4) : x;
+                    var z = params.size() > 5 ? params.getDouble(5) : x;
+                    return new Box(x, y, z);
+                });
         cmdFnRegistry.register("sphere",
                 params -> new Sphere(params.getDouble(3)));
         cmdFnRegistry.register("cylinder",
@@ -200,7 +203,7 @@ public class JFX3dTool extends EditorJFXTool {
                         params.getDouble(5)));
         cmdFnRegistry.register("tetrahedra",
                 params -> {
-                    var pos = new Point3D(params.get(0).asDouble(),
+                    var pos = new Point3D(params.getDouble(0),
                             params.getDouble(1),
                             params.getDouble(2));
                     return new TetrahedraMesh(params.getDouble(3), 1, pos);
@@ -218,7 +221,7 @@ public class JFX3dTool extends EditorJFXTool {
                 params -> new TrapezoidMesh(params.getDouble(3),
                         params.getDouble(4),
                         params.getDouble(5),
-                        params.get(6).asDouble()));
+                        params.getDouble(6)));
         cmdFnRegistry.register("octahedron",
                 params -> new OctahedronMesh(params.getDouble(3),
                         params.getDouble(4)));
@@ -277,7 +280,6 @@ public class JFX3dTool extends EditorJFXTool {
                     materialRef.set(new PhongMaterial(fixColor(params.get(0))));
                     return null;
                 });
-
     }
 
     @Override
@@ -353,7 +355,7 @@ public class JFX3dTool extends EditorJFXTool {
             };
 
             shape3dOp.ifPresent(shape3d -> {
-                shape3d.setTranslateX(params.get(0).asDouble());
+                shape3d.setTranslateX(params.getDouble(0));
                 shape3d.setTranslateY(params.getDouble(1));
                 shape3d.setTranslateZ(params.getDouble(2));
                 shape3d.setMaterial(materialRef.get());
