@@ -17,6 +17,7 @@ import org.fxyz3d.shapes.primitives.OctahedronMesh;
 import org.fxyz3d.shapes.primitives.PrismMesh;
 import org.fxyz3d.shapes.primitives.PyramidMesh;
 import org.fxyz3d.shapes.primitives.SpheroidMesh;
+import org.fxyz3d.shapes.primitives.SpringMesh;
 import org.fxyz3d.shapes.primitives.TetrahedraMesh;
 import org.fxyz3d.shapes.primitives.TrapezoidMesh;
 
@@ -234,6 +235,22 @@ public class JFX3dTool extends EditorJFXTool {
                         params.getDouble(4)));
         cmdFnRegistry.register("icosahedron",
                 params -> new IcosahedronMesh(params.getDouble(3).floatValue()));
+
+        cmdFnRegistry.register("spring",
+                params -> new SpringMesh(params.getDouble(3),
+                        params.getDouble(4),
+                        params.getDouble(5),
+                        params.getDouble(6)));
+        cmdFnRegistry.register("pointLight",
+                params -> {
+                    var light = new PointLight(fixColor(params.get(0)));
+                    light.getTransforms().addAll(
+                            new Translate(params.getDouble(1),
+                                    params.getDouble(2),
+                                    params.getDouble(3)));
+                    this.container.getChildren().add(light);
+                    return null;
+                });
         cmdFnRegistry.register("pointLight",
                 params -> {
                     var light = new PointLight(fixColor(params.get(0)));
@@ -325,6 +342,7 @@ public class JFX3dTool extends EditorJFXTool {
             icosahedron x y z diameter
             trapezoid x y z smallSize bigSize h depth
             frustum x y z majorRadius minorRadius height
+            spring x y z meanRadius wireRadius pitch length
             pointLight color x y z # web color
             directionalLight color dx dy dz # web color
             spotLight color x y z dx dy dz innerAngle outerAngle # web color
