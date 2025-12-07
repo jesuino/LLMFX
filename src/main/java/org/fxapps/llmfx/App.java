@@ -126,6 +126,9 @@ public class App {
             saveHistory();
             System.exit(0);
         });
+        stage.maximizedProperty().addListener((observable, oldValue, newValue) -> {
+            chatController.restoreDividerPositions();
+        });
 
         stage.setScene(scene);
         stage.setTitle("LLM FX: A desktop App for LLM Servers");

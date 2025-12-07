@@ -5,6 +5,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
@@ -171,6 +172,12 @@ public class ChatController {
     @FXML
     TabPane graphicsPane;
 
+    @FXML
+    Button btnCollapseHistory;
+
+    @FXML
+    VBox vbChatHistory;
+
     private SimpleBooleanProperty holdChatProperty;
 
     private MenuItem clearToolsMenuItem;
@@ -230,10 +237,6 @@ public class ChatController {
         btnTrashConversation.disableProperty()
                 .bind(historyList.getSelectionModel().selectedIndexProperty().isEqualTo(-1));
 
-        if (appConfig.historyFile().isEmpty()) {
-            spBody.setDividerPositions(new double[] { 0, 1d });
-        }
-
         this.toolsTabs = new ArrayList<>();
         toolsInfo.getToolsMap()
                 .entrySet()
@@ -243,6 +246,14 @@ public class ChatController {
                         toolsTabs.add(new Tab(e.getKey(), jfxTool.getRoot()));
                     }
                 });
+
+        SplitPane.setResizableWithParent(vbChatHistory, true);
+        btnCollapseHistory.textProperty().bind(vbChatHistory.visibleProperty().map(v -> v ? "<" : ">"));
+        btnCollapseHistory.setOnAction(e -> vbChatHistory.setVisible(!vbChatHistory.isVisible()));
+        final var initialHistoryWidth = vbChatHistory.getPrefWidth();
+        vbChatHistory.prefWidthProperty().bind(vbChatHistory.visibleProperty().map(v -> v ? initialHistoryWidth : 0.0));
+        vbChatHistory.visibleProperty().addListener(e -> restoreDividerPositions());
+
     }
 
     @FXML
@@ -393,14 +404,14 @@ public class ChatController {
 
     public void onSelectTool() {
         graphicsPane.getTabs().clear();
-        spBody.setDividerPosition(1, 1);
+        spBody.setDividerPosition(0, 1);
         var tabs = toolsTabs.stream()
                 .filter(tab -> selectedTools().contains(tab.getText()))
                 .toList();
         graphicsPane.getTabs().addAll(tabs);
 
         if (!tabs.isEmpty()) {
-            spBody.setDividerPosition(1, 0.4);
+            spBody.setDividerPosition(0, 0.4);
         }
 
     }
@@ -510,5 +521,11 @@ public class ChatController {
 
     public void hideWelcomeMessage() {
         vbWelcomeMessage.setVisible(false);
+    }
+
+    public void restoreDividerPositions() {
+        if (selectedTools().isEmpty()) {
+            spBody.setDividerPosition(0, 1);
+        }
     }
 }

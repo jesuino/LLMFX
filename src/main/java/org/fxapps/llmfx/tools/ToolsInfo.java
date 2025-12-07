@@ -91,10 +91,11 @@ public class ToolsInfo {
 
         // graphics
         toolsMap.putAll(Map.of(
-                DRAWER, drawerTool,                
+                DRAWER, drawerTool,
                 REPORTING, reportingTool,
                 _3D, _3dTools,
-                WEB_RENDER, webRenderingTool));
+                WEB_RENDER, webRenderingTool,
+                SHAPES, shapesTool));
         // Web
         toolsMap.putAll(Map.of(
                 WEB_SEARCH, webSearchTool,

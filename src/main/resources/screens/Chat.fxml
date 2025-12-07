@@ -72,6 +72,8 @@
                   <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
                </padding>
             </TextField>
+            <MenuButton fx:id="toolsMenu" mnemonicParsing="false" prefHeight="36.0" text="Tools" />
+            <MenuButton fx:id="mcpMenu" disable="true" mnemonicParsing="false" prefHeight="36.0" text="MCP" />
             <MenuButton fx:id="btnContent" mnemonicParsing="false" prefHeight="36.0" prefWidth="39.0" text="↑">
               <items>
                 <MenuItem mnemonicParsing="false" onAction="#choseContent" text="Upload" />
@@ -88,18 +90,8 @@
       </HBox>
    </bottom>
    <center>
-      <SplitPane fx:id="spBody" dividerPositions="0.2, 1.0" prefHeight="295.0" prefWidth="565.0" BorderPane.alignment="CENTER">
+      <SplitPane fx:id="spBody" dividerPositions="1.0" prefHeight="295.0" prefWidth="565.0" BorderPane.alignment="CENTER">
          <items>
-            <StackPane minWidth="0.0">
-               <children>
-                  <ListView fx:id="historyList" minWidth="0.0" prefHeight="295.0" prefWidth="199.0" />
-                  <Button fx:id="btnTrashConversation" alignment="CENTER" minWidth="0.0" mnemonicParsing="false" onAction="#trashConversation" text="X" textFill="#bc1111" StackPane.alignment="BOTTOM_RIGHT">
-                     <StackPane.margin>
-                        <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
-                     </StackPane.margin>
-                  </Button>
-               </children>
-            </StackPane>
             <StackPane>
                <children>
                   <WebView fx:id="chatOutput" prefHeight="-1.0" prefWidth="-1.0" />
@@ -133,7 +125,6 @@
                      </StackPane.margin>
                      <children>
                         <Button fx:id="btnReload" mnemonicParsing="false" onAction="#reloadMessage" text="↻" />
-                        <Button fx:id="btnNewChat" mnemonicParsing="false" onAction="#newChat" prefHeight="26.0" prefWidth="33.0" text="🗎" textFill="#dd0606" />
                         <SplitMenuButton mnemonicParsing="false" prefHeight="26.0" prefWidth="47.0" text="↓">
                           <items>
                             <MenuItem mnemonicParsing="false" onAction="#saveAsText" text="Text" />
@@ -144,10 +135,6 @@
                      </children>
                   </HBox>
                   <HBox alignment="BOTTOM_LEFT" fillHeight="false" maxHeight="25.0" maxWidth="220.0" prefHeight="100.0" prefWidth="30.0" spacing="10.0" StackPane.alignment="BOTTOM_LEFT">
-                     <children>
-                        <MenuButton fx:id="toolsMenu" mnemonicParsing="false" text="Tools" />
-                        <MenuButton fx:id="mcpMenu" disable="true" mnemonicParsing="false" text="MCP" />
-                     </children>
                      <StackPane.margin>
                         <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
                      </StackPane.margin>
@@ -182,4 +169,40 @@
    <padding>
       <Insets left="10.0" right="10.0" top="5.0" />
    </padding>
+   <left>
+      <StackPane BorderPane.alignment="CENTER">
+         <BorderPane.margin>
+            <Insets left="2.0" right="2.0" />
+         </BorderPane.margin>
+         <children>
+            <VBox fx:id="vbChatHistory" spacing="10.0" StackPane.alignment="TOP_LEFT">
+               <children>
+                  <Button fx:id="btnNewChat" mnemonicParsing="false" onAction="#newChat" prefHeight="26.0" prefWidth="120.0" text="🗎 New Chat" textFill="#dd0606">
+                     <VBox.margin>
+                        <Insets top="10.0" />
+                     </VBox.margin>
+                  </Button>
+                  <StackPane minWidth="0.0" prefHeight="784.0" prefWidth="199.0">
+                     <children>
+                        <ListView fx:id="historyList" minWidth="0.0" prefHeight="295.0" prefWidth="199.0" />
+                        <Button fx:id="btnTrashConversation" alignment="CENTER" minWidth="0.0" mnemonicParsing="false" onAction="#trashConversation" text="X" textFill="#bc1111" StackPane.alignment="BOTTOM_RIGHT">
+                           <StackPane.margin>
+                              <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
+                           </StackPane.margin>
+                        </Button>
+                     </children>
+                  </StackPane>
+               </children>
+               <opaqueInsets>
+                  <Insets />
+               </opaqueInsets>
+            </VBox>
+            <Button fx:id="btnCollapseHistory" alignment="TOP_RIGHT" mnemonicParsing="false" text="&lt;" StackPane.alignment="TOP_RIGHT">
+               <StackPane.margin>
+                  <Insets top="10.0" />
+               </StackPane.margin>
+            </Button>
+         </children>
+      </StackPane>
+   </left>
 </BorderPane>

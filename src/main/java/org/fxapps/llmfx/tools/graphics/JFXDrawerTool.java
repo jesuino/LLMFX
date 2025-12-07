@@ -58,7 +58,6 @@ public class JFXDrawerTool extends EditorJFXTool {
             polyline x1 y1 x2 y2 … xn yn
             polygon x1 y1 x2 y2 … xn yn
             fillPolygon x1 y1 x2 y2 … xn yn
-            text x y text
             color r g b
             width w
             text x y "string"
