@@ -49,6 +49,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.geometry.VPos;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckMenuItem;
@@ -65,6 +66,7 @@ import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
 import javafx.scene.image.Image;
 import javafx.scene.image.ImageView;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 
@@ -250,10 +252,10 @@ public class ChatController {
         SplitPane.setResizableWithParent(vbChatHistory, true);
         btnCollapseHistory.textProperty().bind(vbChatHistory.visibleProperty().map(v -> v ? "<" : ">"));
         btnCollapseHistory.setOnAction(e -> vbChatHistory.setVisible(!vbChatHistory.isVisible()));
-        final var initialHistoryWidth = vbChatHistory.getPrefWidth();
+        final var initialHistoryWidth = vbChatHistory.getPrefWidth();        
+        VBox.setVgrow(historyList, Priority.SOMETIMES);
         vbChatHistory.prefWidthProperty().bind(vbChatHistory.visibleProperty().map(v -> v ? initialHistoryWidth : 0.0));
         vbChatHistory.visibleProperty().addListener(e -> restoreDividerPositions());
-
     }
 
     @FXML

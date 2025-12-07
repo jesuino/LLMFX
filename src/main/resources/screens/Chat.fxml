@@ -177,14 +177,17 @@
          <children>
             <VBox fx:id="vbChatHistory" spacing="10.0" StackPane.alignment="TOP_LEFT">
                <children>
-                  <Button fx:id="btnNewChat" mnemonicParsing="false" onAction="#newChat" prefHeight="26.0" prefWidth="120.0" text="🗎 New Chat" textFill="#dd0606">
+                  <HBox>
                      <VBox.margin>
                         <Insets top="10.0" />
                      </VBox.margin>
-                  </Button>
-                  <StackPane minWidth="0.0" prefHeight="784.0" prefWidth="199.0">
                      <children>
-                        <ListView fx:id="historyList" minWidth="0.0" prefHeight="295.0" prefWidth="199.0" />
+                        <Button fx:id="btnNewChat" mnemonicParsing="false" onAction="#newChat" prefHeight="26.0" prefWidth="120.0" text="🗎 New Chat" textFill="#dd0606" />
+                     </children>
+                  </HBox>
+                  <StackPane minWidth="0.0" prefHeight="12000.0" prefWidth="199.0">
+                     <children>
+                        <ListView fx:id="historyList" minWidth="0.0" prefWidth="199.0" />
                         <Button fx:id="btnTrashConversation" alignment="CENTER" minWidth="0.0" mnemonicParsing="false" onAction="#trashConversation" text="X" textFill="#bc1111" StackPane.alignment="BOTTOM_RIGHT">
                            <StackPane.margin>
                               <Insets bottom="15.0" left="15.0" right="15.0" top="15.0" />
