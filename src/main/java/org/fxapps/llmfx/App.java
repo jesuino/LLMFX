@@ -229,7 +229,7 @@ public class App {
     void onHistoryDeleted(@Observes DeleteConversationEvent evt) {
         var selectedHistory = historyStorage.getChatHistory().get(evt.index());
         if (selectedHistory != null) {
-            historyStorage.getChatHistory().remove(selectedHistory);
+            historyStorage.removeConversation(selectedHistory);
             updateHistoryList();
             chatController.clearChatHistory();
         }

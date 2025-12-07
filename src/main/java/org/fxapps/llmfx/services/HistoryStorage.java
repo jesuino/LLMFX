@@ -81,4 +81,12 @@ public class HistoryStorage {
         this.currentConversation = selectedHistory;
     }
 
+    public void removeConversation(ChatHistory selectedHistory) {
+        this.getChatHistory().remove(selectedHistory);
+        if (this.getConversation() == selectedHistory) {
+            this.currentConversation = ChatHistory.empty();
+        }
+
+    }
+
 }

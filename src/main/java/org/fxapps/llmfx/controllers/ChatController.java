@@ -237,7 +237,7 @@ public class ChatController {
         });
 
         btnTrashConversation.disableProperty()
-                .bind(historyList.getSelectionModel().selectedIndexProperty().isEqualTo(-1));
+                .bind(historyList.getSelectionModel().selectedIndexProperty().isEqualTo(-1).or(holdChatProperty));
 
         this.toolsTabs = new ArrayList<>();
         toolsInfo.getToolsMap()
