@@ -191,6 +191,10 @@ public class App {
 
     @RunOnFxThread
     void onModelSelected(@Observes SelectedModelEvent selectedModelEvent) {
+        if(this.selectedModel != null && llmConfig.unloadModel().orElse(false)) {
+            logger.info("Unloading previous model: " + this.selectedModel);
+            openApiService.unloadModel(this.selectedModel);
+        }
         this.selectedModel = selectedModelEvent.model();
     }
 

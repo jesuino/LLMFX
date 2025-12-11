@@ -12,6 +12,7 @@ import io.quarkus.rest.client.reactive.Url;
 import jakarta.enterprise.context.ApplicationScoped;
 import jakarta.inject.Inject;
 import jakarta.ws.rs.GET;
+import jakarta.ws.rs.POST;
 import jakarta.ws.rs.Path;
 
 @ApplicationScoped
@@ -26,12 +27,16 @@ public class OpenAiService {
         @GET
         @Path("/models")
         ModelListResponse listModels(@Url String url);
+
+        @POST
+        @Path("/models/unload")
+        void unloadModel(@Url String url, String model);
     }
 
     public record ModelListResponse(String object, List<ModelInfo> data) {
     }
 
-    public record ModelInfo(String id, String object, long created, String owned_by) {
+    public record ModelInfo(String id, String model, String object, long created, String owned_by) {
     }
 
     @Inject
@@ -41,6 +46,13 @@ public class OpenAiService {
     public List<String> listModels() {
         var models = openAiServiceRest.listModels(getBaseUrl());
         return models.data().stream().map(ModelInfo::id).toList();
+    }
+
+    public void unloadModel(String modelId) {
+        var reqBody = """
+                {"model": "%s"}
+                    """.formatted(modelId);
+        openAiServiceRest.unloadModel(getBaseUrl(), reqBody);
     }
 
     public String getBaseUrl() {

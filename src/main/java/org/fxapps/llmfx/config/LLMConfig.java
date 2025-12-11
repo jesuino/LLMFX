@@ -29,4 +29,7 @@ public interface LLMConfig {
     @ConfigProperty(defaultValue = "false")
     Optional<Boolean> logResponses();
 
+    @ConfigProperty(defaultValue = "false")
+    Optional<Boolean> unloadModel();
+
 }
