@@ -5,7 +5,6 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
@@ -49,7 +48,6 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.geometry.VPos;
 import javafx.scene.SnapshotParameters;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckMenuItem;
@@ -83,9 +81,6 @@ public class ChatController {
     private static final String TOOLS_LABEL = "Tools";
 
     Logger logger = Logger.getLogger(ChatController.class);
-
-    @Inject
-    private AppConfig appConfig;
 
     @Inject
     Event<UserInputEvent> onUserInputEvent;

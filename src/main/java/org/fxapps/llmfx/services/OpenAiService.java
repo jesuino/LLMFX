@@ -7,6 +7,7 @@ import org.eclipse.microprofile.rest.client.inject.RegisterRestClient;
 import org.eclipse.microprofile.rest.client.inject.RestClient;
 
 import org.fxapps.llmfx.config.RuntimeLLMConfig;
+import org.jboss.logging.Logger;
 
 import io.quarkus.rest.client.reactive.Url;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -20,6 +21,8 @@ public class OpenAiService {
 
     @Inject
     RuntimeLLMConfig llmConfig;
+
+    Logger logger = Logger.getLogger(OpenAiService.class);
 
     @RegisterRestClient(baseUri = "notused")
     @RegisterClientHeaders(BearerTokenHeaderFactory.class)
@@ -52,7 +55,12 @@ public class OpenAiService {
         var reqBody = """
                 {"model": "%s"}
                     """.formatted(modelId);
-        openAiServiceRest.unloadModel(getBaseUrl(), reqBody);
+        try {
+            openAiServiceRest.unloadModel(getBaseUrl(), reqBody);
+        } catch (Exception e) {
+            logger.warn("Error unloading model: " + modelId);
+            logger.debug(e);            
+        }
     }
 
     public String getBaseUrl() {
