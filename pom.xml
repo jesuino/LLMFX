@@ -18,8 +18,8 @@
         <quarkus.platform.version>3.29.2</quarkus.platform.version>
         <skipITs>true</skipITs>
         <surefire-plugin.version>3.5.2</surefire-plugin.version>
-        <langchain4j.version>1.9.1</langchain4j.version>
-        <langchain4j.mcp.version>1.9.1-beta17</langchain4j.mcp.version>
+        <langchain4j.version>1.11.0</langchain4j.version>
+        <langchain4j.mcp.version>1.11.0-beta19</langchain4j.mcp.version>
         <!--Matches
         the version used by JFX quarkus ext-->
         <openjfx.version>25.0.1</openjfx.version>
@@ -118,7 +118,6 @@
             <artifactId>jsoup</artifactId>
             <version>1.20.1</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/org.apache.commons/commons-text -->
         <dependency>
             <groupId>org.apache.commons</groupId>
             <artifactId>commons-text</artifactId>
