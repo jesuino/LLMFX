@@ -11,7 +11,7 @@ import org.jboss.logging.Logger;
 import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.transport.McpTransport;
-import dev.langchain4j.mcp.client.transport.http.HttpMcpTransport;
+import dev.langchain4j.mcp.client.transport.http.StreamableHttpMcpTransport;
 import dev.langchain4j.mcp.client.transport.stdio.StdioMcpTransport;
 import jakarta.annotation.PostConstruct;
 import jakarta.enterprise.context.ApplicationScoped;
@@ -63,8 +63,8 @@ public class MCPClientRepository {
         }
 
         if (def.url().isPresent()) {
-            return new HttpMcpTransport.Builder()
-                    .sseUrl(def.url().get())
+            return new StreamableHttpMcpTransport.Builder()
+                    .url(def.url().get())
                     .build();
         }
 

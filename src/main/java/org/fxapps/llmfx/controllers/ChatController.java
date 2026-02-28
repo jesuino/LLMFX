@@ -31,9 +31,9 @@ import org.fxapps.llmfx.Events.UserInputEvent;
 import org.fxapps.llmfx.FXUtils;
 import org.fxapps.llmfx.Model.Content;
 import org.fxapps.llmfx.Model.ContentType;
-import org.fxapps.llmfx.config.AppConfig;
 import org.fxapps.llmfx.tools.ToolsInfo;
 import org.fxapps.llmfx.tools.graphics.JFXTool;
+import org.fxapps.llmfx.windows.MCPFunctionSelectionDialog;
 import org.fxapps.llmfx.windows.ScreenshotWindow;
 import org.fxapps.llmfx.windows.ViewLogsDialog;
 import org.jboss.logging.Logger;
@@ -123,6 +123,9 @@ public class ChatController {
 
     @Inject
     ScreenshotWindow screenshotWindow;
+
+    @Inject
+    MCPFunctionSelectionDialog mcpFunctionSelectionDialog;
 
     @FXML
     private WebView chatOutput;
@@ -359,13 +362,17 @@ public class ChatController {
         mcpMenu.setDisable(mcpServers.isEmpty());
         mcpServers.stream().map(mcpServer -> {
             var menu = new CheckMenuItem(mcpServer);
-            menu.selectedProperty().addListener((obs, old, n) -> mcpMenu
-                    .setText(MCP_LABEL +
-                            (selectedMCPs().isEmpty()
-                                    ? ""
-                                    : " (" + selectedMCPs().size() + ")"))
+            menu.selectedProperty().addListener((obs, old, n) -> {
+                mcpMenu.setText(MCP_LABEL +
+                        (selectedMCPs().isEmpty()
+                                ? ""
+                                : " (" + selectedMCPs().size() + ")"));
 
-            );
+                // Show function selection dialog when MCP is selected
+                if (n && mcpFunctionSelectionDialog != null) {
+                    Platform.runLater(() -> mcpFunctionSelectionDialog.showForMcp(mcpServer));
+                }
+            });
             return menu;
         }).forEach(mcpMenu.getItems()::add);
 

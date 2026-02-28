@@ -23,6 +23,7 @@ import dev.langchain4j.data.message.TextContent;
 import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.data.message.VideoContent;
+import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.chat.response.ChatResponse;
@@ -52,6 +53,12 @@ public class ChatService {
 
     @Inject
     EventChatModelListener eventChatModelListener;
+
+    @Inject
+    MCPFunctionRegistry mcpFunctionRegistry;
+
+    @Inject
+    MCPClientRepository mcpClientRepository;
 
     private final Map<String, StreamingChatModel> modelCache;
 
@@ -251,10 +258,16 @@ public class ChatService {
 
     private HashMap<ToolSpecification, ToolExecutor> getRequestTools(ChatRequest chatRequest) {
         var tools = new HashMap<ToolSpecification, ToolExecutor>();
-        // MCP Tools
-        chatRequest.mcpClients().forEach(client -> client.listTools()
-                .stream()
-                .forEach(tool -> tools.put(tool, (req, mem) -> client.executeTool(req).resultText())));
+        // MCP Tools - filter by selected functions
+        chatRequest.mcpClients().forEach(client -> {
+            // Find the MCP name for this client
+            String mcpName = findMcpNameForClient(client);
+
+            client.listTools()
+                    .stream()
+                    .filter(tool -> mcpName == null || mcpFunctionRegistry.isFunctionSelected(mcpName, tool.name()))
+                    .forEach(tool -> tools.put(tool, (req, mem) -> client.executeTool(req).resultText()));
+        });
         // native tools
         chatRequest.tools().forEach(tool -> {
             ToolSpecifications.toolSpecificationsFrom(tool)
@@ -262,5 +275,16 @@ public class ChatService {
                             (req, mem) -> new DefaultToolExecutor(tool, req).execute(req, mem)));
         });
         return tools;
+    }
+
+    /**
+     * Find the MCP name for a given client by comparing client instances.
+     * Returns null if not found.
+     */
+    private String findMcpNameForClient(McpClient client) {
+        return mcpClientRepository.mcpServers().stream()
+                .filter(name -> mcpClientRepository.getMcpClient(name) == client)
+                .findFirst()
+                .orElse(null);
     }
 }
