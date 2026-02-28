@@ -112,8 +112,6 @@ public class ChatMessagesView {
                                 """)
                 .replaceAll("</think>",
                         "><h4>end thinking</h4></div>");
-        // TODO: find someway to copy code to the clipboard
-        // .replaceAll("<code", "<code");
         runScriptToAppendMessage(message, "assistant", streaming);
     }
 
@@ -159,6 +157,28 @@ public class ChatMessagesView {
                             }
                             return false;
                         });
+                    });
+
+                    document.querySelectorAll('pre').forEach(pre => {
+                        if (pre.querySelector('.copy-button')) return;
+
+                        const code = pre.querySelector('code');
+                        if (code) {
+                            const button = document.createElement('button');
+                            button.className = 'copy-button';
+                            button.textContent = 'Copy';
+                            button.addEventListener('click', function() {
+                                const text = code.textContent;
+                                if (bridge) {
+                                    bridge.copyToClipboard(text);
+                                    button.textContent = 'Copied!';
+                                    setTimeout(() => {
+                                        button.textContent = 'Copy';
+                                    }, 2000);
+                                }
+                            });
+                            pre.appendChild(button);
+                        }
                     });
                 """);
     }
