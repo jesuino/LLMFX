@@ -10,7 +10,7 @@ import javafx.scene.web.WebView;
 
 @Singleton
 public class JFXWebRenderingTool extends EditorJFXTool {
- 
+
     private WebView webView;
 
     @PostConstruct
@@ -20,25 +20,35 @@ public class JFXWebRenderingTool extends EditorJFXTool {
     }
 
     @Tool("""
-            Render and allow users to visualize HTML content. You can use this tool to render HTML content for the user.
+            Render and allow users to visualize HTML or SVG content on a web view.
             """)
     public void renderHTML(@P("The HTML content to be rendered") String html) {
-        Platform.runLater(() -> super.setEditorContent(html));
+        Platform.runLater(() -> {
+            super.setEditorContent(html);
+            render(html);
+        });
+
     }
 
     @Override
-    Node getRenderNode() {        
+    Node getRenderNode() {
         return webView;
     }
 
     @Override
     void clearRenderNode() {
-        webView.getEngine().loadContent("");
+        render("");
     }
 
     @Override
     void onEditorChange(String newContent) {
-        webView.getEngine().loadContent(newContent);
+        render(newContent);
+
+    }
+
+    void render(String content) {
+        Platform.runLater(() -> this.webView.getEngine().loadContent(content));
+
     }
 
 }
