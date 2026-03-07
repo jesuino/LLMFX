@@ -1,9 +1,19 @@
 package org.fxapps.llmfx.controllers;
 
-import org.w3c.dom.html.HTMLElement;
+import java.net.URL;
+import java.util.List;
 
+import org.apache.commons.text.StringEscapeUtils;
+import org.commonmark.ext.gfm.tables.TablesExtension;
+import org.commonmark.parser.Parser;
+import org.commonmark.renderer.html.HtmlRenderer;
+import org.fxapps.llmfx.Model.Message;
+
+import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
+import javafx.concurrent.Worker.State;
 import javafx.scene.web.WebView;
+import netscape.javascript.JSObject;
 
 /*
  * This class will be responsible for rendering and displaying the chat messages in the WebView
@@ -11,138 +21,159 @@ import javafx.scene.web.WebView;
 @Singleton
 public class ChatMessagesView {
 
-    final String CHAT_PAGE = """
-                <html>
-                    <style>
-                        * {
-                            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen-Sans, Ubuntu, Cantarell, sans-serif;
-                        }
+    private static final double MIN_ZOOM = 0d;
+    private static final double MAX_ZOOM = 3.0d;
 
-                        table {
-                            border-collapse: collapse;
-                            margin-bottom: 20px;
-                            border-radius: 8px;
-                            overflow: hidden;
-                        }
-
-                        th, td {
-                            padding: 12px 16px;
-                            text-align: left;
-                            vertical-align: top;
-                            background-color: #fafafa;
-                            border-bottom: 1px solid #eaeaea;
-                        }
-
-                        th {
-                            background-color: #1a73e8;
-                            color: white;
-                            font-weight: 500;
-                        }
-
-                        th:last-child {
-                            border-bottom: none;
-                        }
-
-                        tr:last-child td {
-                            border-bottom: none;
-                        }
-
-                        .chat-container {
-                            padding: 16px;
-                            flex-grow: 1;
-                            line-height: 1.5;
-                        }
-
-                        .chat-container > p {
-                            border-radius: 12px;
-                            color: #1f1f1f;
-                            margin: 8px 0;
-                            padding: 12px 16px !important;
-                            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-                        }
-
-                        .user-message {
-                            background-color: #e3f2fd;
-                        }
-
-                        .system-message {
-                            background-color: #f5f5f5;
-                            border-left: 4px solid #1a73e8;
-                            color: #757575 !important;
-                            font-style: italic;
-                        }
-
-                        .assistant-message {
-                            background-color: #eeeeee;
-                        }
-                    </style>
-                    <body>
-                        <div id="chatContent" class="chat-container">
-                        </div>
-                    </body>
-                </html>
+    private static final String CHAT_PAGE = """
+            <html>
+                <body>
+                    <div id="chatContent" class="chat-container">
+                    </div>
+                </body>
+            </html>
             """;
+
+    public static final String STYLE = "/style/chat-messages.css";
+
+    private static final double ZOOM_STEP = 0.1d;
+
+    @Inject
+    MessagesViewJSBridge jsBridge;
+
     private WebView chatOutput;
     private boolean autoScroll;
 
+    private Parser markDownParser;
+    private HtmlRenderer markdownRenderer;
+
     public void init(WebView webView) {
         this.chatOutput = webView;
-        webView.getEngine().loadContent(CHAT_PAGE);
-        chatOutput.setOnScroll(e -> autoScroll = false);
+        this.markdownRenderer = HtmlRenderer.builder().extensions(List.of(TablesExtension.create())).build();
+        this.markDownParser = Parser.builder().extensions(List.of(TablesExtension.create())).build();
+        URL styleUrl = getClass().getResource(STYLE);
+        webView.getEngine().setUserStyleSheetLocation(styleUrl.toExternalForm());
+        webView.getEngine().loadContent(CHAT_PAGE, "text/html");
+
+        chatOutput.setOnScroll(e -> {
+            if (e.isControlDown()) {
+                var zoomStep = Math.clamp(e.getDeltaY(), -ZOOM_STEP, ZOOM_STEP);
+                var zoom = Math.clamp(zoomStep + chatOutput.getFontScale(), MIN_ZOOM, MAX_ZOOM);
+                this.chatOutput.setFontScale(zoom);
+                e.consume();
+            } else {
+                // scrolling up so need to turn off auto scroll
+                autoScroll = e.getDeltaY() <= 0;
+            }
+        });
+        webView.getEngine().getLoadWorker().stateProperty().addListener((_obs, _old, newState) -> {
+            if (newState == State.SUCCEEDED) {
+                var window = (JSObject) webView.getEngine().executeScript("window");
+                window.setMember("bridge", jsBridge);
+            }
+        });
     }
 
-    public void appendUserMessage(String userMessage) {
-        runScriptToAppendMessage("<p>" + userMessage + "</p>", "user");
+    public void appendUserMessage(Message userMessage) {
+        var message = new StringBuffer("<p>");
+        String escapeMessage = StringEscapeUtils.escapeHtml4(userMessage.text());
+        message.append(escapeMessage);
+        autoScroll = true;
+        userMessage.content()
+                .stream()
+                .map(content -> "data:" + content.mimeType() + ";base64, " + content.content())
+                .findAny()
+                .map(content -> "<br /><img src=\"" + content + "\" />")
+                .ifPresent(message::append);
+        message.append("</p>");
+        runScriptToAppendMessage(message.toString(), "user", false);
     }
 
-    public void appendSystemMessage(String systemMessage) {
-        runScriptToAppendMessage("<p>" + systemMessage + "</p>", "system");
+    public void appendSystemMessage(Message systemMessage) {
+        runScriptToAppendMessage("<p>" + systemMessage.text() + "</p>", "system", false);
     }
 
-    public void appendAssistantMessage(String assistantMessage) {
-        var message = assistantMessage.replaceFirst("<think>",
-                """
-                            <h4 style=\"color: red !important\">Thinking</h4>
-                            <i style=\"color: gray\">
-                        """)
-                .replaceFirst("</think>", "</i><h4 style=\"color: red !important\">end thinking</h4><hr/>")
-                // TODO: find someway to copy to the clipboard
-                .replaceAll("<code", "<code");
-        runScriptToAppendMessage(message, "assistant");
+    public void streamAssistantMessage(Message assistantMessage) {
+        appendAssistantMessage(assistantMessage.text(), true);
     }
 
-    private void runScriptToAppendMessage(String message, String role) {
-        // workaround because I don't have an innerHTML method in Java API!
+    public void appendAssistantMessage(Message assistantMessage) {
+        appendAssistantMessage(assistantMessage.text(), false);
+    }
+
+    private void appendAssistantMessage(String assistantMessage, boolean streaming) {
+        var assistantHTMLMessage = parseMarkdowToHTML(assistantMessage);
+        var message = assistantHTMLMessage
+                // qwen 3 generates empty think tags when /nothink is used
+                .replaceAll("<think>\s*</think>", "")
+                .replaceAll("<think>",
+                        """
+                                <div class="think-box">
+                                    <h4>Thinking</h4>
+                                """)
+                .replaceAll("</think>",
+                        "><h4>end thinking</h4></div>");
+        // TODO: find someway to copy code to the clipboard
+        // .replaceAll("<code", "<code");
+        runScriptToAppendMessage(message, "assistant", streaming);
+    }
+
+    private void runScriptToAppendMessage(String message, String role, boolean streaming) {
+        // workaround because I don't have an innerHTML method in Java API! (and setting
+        // the attribute directly does not work)
         var script = """
-                var messageContent = document.createElement('p');
                 var tmp = document.querySelector('#tmp');
-                messageContent.setAttribute("class", '%s-message');
-                messageContent.innerHTML = tmp.textContent;
-                document.querySelector('#chatContent').appendChild(messageContent);
-                tmp.remove();
-                """.formatted(role);
+                var lastMessage = document.querySelector('#last-message');
+                """;
+        if (streaming) {
+            script += "lastMessage.innerHTML = tmp.textContent;";
+        } else {
+            script += """
+                        if (lastMessage) {
+                            lastMessage.id = "";
+                        }
+                        var newMessage = document.createElement('p');
+                        newMessage.id = 'last-message';
+                        newMessage.setAttribute("class", '%s-message');
+                        newMessage.innerHTML = tmp.textContent;
+                        document.querySelector('#chatContent').appendChild(newMessage);
+                    """.formatted(role);
+        }
+        script += "tmp.remove();";
 
-        var el = chatOutput.getEngine().getDocument().createElement("p");
-        el.setTextContent(message);
-        el.setAttribute("id", "tmp");
-        el.setAttribute("hidden", "true");
-        var chatRoot = (HTMLElement) chatOutput.getEngine().getDocument().getElementById("chatContent");
-        chatRoot.appendChild(el);
+        var tmp = chatOutput.getEngine().getDocument().createElement("p");
+        tmp.setTextContent(message);
+        tmp.setAttribute("id", "tmp");
+        tmp.setAttribute("hidden", "true");
+        chatOutput.getEngine().getDocument().getElementById("chatContent").appendChild(tmp);
         chatOutput.getEngine().executeScript(script);
-        if (autoScroll)
+        if (autoScroll) {
             chatOutput.getEngine().executeScript("window.scrollTo(0, document.body.scrollHeight);");
+        }
+        chatOutput.getEngine().executeScript("""
+                    document.querySelectorAll('a').forEach(a => {
+                        a.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            console.log('Clicked!');
+                            if (bridge) {
+                                bridge.openUrl(a.href);
+                            }
+                            return false;
+
+                        });
+                    });
+                """);
     }
 
-    public void setAutoScroll(boolean autoScroll) {
-        this.autoScroll = autoScroll;
+    public String getChatHistoryHTML() {
+        return (String) chatOutput.getEngine().executeScript("document.documentElement.outerHTML");
     }
 
-	public String getChatHistoryHTML() {
-		return (String) chatOutput.getEngine().executeScript("document.documentElement.outerHTML");
-	}
+    public void clearChatHistory() {
+        chatOutput.getEngine().executeScript("document.getElementById('chatContent').innerHTML = ''");
+    }
 
-	public void clearChatHistory() {
-		chatOutput.getEngine().executeScript("document.getElementById('chatContent').innerHTML = ''");
-	}
-
+    private String parseMarkdowToHTML(String markdown) {
+        var parsedContent = markDownParser.parse(markdown);
+        return markdownRenderer.render(parsedContent);
+    }
 }

@@ -24,7 +24,7 @@ public class WebSearchTool {
             Returns a list of search results for a given query.
             You can use it if users ask you to search the web or
              if you don't know the answer to certain questions.
-                """)
+            """)
     public List<WebResult> doWebSearch(@P("The query to be searched on the internet") String query)
             throws Exception {
         // source:
@@ -48,10 +48,4 @@ public class WebSearchTool {
             throw e;
         }
     }
-
-    @Tool("Fetch the content of a given web page")
-    public String getWebPageContent(@P("The URL of the web page to be fetched") String url) throws IOException {
-        return Jsoup.connect(url).get().body().text();
-    }
-
 }

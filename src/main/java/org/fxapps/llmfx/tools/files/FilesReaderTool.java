@@ -36,7 +36,7 @@ public class FilesReaderTool {
 
         Files.walkFileTree(currentPath, new SimpleFileVisitor<Path>() {
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attribs) throws IOException {
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attribs) {
                 var fs = FileSystems.getDefault();
                 var matcher = fs.getPathMatcher("glob:" + pattern);
                 var name = file.getFileName();
@@ -56,9 +56,9 @@ public class FilesReaderTool {
         
         final var currentPath = Paths.get(".");
 
-        Files.walkFileTree(currentPath, new SimpleFileVisitor<Path>() {
+        Files.walkFileTree(currentPath, new SimpleFileVisitor<>() {
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attribs) throws IOException {                               
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attribs) {
                 var name = file.getFileName();
                 if (name.toString().equals(fileName)) {
                     fileRef.set(currentPath.relativize(file).toString());

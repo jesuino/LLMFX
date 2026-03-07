@@ -1,29 +1,21 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.SubScene?>
-<?import javafx.scene.canvas.Canvas?>
 <?import javafx.scene.control.Button?>
 <?import javafx.scene.control.ComboBox?>
 <?import javafx.scene.control.Label?>
 <?import javafx.scene.control.ListView?>
 <?import javafx.scene.control.MenuButton?>
 <?import javafx.scene.control.MenuItem?>
-<?import javafx.scene.control.ScrollPane?>
 <?import javafx.scene.control.SplitMenuButton?>
 <?import javafx.scene.control.SplitPane?>
-<?import javafx.scene.control.Tab?>
 <?import javafx.scene.control.TabPane?>
 <?import javafx.scene.control.TextField?>
+<?import javafx.scene.control.ToggleButton?>
 <?import javafx.scene.effect.Glow?>
 <?import javafx.scene.effect.Shadow?>
 <?import javafx.scene.layout.BorderPane?>
-<?import javafx.scene.layout.ColumnConstraints?>
-<?import javafx.scene.layout.GridPane?>
 <?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Pane?>
-<?import javafx.scene.layout.Region?>
-<?import javafx.scene.layout.RowConstraints?>
 <?import javafx.scene.layout.StackPane?>
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.paint.Color?>
@@ -65,6 +57,7 @@
                <children>
                   <ComboBox fx:id="cmbModels" onAction="#modelSelected" prefHeight="26.0" prefWidth="181.0" promptText="Model" />
                   <Button mnemonicParsing="false" onAction="#onRefreshModels" text="↻" />
+                  <ToggleButton fx:id="btnViewLogs" mnemonicParsing="false" text="🔍" />
                   <SplitMenuButton mnemonicParsing="false" prefHeight="26.0" prefWidth="47.0" text="↓">
                     <items>
                       <MenuItem mnemonicParsing="false" onAction="#saveAsText" text="Text" />
@@ -85,6 +78,7 @@
                   <Insets bottom="10.0" left="5.0" right="5.0" top="10.0" />
                </padding>
             </TextField>
+            <Button fx:id="btnContent" alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false" onAction="#choseContent" prefHeight="39.0" prefWidth="38.0" text="📁" textAlignment="CENTER" textFill="#e40a0a" />
             <Button fx:id="btnStop" alignment="CENTER" contentDisplay="CENTER" mnemonicParsing="false" onAction="#stopStreaming" prefHeight="39.0" prefWidth="38.0" text="■" textAlignment="CENTER" textFill="#e40a0a" />
          </children>
          <BorderPane.margin>
@@ -132,73 +126,29 @@
                         <Insets bottom="5.0" right="5.0" />
                      </StackPane.margin>
                   </VBox>
-                  <HBox alignment="BOTTOM_RIGHT" maxHeight="20.0" maxWidth="230.0" prefHeight="23.0" prefWidth="529.0" spacing="10.0" StackPane.alignment="BOTTOM_RIGHT">
+                  <HBox alignment="BOTTOM_RIGHT" maxHeight="23.0" maxWidth="150.0" prefHeight="23.0" prefWidth="169.0" spacing="10.0" StackPane.alignment="BOTTOM_RIGHT">
                      <StackPane.margin>
                         <Insets bottom="10.0" right="10.0" />
                      </StackPane.margin>
                      <children>
-                        <MenuButton fx:id="toolsMenu" mnemonicParsing="false" text="Tools" />
-                        <MenuButton fx:id="mcpMenu" mnemonicParsing="false" text="MCP" />
+                        <Button fx:id="btnReload" mnemonicParsing="false" onAction="#reloadMessage" text="↻" />
                         <Button fx:id="btnNewChat" mnemonicParsing="false" onAction="#newChat" prefHeight="26.0" prefWidth="33.0" text="🗎" textFill="#dd0606" />
                      </children>
+                  </HBox>
+                  <HBox alignment="BOTTOM_LEFT" fillHeight="false" maxHeight="25.0" maxWidth="220.0" prefHeight="100.0" prefWidth="30.0" spacing="10.0" StackPane.alignment="BOTTOM_LEFT">
+                     <children>
+                        <MenuButton fx:id="toolsMenu" mnemonicParsing="false" text="Tools" />
+                        <MenuButton fx:id="mcpMenu" disable="true" mnemonicParsing="false" text="MCP" />
+                     </children>
+                     <StackPane.margin>
+                        <Insets bottom="10.0" left="10.0" right="10.0" top="10.0" />
+                     </StackPane.margin>
                   </HBox>
                </children>
             </StackPane>
             <StackPane minWidth="0.0">
                <children>
-                  <TabPane fx:id="graphicsPane" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE">
-                     <tabs>
-                        <Tab fx:id="canvasTab" text="Canvas">
-                          <content>
-                              <ScrollPane>
-                                 <content>
-                                    <Canvas fx:id="canvas" height="900.0" width="1200.0" />
-                                 </content>
-                              </ScrollPane>
-                          </content>
-                        </Tab>
-                        <Tab fx:id="reportingTab" text="Reporting">
-                          <content>
-                              <ScrollPane>
-                                 <content>
-                                    <GridPane fx:id="reportingPane" hgap="5.0" vgap="5.0">
-                                       <columnConstraints>
-                                          <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" />
-                                       </columnConstraints>
-                                       <rowConstraints>
-                                          <RowConstraints minHeight="10.0" vgrow="SOMETIMES" />
-                                       </rowConstraints>
-                                       <padding>
-                                          <Insets bottom="5.0" left="5.0" right="5.0" top="5.0" />
-                                       </padding>
-                                    </GridPane>
-                                 </content>
-                              </ScrollPane>
-                          </content>
-                        </Tab>
-                        <Tab fx:id="webViewTab" text="Web View">
-                          <content>
-                              <StackPane>
-                                 <children>
-                                    <WebView fx:id="webContentView" prefHeight="200.0" prefWidth="200.0" />
-                                 </children>
-                              </StackPane>
-                          </content>
-                        </Tab>
-                        <Tab fx:id="tab3d" text="3d">
-                          <content>
-                              <Pane>
-                                 <children>
-                                    <SubScene fx:id="_3dSubscene" height="900.0" width="1200.0">
-                                      <root>
-                                        <Region />
-                                      </root>
-                                    </SubScene>
-                                 </children>
-                              </Pane>
-                          </content>
-                        </Tab>
-                     </tabs></TabPane>
+                  <TabPane fx:id="graphicsPane" prefHeight="200.0" prefWidth="200.0" tabClosingPolicy="UNAVAILABLE" />
                   <HBox alignment="CENTER" maxHeight="25.0" maxWidth="60.0" prefHeight="30.0" prefWidth="52.0" spacing="5.0" StackPane.alignment="BOTTOM_RIGHT">
                      <children>
                         <Button fx:id="btnClearCanvas" mnemonicParsing="false" onAction="#clearCurrentGraphicsTab" text="🗑">

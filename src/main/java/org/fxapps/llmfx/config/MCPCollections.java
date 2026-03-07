@@ -10,7 +10,7 @@ public interface MCPCollections {
 
     Map<String, MCPServerDefinition> servers();
 
-    public interface MCPServerDefinition {
+    interface MCPServerDefinition {
         Optional<List<String>> commands();
         Optional<String> url();
     }

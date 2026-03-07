@@ -4,6 +4,7 @@ import static org.fxapps.llmfx.FXUtils.fixColor;
 
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
+import jakarta.annotation.PostConstruct;
 import jakarta.inject.Singleton;
 import javafx.application.Platform;
 import javafx.scene.Camera;
@@ -12,6 +13,8 @@ import javafx.scene.Node;
 import javafx.scene.PerspectiveCamera;
 import javafx.scene.PointLight;
 import javafx.scene.SubScene;
+import javafx.scene.canvas.Canvas;
+import javafx.scene.control.ScrollPane;
 import javafx.scene.paint.Color;
 import javafx.scene.paint.PhongMaterial;
 import javafx.scene.shape.Box;
@@ -25,14 +28,15 @@ import javafx.scene.transform.Translate;
 // perhaps improve this with FXyz
 // perhaps add controls to manipulate the 3d Scene?
 @Singleton
-public class JFX3dTool {
+public class JFX3dTool implements JFXTool {
 
         private SubScene subScene;
         private Group container;
 
-        public void setSubScene(SubScene subScene, Group container) {
-                this.subScene = subScene;
-                this.container = container;
+        @PostConstruct
+        public void init() {
+                this.container = new Group();
+                this.subScene = new SubScene(container, 1200, 900);
 
                 Camera camera = new PerspectiveCamera(true);
                 camera.setFarClip(6000);
@@ -46,6 +50,15 @@ public class JFX3dTool {
                 this.container.getChildren().add(camera);
                 this.subScene.setCamera(camera);
                 subScene.setFill(Color.SILVER);
+        }
+
+        public void clear() {
+                this.container.getChildren().removeAll();
+        }
+
+        public Node getRoot() {
+
+                return this.subScene;
         }
 
         @Tool("rotate the view")

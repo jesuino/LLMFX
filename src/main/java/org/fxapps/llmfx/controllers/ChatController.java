@@ -1,43 +1,39 @@
 package org.fxapps.llmfx.controllers;
 
-import static org.fxapps.llmfx.tools.ToolsInfo.CANVAS_DRAWING;
-import static org.fxapps.llmfx.tools.ToolsInfo.CANVAS_PIXELS;
-import static org.fxapps.llmfx.tools.ToolsInfo.REPORTING;
-import static org.fxapps.llmfx.tools.ToolsInfo.WEB_RENDER;
-import static org.fxapps.llmfx.tools.ToolsInfo._3D;
-
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
-import java.util.Map.Entry;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import javax.imageio.ImageIO;
 
 import org.fxapps.llmfx.AlertsHelper;
-
 import org.fxapps.llmfx.Events.DeleteConversationEvent;
 import org.fxapps.llmfx.Events.HistorySelectedEvent;
 import org.fxapps.llmfx.Events.NewChatEvent;
-
 import org.fxapps.llmfx.Events.RefreshModelsEvent;
+import org.fxapps.llmfx.Events.ReloadMessageEvent;
 import org.fxapps.llmfx.Events.SaveChatEvent;
 import org.fxapps.llmfx.Events.SaveFormat;
 import org.fxapps.llmfx.Events.SelectedModelEvent;
 import org.fxapps.llmfx.Events.StopStreamingEvent;
 import org.fxapps.llmfx.Events.UserInputEvent;
 import org.fxapps.llmfx.FXUtils;
+import org.fxapps.llmfx.ViewLogsDialog;
+import org.fxapps.llmfx.Model.Content;
+import org.fxapps.llmfx.Model.ContentType;
 import org.fxapps.llmfx.config.AppConfig;
-import org.fxapps.llmfx.tools.graphics.JFX3dTool;
-import org.fxapps.llmfx.tools.graphics.JFXCanvasPixelTool;
-import org.fxapps.llmfx.tools.graphics.JFXCanvasTool;
-import org.fxapps.llmfx.tools.graphics.JFXReportingTool;
-import org.fxapps.llmfx.tools.graphics.JFXWebRenderingTool;
+import org.fxapps.llmfx.tools.ToolsInfo;
+import org.fxapps.llmfx.tools.graphics.JFXTool;
+import org.jboss.logging.Logger;
 
 import io.quarkiverse.fx.views.FxView;
 import jakarta.enterprise.event.Event;
@@ -49,10 +45,7 @@ import javafx.beans.property.SimpleBooleanProperty;
 import javafx.collections.FXCollections;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.Group;
 import javafx.scene.SnapshotParameters;
-import javafx.scene.SubScene;
-import javafx.scene.canvas.Canvas;
 import javafx.scene.control.Button;
 import javafx.scene.control.CheckMenuItem;
 import javafx.scene.control.ComboBox;
@@ -65,7 +58,7 @@ import javafx.scene.control.SplitPane;
 import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
-import javafx.scene.layout.GridPane;
+import javafx.scene.control.ToggleButton;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 
@@ -81,6 +74,8 @@ public class ChatController {
 
     private static final String TOOLS_LABEL = "Tools";
 
+    Logger logger = Logger.getLogger(ChatController.class);
+
     @Inject
     private AppConfig appConfig;
 
@@ -95,6 +90,9 @@ public class ChatController {
 
     @Inject
     Event<NewChatEvent> clearChatEvent;
+
+    @Inject
+    Event<ReloadMessageEvent> reloadMessageEvent;
 
     @Inject
     Event<SaveChatEvent> saveChatEvent;
@@ -114,21 +112,11 @@ public class ChatController {
     @Inject
     AlertsHelper alertsHelper;
 
-    // Tools to be initiated
     @Inject
-    JFXCanvasTool jfxCanvasTool;
+    ToolsInfo toolsInfo;
 
     @Inject
-    JFXCanvasPixelTool jfxCanvasPixelTool;
-
-    @Inject
-    JFXReportingTool jfxReportingTool;
-
-    @Inject
-    JFXWebRenderingTool jfxWebRenderingTool;
-
-    @Inject
-    JFX3dTool jfx3dTool;
+    ViewLogsDialog viewLogsDialog;
 
     @FXML
     private WebView chatOutput;
@@ -149,7 +137,16 @@ public class ChatController {
     private Button btnNewChat;
 
     @FXML
+    private Button btnReload;
+
+    @FXML
     private Button btnStop;
+
+    @FXML
+    private Button btnContent;
+
+    @FXML
+    private ToggleButton btnViewLogs;
 
     @FXML
     private Button btnTrashConversation;
@@ -166,42 +163,14 @@ public class ChatController {
     @FXML
     TabPane graphicsPane;
 
-    @FXML
-    Button btnClearCanvas;
-
-    @FXML
-    private Tab canvasTab;
-
-    @FXML
-    private Tab reportingTab;
-
-    @FXML
-    private Tab webViewTab;
-
-    @FXML
-    private Tab tab3d;
-
-    @FXML
-    WebView webContentView;
-
-    @FXML
-    private Canvas canvas;
-
-    @FXML
-    private GridPane reportingPane;
-    @FXML
-    private SubScene _3dSubscene;
-
-    private Group grp3d;
-
     private SimpleBooleanProperty holdChatProperty;
 
     private MenuItem clearToolsMenuItem;
 
+    private List<Tab> toolsTabs;
+
     public void init() {
         this.clearToolsMenuItem = new MenuItem("Clear all tools");
-        this.grp3d = new Group();
-        _3dSubscene.setRoot(grp3d);
         this.chatMessagesView.init(chatOutput);
 
         clearToolsMenuItem.setOnAction(e -> {
@@ -222,8 +191,23 @@ public class ChatController {
         holdChatProperty = new SimpleBooleanProperty();
         txtInput.disableProperty().bind(holdChatProperty);
         btnNewChat.disableProperty().bind(holdChatProperty);
+        btnReload.disableProperty().bind(holdChatProperty);
         historyList.disableProperty().bind(holdChatProperty);
+        btnContent.disableProperty().bind(holdChatProperty);
+        cmbModels.disableProperty().bind(holdChatProperty);
         btnStop.disableProperty().bind(holdChatProperty.not());
+
+        btnViewLogs.setOnAction(e -> {
+            if (btnViewLogs.isSelected()) {
+                viewLogsDialog.show();
+            } else {
+                viewLogsDialog.hide();
+            }
+        });
+
+        viewLogsDialog.setOnCloseRequest(e -> {
+            btnViewLogs.setSelected(false);
+        });
 
         this.historyList.setOnMouseClicked(e -> {
             var i = historyList.getSelectionModel().getSelectedIndex();
@@ -242,12 +226,15 @@ public class ChatController {
             spBody.setDividerPositions(new double[] { 0, 1d });
         }
 
-        // init tooling
-        jfxCanvasTool.setContext(canvas.getGraphicsContext2D());
-        jfxCanvasPixelTool.setCanvas(canvas);
-        jfxReportingTool.setGridPane(reportingPane);
-        jfxWebRenderingTool.setWebView(webContentView);
-        jfx3dTool.setSubScene(_3dSubscene, grp3d);
+        this.toolsTabs = new ArrayList<>();
+        toolsInfo.getToolsMap()
+                .entrySet()
+                .stream()
+                .forEach(e -> {
+                    if (e.getValue() instanceof JFXTool jfxTool) {
+                        toolsTabs.add(new Tab(e.getKey(), jfxTool.getRoot()));
+                    }
+                });
     }
 
     @FXML
@@ -256,7 +243,7 @@ public class ChatController {
 
         var image = selectedTab.getContent().snapshot(new SnapshotParameters(), null);
 
-        alertsHelper.showFileChooser("Save image", "png").ifPresent(f -> {
+        alertsHelper.showSaveFileChooser("Save image", "png").ifPresent(f -> {
             try {
                 var bufferedImage = FXUtils.fromFXImage(image);
                 ImageIO.write(bufferedImage, "png", f);
@@ -269,27 +256,25 @@ public class ChatController {
 
     @FXML
     void clearCurrentGraphicsTab() {
-        var selectedTab = graphicsPane.getSelectionModel().getSelectedItem();
-        if (this.reportingTab == selectedTab) {
-            reportingPane.getChildren().clear();
-        }
-
-        if (this.tab3d == selectedTab) {
-            grp3d.getChildren().clear();
-        }
-
-        if (this.canvasTab == selectedTab) {
-            this.canvas.getGraphicsContext2D().clearRect(0, 0, 10000, 10000);
+        var selectedLabel = graphicsPane.getSelectionModel().getSelectedItem().getText();
+        if (toolsInfo.getToolsMap().containsKey(selectedLabel)
+                && toolsInfo.getToolsMap().get(selectedLabel) instanceof JFXTool jfxTool) {
+            jfxTool.clear();
         }
 
     }
 
     @FXML
-    void onInputAction() {
+    void onInputAction() throws IOException {
         final var input = txtInput.getText();
         if (!input.isBlank()) {
             txtInput.setText("");
-            onUserInputEvent.fire(new UserInputEvent(input));
+            Content content = null;
+            if (btnContent.getUserData() != null) {
+                content = (Content) btnContent.getUserData();
+                btnContent.setUserData(null);
+            }
+            onUserInputEvent.fire(new UserInputEvent(input, Optional.ofNullable(content)));
         }
     }
 
@@ -300,7 +285,7 @@ public class ChatController {
             return;
         }
         final var confirmDelete = alertsHelper.showWarningWithConfirmation("Delete conversation",
-                "Are you sure you want to delete the conversation?");
+                "Are you sure you want to delete the conversation ?");
 
         if (confirmDelete) {
             deleteConversationEvent.fire(new DeleteConversationEvent(i));
@@ -315,7 +300,7 @@ public class ChatController {
                 return catMenu.getItems()
                         .stream()
                         .filter(it -> it instanceof CheckMenuItem check && check.isSelected())
-                        .map(it -> ((CheckMenuItem) it).getText());
+                        .map(MenuItem::getText);
             }
             return Stream.empty();
         }).collect(Collectors.toSet());
@@ -334,8 +319,7 @@ public class ChatController {
     }
 
     public void setHistoryItems(Collection<String> items) {
-        historyList.getItems().clear();
-        historyList.getItems().addAll(items);
+        historyList.getItems().setAll(items);
         historyList.getSelectionModel().selectLast();
     }
 
@@ -347,7 +331,7 @@ public class ChatController {
         cmbModels.getSelectionModel().select(model);
     }
 
-    public void clearChatHistoy() {
+    public void clearChatHistory() {
         vbWelcomeMessage.setVisible(true);
         chatMessagesView.clearChatHistory();
     }
@@ -357,6 +341,7 @@ public class ChatController {
     }
 
     public void setMCPServers(Collection<String> mcpServers) {
+        mcpMenu.setDisable(mcpServers.isEmpty());
         mcpServers.stream().map(mcpServer -> {
             var menu = new CheckMenuItem(mcpServer);
             menu.selectedProperty().addListener((obs, old, n) -> mcpMenu
@@ -387,8 +372,6 @@ public class ChatController {
                                     + (selectedTools().isEmpty()
                                             ? ""
                                             : " (" + selectedTools().size() + ")"));
-
-                            mcpMenu.setDisable(!selectedTools().isEmpty());
                             Platform.runLater(this::onSelectTool);
 
                         });
@@ -404,15 +387,8 @@ public class ChatController {
     public void onSelectTool() {
         graphicsPane.getTabs().clear();
         spBody.setDividerPosition(1, 1);
-        var tabs = Map.of(CANVAS_DRAWING, canvasTab,
-                CANVAS_PIXELS, canvasTab,
-                REPORTING, reportingTab,
-                _3D, tab3d,
-                WEB_RENDER, webViewTab)
-                .entrySet()
-                .stream()
-                .filter(e -> selectedTools().contains(e.getKey()))
-                .map(Entry::getValue)
+        var tabs = toolsTabs.stream()
+                .filter(tab -> selectedTools().contains(tab.getText()))
                 .toList();
         graphicsPane.getTabs().addAll(tabs);
 
@@ -439,6 +415,11 @@ public class ChatController {
     }
 
     @FXML
+    void reloadMessage(ActionEvent event) {
+        reloadMessageEvent.fire(new ReloadMessageEvent());
+    }
+
+    @FXML
     void saveAsHTML(ActionEvent event) {
         saveChatEvent.fire(new SaveChatEvent(SaveFormat.HTML));
     }
@@ -458,19 +439,27 @@ public class ChatController {
         stopStreamingEvent.fire(new StopStreamingEvent());
     }
 
-    public void appendUserMessage(String content) {
-        vbWelcomeMessage.setVisible(false);
-        chatMessagesView.setAutoScroll(true);
-        chatMessagesView.appendUserMessage(content);
+    @FXML
+    void choseContent() {
+
+        alertsHelper.showFileChooser("Select file")
+                .ifPresent(file -> {
+                    var path = file.toPath();
+                    try {
+                        var imageBase64 = Base64.getEncoder().encodeToString(Files.readAllBytes(path));
+                        var content = new Content(imageBase64, ContentType.IMAGE, Files.probeContentType(path));
+                        btnContent.setUserData(content);
+                    } catch (Exception e) {
+                        alertsHelper.showError("Error reading content",
+                                "Error reading content",
+                                "content could not be open: " + e.getMessage());
+                        logger.error("Error opening content", e);
+                    }
+                });
+
     }
 
-    public void appendSystemMessage(String content) {
+    public void hideWelcomeMessage() {
         vbWelcomeMessage.setVisible(false);
-        chatMessagesView.appendSystemMessage(content);
-    }
-
-    public void appendAssistantMessage(String htmlMessage) {
-        vbWelcomeMessage.setVisible(false);
-        chatMessagesView.appendAssistantMessage(htmlMessage);
     }
 }

@@ -1,7 +1,9 @@
 package org.fxapps.llmfx.tools.code;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
 import java.util.List;
 
 import dev.langchain4j.agent.tool.P;
@@ -9,15 +11,15 @@ import dev.langchain4j.agent.tool.Tool;
 import jakarta.inject.Singleton;
 
 @Singleton
-public class CommandsTool {
+public class PythonTool {
 
     @Tool("""
-            Run a command in the terminal and return the output.
+            Run python code. Use this when user asks you to execute a Python script.
             """)
-    public String runCommand(@P("The command to run and its arguments") List<String> command) throws Exception {
+    public String runPythonCode(@P("The code to run") String code) throws IOException, InterruptedException {
+        var file = Files.createTempFile("tool", ".py");
+        var process = new ProcessBuilder(List.of("python", file.toAbsolutePath().toString())).start();
 
-        var process = new ProcessBuilder(command).start();
-        // Reading the output from the command
         var reader = new BufferedReader(new InputStreamReader(process.getInputStream()));
         var result = new StringBuilder();
         String line;
@@ -26,19 +28,16 @@ public class CommandsTool {
         }
         reader.close();
 
-        // Waiting for the command to complete and checking its exit value
+        System.out.println("File is: " + file.toAbsolutePath().toString());
         int exitCode = process.waitFor();
 
+        Files.delete(file);
+
         if (exitCode != 0) {
-            throw new RuntimeException("Command failed with exit code: " + exitCode);
+            throw new RuntimeException("Not able to run script " + exitCode);
         }
         return result.toString();
 
-    }
-
-    @Tool("Get the name of the operating system")
-    public String osName() {
-        return System.getProperty("os.name");
     }
 
 }

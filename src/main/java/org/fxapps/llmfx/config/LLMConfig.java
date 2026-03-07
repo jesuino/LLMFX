@@ -23,6 +23,12 @@ public interface LLMConfig {
     @ConfigProperty
     Optional<String> systemMessage();
 
+    @ConfigProperty(defaultValue = "false")
+    Optional<Boolean> logRequests();
+
+    @ConfigProperty(defaultValue = "false")
+    Optional<Boolean> logResponses();
+
     @ConfigProperty
     Optional<String> documents();
 

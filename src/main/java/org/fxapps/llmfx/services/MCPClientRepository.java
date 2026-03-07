@@ -38,10 +38,9 @@ public class MCPClientRepository {
                 var mcpClient = new DefaultMcpClient.Builder()
                         .transport(transport)
                         .build();
-
                 toolProviderRegister.put(name, mcpClient);
             } catch (Exception e) {
-                logger.error("Not able to load MCP Server configuration for server " + name, e);
+                logger.error("Not able to load MCP server configuration for server " + name, e);
             }
         }
     }
@@ -56,7 +55,7 @@ public class MCPClientRepository {
     }
 
     McpTransport getTransport(MCPServerDefinition def) {
-        if (def.commands().isPresent()&& !def.commands().isEmpty()) {
+        if (def.commands().isPresent() && !def.commands().isEmpty()) {
             return new StdioMcpTransport.Builder()
                     .command(def.commands().get())
                     .logEvents(true)

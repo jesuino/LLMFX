@@ -1,6 +1,12 @@
 package org.fxapps.llmfx;
 
-import javafx.scene.Node;
+import java.util.Optional;
+
+import org.fxapps.llmfx.Model.Content;
+
+import dev.langchain4j.model.chat.listener.ChatModelErrorContext;
+import dev.langchain4j.model.chat.listener.ChatModelRequestContext;
+import dev.langchain4j.model.chat.listener.ChatModelResponseContext;
 
 public class Events {
 
@@ -8,13 +14,16 @@ public class Events {
     }
 
     public enum SaveFormat {
-        TEXT, JSON, HTML;
-    };
+        TEXT, JSON, HTML
+    }
 
     public record ChatUpdateEvent(String chat) {
     }
 
     public record NewChatEvent() {
+    }
+
+    public record ReloadMessageEvent() {
     }
 
     public record SaveChatEvent(SaveFormat saveFormat) {
@@ -26,7 +35,7 @@ public class Events {
     public record StopStreamingEvent() {
     }
 
-    public record UserInputEvent(String text) {
+    public record UserInputEvent(String text, Optional<Content> content) {
     }
 
     public record RefreshModelsEvent() {
@@ -36,6 +45,15 @@ public class Events {
     }
 
     public record DeleteConversationEvent(int index) {
+    }
+
+    public record ChatModelRequestEvent(ChatModelRequestContext requestContext) {
+    }
+
+    public record ChatModelResponseEvent(ChatModelResponseContext responseContext) {
+    }
+
+    public record ChatModelErrorEvent(ChatModelErrorContext chatModelError) {
     }
 
 }

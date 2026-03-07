@@ -44,9 +44,9 @@ public class HistoryStorage {
                 var jsonContent = Files.readString(historyFile);
                 if (!jsonContent.isBlank()) {
                     final var loadHistory = Arrays.asList(jsonBuilder.fromJson(jsonContent, ChatHistory[].class));
-                    loadHistory.forEach(this.chatHistory::add);
+                    this.chatHistory.addAll(loadHistory);
                     if (!chatHistory.isEmpty()) {
-                        this.currentConversation = this.chatHistory.get(0);
+                        this.currentConversation = this.chatHistory.getFirst();
                     }
                 }
             }
