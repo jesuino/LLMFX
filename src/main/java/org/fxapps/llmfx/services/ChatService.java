@@ -1,6 +1,5 @@
 package org.fxapps.llmfx.services;
 
-import java.net.http.HttpClient;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -26,12 +25,14 @@ import dev.langchain4j.data.message.ToolExecutionResultMessage;
 import dev.langchain4j.data.message.UserMessage;
 import dev.langchain4j.data.message.VideoContent;
 import dev.langchain4j.data.segment.TextSegment;
-import dev.langchain4j.http.client.jdk.JdkHttpClient;
-import dev.langchain4j.http.client.jdk.JdkHttpClientBuilder;
+import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.memory.chat.MessageWindowChatMemory;
 import dev.langchain4j.model.chat.StreamingChatModel;
-import dev.langchain4j.model.chat.listener.ChatModelListener;
 import dev.langchain4j.model.chat.response.ChatResponse;
+import dev.langchain4j.model.chat.response.PartialResponse;
+import dev.langchain4j.model.chat.response.PartialResponseContext;
+import dev.langchain4j.model.chat.response.PartialThinking;
+import dev.langchain4j.model.chat.response.PartialThinkingContext;
 import dev.langchain4j.model.chat.response.StreamingChatResponseHandler;
 import dev.langchain4j.model.openai.OpenAiStreamingChatModel;
 import dev.langchain4j.rag.content.retriever.ContentRetriever;
@@ -59,18 +60,18 @@ public class ChatService {
     @Inject
     EventChatModelListener eventChatModelListener;
 
+    @Inject
+    MCPFunctionRegistry mcpFunctionRegistry;
+
+    @Inject
+    MCPClientRepository mcpClientRepository;
+
     private final Map<String, StreamingChatModel> modelCache;
 
     private ContentRetriever contentRetriever;
 
-    private final JdkHttpClientBuilder jdkHttpClientBuilder;
-
     ChatService() {
         this.modelCache = new HashMap<>();
-        // some LLM servers (e.g. lmstudio) require HTTP/1.1
-        this.jdkHttpClientBuilder = JdkHttpClient.builder()
-                .httpClientBuilder(HttpClient.newBuilder()
-                        .version(HttpClient.Version.HTTP_1_1));
 
         if (llmConfig.documents().isPresent()) {
             var documents = FileSystemDocumentLoader.loadDocuments(llmConfig.documents().get());
@@ -126,10 +127,10 @@ public class ChatService {
         chatRequest.content()
                 .stream()
                 .map(c -> switch (c.type()) {
-                    case IMAGE -> ImageContent.from(c.content(), "image/png");
-                    case AUDIO -> AudioContent.from(c.content());
-                    case PDF -> PdfFileContent.from(c.content());
-                    case VIDEO -> VideoContent.from(c.content());
+                    case IMAGE -> ImageContent.from(c.content(), c.mimeType());
+                    case AUDIO -> AudioContent.from(c.content(), c.mimeType());
+                    case PDF -> PdfFileContent.from(c.content(), c.mimeType());
+                    case VIDEO -> VideoContent.from(c.content(), c.mimeType());
                 }).forEach(contentList::add);
         return new UserMessage(contentList);
     }
@@ -141,10 +142,21 @@ public class ChatService {
         model.chat(request, new StreamingChatResponseHandler() {
 
             @Override
-            public void onPartialResponse(String token) {
-                if (chatRequest.isRunning()) {
-                    chatRequest.onToken().accept(token);
+            public void onPartialThinking(PartialThinking partialThinking,
+                    PartialThinkingContext context) {
+                if (!chatRequest.isRunning()) {
+                    context.streamingHandle().cancel();
                 }
+                chatRequest.onToken().accept(partialThinking.text());
+            }
+
+            @Override
+            public void onPartialResponse(PartialResponse partialResponse,
+                    PartialResponseContext context) {
+                if (!chatRequest.isRunning()) {
+                    context.streamingHandle().cancel();
+                }
+                chatRequest.onToken().accept(partialResponse.text());
             }
 
             @Override
@@ -203,7 +215,6 @@ public class ChatService {
     private StreamingChatModel getModel(ChatRequest chatRequest) {
         return modelCache.computeIfAbsent(chatRequest.model(),
                 m -> OpenAiStreamingChatModel.builder()
-                        .httpClientBuilder(jdkHttpClientBuilder)
                         .baseUrl(openAi.getBaseUrl())
                         .modelName(m)
                         .apiKey(llmConfig.key().orElse(""))
@@ -211,6 +222,7 @@ public class ChatService {
                         .logRequests(llmConfig.logRequests().orElse(false))
                         .logResponses(llmConfig.logResponses().orElse(false))
                         .listeners(List.of(eventChatModelListener))
+                        .returnThinking(true)
                         .build());
     }
 
@@ -249,7 +261,7 @@ public class ChatService {
 
         chatRequest.history()
                 .stream()
-                .filter(m -> !m.text().equals(chatRequest.message()))
+                .filter(m -> !m.text().isBlank() && !m.text().equals(chatRequest.message()))
                 .map(m -> switch (m.role()) {
                     case USER -> new UserMessage(m.text());
                     case ASSISTANT -> new AiMessage(m.text());
@@ -261,10 +273,16 @@ public class ChatService {
 
     private HashMap<ToolSpecification, ToolExecutor> getRequestTools(ChatRequest chatRequest) {
         var tools = new HashMap<ToolSpecification, ToolExecutor>();
-        // MCP Tools
-        chatRequest.mcpClients().forEach(client -> client.listTools()
-                .stream()
-                .forEach(tool -> tools.put(tool, (req, mem) -> client.executeTool(req))));
+        // MCP Tools - filter by selected functions
+        chatRequest.mcpClients().forEach(client -> {
+            // Find the MCP name for this client
+            String mcpName = findMcpNameForClient(client);
+
+            client.listTools()
+                    .stream()
+                    .filter(tool -> mcpName == null || mcpFunctionRegistry.isFunctionSelected(mcpName, tool.name()))
+                    .forEach(tool -> tools.put(tool, (req, mem) -> client.executeTool(req).resultText()));
+        });
         // native tools
         chatRequest.tools().forEach(tool -> {
             ToolSpecifications.toolSpecificationsFrom(tool)
@@ -272,5 +290,16 @@ public class ChatService {
                             (req, mem) -> new DefaultToolExecutor(tool, req).execute(req, mem)));
         });
         return tools;
+    }
+
+    /**
+     * Find the MCP name for a given client by comparing client instances.
+     * Returns null if not found.
+     */
+    private String findMcpNameForClient(McpClient client) {
+        return mcpClientRepository.mcpServers().stream()
+                .filter(name -> mcpClientRepository.getMcpClient(name) == client)
+                .findFirst()
+                .orElse(null);
     }
 }

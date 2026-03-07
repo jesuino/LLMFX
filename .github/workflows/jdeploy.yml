@@ -19,9 +19,19 @@ jobs:
          - name: Set up JDK 21
            uses: actions/setup-java@v3
            with:
-              java-version: '21'
+              java-version: '25.0.1'
               distribution: 'temurin'
          - name: Build with Maven
+           run: mvn clean package -q
+         - name: Rename Uber JAR
+           run: mv target/llm-fx-1.0.0-SNAPSHOT-runner.jar target/llmfx.jar
+         - name: Upload Uber JAR to Release
+           if: startsWith(github.ref, 'refs/tags/')
+           uses: softprops/action-gh-release@v1
+           with:
+              files: target/llmfx.jar
+              token: ${{ secrets.GITHUB_TOKEN }}
+         - name: Rebuild for jDeploy (runner jar)
            run: mvn clean package -q
          - name: Build App Installer Bundles
            uses: shannah/jdeploy@master

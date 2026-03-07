@@ -139,7 +139,7 @@ public class JFXCanvasTool implements JFXTool {
             double x,
             double y,
             double radius) {
-        ctx.strokeOval(x, y, y, radius);
+        ctx.strokeOval(x, y, radius, radius);
         ctx.fillOval(x, y, radius, radius);
     }
 

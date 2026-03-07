@@ -1,7 +1,7 @@
 package org.fxapps.llmfx.services;
 
 import org.eclipse.microprofile.rest.client.ext.ClientHeadersFactory;
-import org.fxapps.llmfx.config.LLMConfig;
+import org.fxapps.llmfx.config.RuntimeLLMConfig;
 
 import jakarta.inject.Inject;
 import jakarta.ws.rs.core.MultivaluedHashMap;
@@ -13,10 +13,11 @@ import jakarta.ws.rs.core.MultivaluedMap;
 public class BearerTokenHeaderFactory implements ClientHeadersFactory {
 
     @Inject
-    LLMConfig llmConfig;
-    
+    RuntimeLLMConfig llmConfig;
+
     @Override
-    public MultivaluedMap<String, String> update(MultivaluedMap<String, String> incomingHeaders, MultivaluedMap<String, String> clientOutgoingHeaders) {
+    public MultivaluedMap<String, String> update(MultivaluedMap<String, String> incomingHeaders,
+            MultivaluedMap<String, String> clientOutgoingHeaders) {
         var result = new MultivaluedHashMap<String, String>();
         llmConfig.key().ifPresent(key -> result.add("Authorization", "Bearer " + key));
         return result;

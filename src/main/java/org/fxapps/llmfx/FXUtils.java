@@ -4,12 +4,21 @@ import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 import java.awt.image.SampleModel;
 import java.awt.image.SinglePixelPackedSampleModel;
+
+import org.fxapps.llmfx.tools.dsl.Param;
+
 import javafx.scene.image.Image;
 import javafx.scene.image.PixelFormat;
 import javafx.scene.image.PixelReader;
 import javafx.scene.paint.Color;
 
 public class FXUtils {
+
+    
+
+    public static Color fixColor(Param param) {
+        return fixColor(param.value());
+    }
 
     // this is a workaround to convert the color provided by the LLM to a valid
     // color

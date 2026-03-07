@@ -1,5 +1,8 @@
 package org.fxapps.llmfx.controllers;
 
+import java.io.ByteArrayOutputStream;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -27,12 +30,13 @@ import org.fxapps.llmfx.Events.SelectedModelEvent;
 import org.fxapps.llmfx.Events.StopStreamingEvent;
 import org.fxapps.llmfx.Events.UserInputEvent;
 import org.fxapps.llmfx.FXUtils;
-import org.fxapps.llmfx.ViewLogsDialog;
 import org.fxapps.llmfx.Model.Content;
 import org.fxapps.llmfx.Model.ContentType;
-import org.fxapps.llmfx.config.AppConfig;
 import org.fxapps.llmfx.tools.ToolsInfo;
 import org.fxapps.llmfx.tools.graphics.JFXTool;
+import org.fxapps.llmfx.windows.MCPFunctionSelectionDialog;
+import org.fxapps.llmfx.windows.ScreenshotWindow;
+import org.fxapps.llmfx.windows.ViewLogsDialog;
 import org.jboss.logging.Logger;
 
 import io.quarkiverse.fx.views.FxView;
@@ -59,6 +63,9 @@ import javafx.scene.control.Tab;
 import javafx.scene.control.TabPane;
 import javafx.scene.control.TextField;
 import javafx.scene.control.ToggleButton;
+import javafx.scene.image.Image;
+import javafx.scene.image.ImageView;
+import javafx.scene.layout.Priority;
 import javafx.scene.layout.VBox;
 import javafx.scene.web.WebView;
 
@@ -75,9 +82,6 @@ public class ChatController {
     private static final String TOOLS_LABEL = "Tools";
 
     Logger logger = Logger.getLogger(ChatController.class);
-
-    @Inject
-    private AppConfig appConfig;
 
     @Inject
     Event<UserInputEvent> onUserInputEvent;
@@ -118,6 +122,12 @@ public class ChatController {
     @Inject
     ViewLogsDialog viewLogsDialog;
 
+    @Inject
+    ScreenshotWindow screenshotWindow;
+
+    @Inject
+    MCPFunctionSelectionDialog mcpFunctionSelectionDialog;
+
     @FXML
     private WebView chatOutput;
 
@@ -143,7 +153,7 @@ public class ChatController {
     private Button btnStop;
 
     @FXML
-    private Button btnContent;
+    private MenuButton btnContent;
 
     @FXML
     private ToggleButton btnViewLogs;
@@ -162,6 +172,12 @@ public class ChatController {
 
     @FXML
     TabPane graphicsPane;
+
+    @FXML
+    Button btnCollapseHistory;
+
+    @FXML
+    VBox vbChatHistory;
 
     private SimpleBooleanProperty holdChatProperty;
 
@@ -220,11 +236,7 @@ public class ChatController {
         });
 
         btnTrashConversation.disableProperty()
-                .bind(historyList.getSelectionModel().selectedIndexProperty().isEqualTo(-1));
-
-        if (appConfig.historyFile().isEmpty()) {
-            spBody.setDividerPositions(new double[] { 0, 1d });
-        }
+                .bind(historyList.getSelectionModel().selectedIndexProperty().isEqualTo(-1).or(holdChatProperty));
 
         this.toolsTabs = new ArrayList<>();
         toolsInfo.getToolsMap()
@@ -235,6 +247,14 @@ public class ChatController {
                         toolsTabs.add(new Tab(e.getKey(), jfxTool.getRoot()));
                     }
                 });
+
+        SplitPane.setResizableWithParent(vbChatHistory, true);
+        btnCollapseHistory.textProperty().bind(vbChatHistory.visibleProperty().map(v -> v ? "<" : ">"));
+        btnCollapseHistory.setOnAction(e -> vbChatHistory.setVisible(!vbChatHistory.isVisible()));
+        final var initialHistoryWidth = vbChatHistory.getPrefWidth();
+        VBox.setVgrow(historyList, Priority.SOMETIMES);
+        vbChatHistory.prefWidthProperty().bind(vbChatHistory.visibleProperty().map(v -> v ? initialHistoryWidth : 0.0));
+        vbChatHistory.visibleProperty().addListener(e -> restoreDividerPositions());
     }
 
     @FXML
@@ -261,7 +281,6 @@ public class ChatController {
                 && toolsInfo.getToolsMap().get(selectedLabel) instanceof JFXTool jfxTool) {
             jfxTool.clear();
         }
-
     }
 
     @FXML
@@ -272,7 +291,7 @@ public class ChatController {
             Content content = null;
             if (btnContent.getUserData() != null) {
                 content = (Content) btnContent.getUserData();
-                btnContent.setUserData(null);
+                clearContent();
             }
             onUserInputEvent.fire(new UserInputEvent(input, Optional.ofNullable(content)));
         }
@@ -344,13 +363,17 @@ public class ChatController {
         mcpMenu.setDisable(mcpServers.isEmpty());
         mcpServers.stream().map(mcpServer -> {
             var menu = new CheckMenuItem(mcpServer);
-            menu.selectedProperty().addListener((obs, old, n) -> mcpMenu
-                    .setText(MCP_LABEL +
-                            (selectedMCPs().isEmpty()
-                                    ? ""
-                                    : " (" + selectedMCPs().size() + ")"))
+            menu.selectedProperty().addListener((obs, old, n) -> {
+                mcpMenu.setText(MCP_LABEL +
+                        (selectedMCPs().isEmpty()
+                                ? ""
+                                : " (" + selectedMCPs().size() + ")"));
 
-            );
+                // Show function selection dialog when MCP is selected
+                if (n && mcpFunctionSelectionDialog != null) {
+                    Platform.runLater(() -> mcpFunctionSelectionDialog.showForMcp(mcpServer));
+                }
+            });
             return menu;
         }).forEach(mcpMenu.getItems()::add);
 
@@ -386,14 +409,14 @@ public class ChatController {
 
     public void onSelectTool() {
         graphicsPane.getTabs().clear();
-        spBody.setDividerPosition(1, 1);
+        spBody.setDividerPosition(0, 1);
         var tabs = toolsTabs.stream()
                 .filter(tab -> selectedTools().contains(tab.getText()))
                 .toList();
         graphicsPane.getTabs().addAll(tabs);
 
         if (!tabs.isEmpty()) {
-            spBody.setDividerPosition(1, 0.4);
+            spBody.setDividerPosition(0, 0.4);
         }
 
     }
@@ -440,14 +463,42 @@ public class ChatController {
     }
 
     @FXML
-    void choseContent() {
+    void clearContent() {
+        btnContent.setUserData(null);
+        btnContent.setGraphic(null);
+    }
 
+    @FXML
+    void getScreenshot() {
+        screenshotWindow.capture(imgOp -> {
+            if (imgOp.isEmpty()) {
+                return;
+            }
+            var img = imgOp.get();
+            var bufferedImage = FXUtils.fromFXImage(img);
+
+            try {
+                var tmpPath = Files.createTempFile("llmfx", ".png");
+                var os = new FileOutputStream(tmpPath.toFile());
+                ImageIO.write(bufferedImage, "png", os);
+                var content = Content.fromPath(tmpPath);
+                setContentPreview(img);
+                btnContent.setUserData(content);
+            } catch (IOException e) {
+                logger.error(e);
+            }
+
+        });
+    }
+
+    @FXML
+    void choseContent() {
         alertsHelper.showFileChooser("Select file")
                 .ifPresent(file -> {
                     var path = file.toPath();
                     try {
-                        var imageBase64 = Base64.getEncoder().encodeToString(Files.readAllBytes(path));
-                        var content = new Content(imageBase64, ContentType.IMAGE, Files.probeContentType(path));
+                        var content = Content.fromPath(path);
+                        setContentPreview(content.getPreview());
                         btnContent.setUserData(content);
                     } catch (Exception e) {
                         alertsHelper.showError("Error reading content",
@@ -459,7 +510,25 @@ public class ChatController {
 
     }
 
+    private void setContentPreview(Image image) {
+        if (btnContent.getGraphic() instanceof ImageView imgView) {
+            imgView.setImage(image);
+            return;
+        }
+
+        var imgView = new ImageView(image);
+        imgView.setFitWidth(40);
+        imgView.setFitHeight(30);
+        btnContent.setGraphic(imgView);
+    }
+
     public void hideWelcomeMessage() {
         vbWelcomeMessage.setVisible(false);
+    }
+
+    public void restoreDividerPositions() {
+        if (selectedTools().isEmpty()) {
+            spBody.setDividerPosition(0, 1);
+        }
     }
 }
