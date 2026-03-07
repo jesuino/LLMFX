@@ -112,10 +112,10 @@ public class ChatService {
         chatRequest.content()
                 .stream()
                 .map(c -> switch (c.type()) {
-                    case IMAGE -> ImageContent.from(c.content(), "image/png");
-                    case AUDIO -> AudioContent.from(c.content());
-                    case PDF -> PdfFileContent.from(c.content());
-                    case VIDEO -> VideoContent.from(c.content());
+                    case IMAGE -> ImageContent.from(c.content(), c.mimeType());
+                    case AUDIO -> AudioContent.from(c.content(), c.mimeType());
+                    case PDF -> PdfFileContent.from(c.content(), c.mimeType());
+                    case VIDEO -> VideoContent.from(c.content(), c.mimeType());
                 }).forEach(contentList::add);
         return new UserMessage(contentList);
     }

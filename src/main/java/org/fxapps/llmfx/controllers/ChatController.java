@@ -2,6 +2,7 @@ package org.fxapps.llmfx.controllers;
 
 import java.io.ByteArrayOutputStream;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
@@ -250,7 +251,7 @@ public class ChatController {
         SplitPane.setResizableWithParent(vbChatHistory, true);
         btnCollapseHistory.textProperty().bind(vbChatHistory.visibleProperty().map(v -> v ? "<" : ">"));
         btnCollapseHistory.setOnAction(e -> vbChatHistory.setVisible(!vbChatHistory.isVisible()));
-        final var initialHistoryWidth = vbChatHistory.getPrefWidth();        
+        final var initialHistoryWidth = vbChatHistory.getPrefWidth();
         VBox.setVgrow(historyList, Priority.SOMETIMES);
         vbChatHistory.prefWidthProperty().bind(vbChatHistory.visibleProperty().map(v -> v ? initialHistoryWidth : 0.0));
         vbChatHistory.visibleProperty().addListener(e -> restoreDividerPositions());
@@ -476,12 +477,11 @@ public class ChatController {
             var img = imgOp.get();
             var bufferedImage = FXUtils.fromFXImage(img);
 
-            var os = new ByteArrayOutputStream();
             try {
+                var tmpPath = Files.createTempFile("llmfx", ".png");
+                var os = new FileOutputStream(tmpPath.toFile());
                 ImageIO.write(bufferedImage, "png", os);
-                byte[] imageBytes = os.toByteArray();
-                var imageBase64 = Base64.getEncoder().encodeToString(imageBytes);
-                var content = new Content(imageBase64, ContentType.IMAGE, "png");
+                var content = Content.fromPath(tmpPath);
                 setContentPreview(img);
                 btnContent.setUserData(content);
             } catch (IOException e) {
@@ -497,9 +497,8 @@ public class ChatController {
                 .ifPresent(file -> {
                     var path = file.toPath();
                     try {
-                        var imageBase64 = Base64.getEncoder().encodeToString(Files.readAllBytes(path));
-                        setContentPreview(new Image(new FileInputStream(file)));
-                        var content = new Content(imageBase64, ContentType.IMAGE, Files.probeContentType(path));
+                        var content = Content.fromPath(path);
+                        setContentPreview(content.getPreview());
                         btnContent.setUserData(content);
                     } catch (Exception e) {
                         alertsHelper.showError("Error reading content",
