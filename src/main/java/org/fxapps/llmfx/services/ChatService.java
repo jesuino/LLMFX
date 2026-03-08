@@ -43,6 +43,7 @@ import dev.langchain4j.store.embedding.EmbeddingStoreIngestor;
 import dev.langchain4j.store.embedding.inmemory.InMemoryEmbeddingStore;
 import dev.langchain4j.service.tool.DefaultToolExecutor;
 import dev.langchain4j.service.tool.ToolExecutor;
+import jakarta.annotation.PostConstruct;
 import jakarta.inject.Inject;
 import jakarta.inject.Singleton;
 
@@ -68,11 +69,15 @@ public class ChatService {
 
     private final Map<String, StreamingChatModel> modelCache;
 
+    // TODO: add the content retriever to the loaded model (no AI Services)
     private ContentRetriever contentRetriever;
 
     ChatService() {
         this.modelCache = new HashMap<>();
+    }
 
+    @PostConstruct
+    void init() {
         if (llmConfig.documents().isPresent()) {
             var documents = FileSystemDocumentLoader.loadDocuments(llmConfig.documents().get());
             var embeddingStore = new InMemoryEmbeddingStore<TextSegment>();
